@@ -1,4 +1,5 @@
 import './style.css';
+import { setupPlayback } from './playback.js';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
 import { CaptionConnection, loadSessions } from './connection.js';
 import { setupReading } from './reading.js';
@@ -26,6 +27,20 @@ const client = new CaptionConnection({ onUpdate(next, nextConnection) {
   }
   render();
 } });
+function highlightAudio(ms) {
+  for (const row of document.querySelectorAll('.caption')) {
+    const active = Number(row.dataset.start) <= ms && ms < Number(row.dataset.end);
+    row.classList.toggle('audio-current', active);
+    if (active) row.setAttribute('aria-current', 'true');
+    else row.removeAttribute('aria-current');
+  }
+}
+const playback = setupPlayback({ currentSession: () => selected, highlight: highlightAudio,
+  selectRun(run) {
+    sessions.push(run);
+    select(run);
+  },
+});
 function node(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -62,6 +77,7 @@ function select(session) {
   demoTimers = [];
   client.stop();
   selected = session;
+  playback.choose(session, demo);
   $('focus-reading').disabled = false;
   state = initialState(session.id);
   announced = '';
@@ -108,12 +124,15 @@ function render() {
   } else transcript.replaceChildren(...rows.map(({ segmentId, original, caption }) => {
     const article = node('article', `caption ${caption?.status || 'pending'}`);
     article.dataset.segment = segmentId;
+    article.dataset.start = original.start_ms;
+    article.dataset.end = original.end_ms;
     const meta = node('div', 'caption-meta', timestamp(original.start_ms));
     if (caption?.speaker_id) meta.append(node('span', '', `Voz ${caption.speaker_id}`));
     meta.append(node('span', '', !caption ? 'Traducción pendiente' : caption.status === 'provisional' ? 'En curso' : 'Confirmado'));
     article.append(meta, node('p', '', caption?.text || 'Esperando traducción…'));
     return article;
   }));
+  highlightAudio(playback.time());
   transcript.scrollTop = $('follow').checked ? transcript.scrollHeight : scrollTop;
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';

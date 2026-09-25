@@ -12,3 +12,21 @@
 ## 3. Integración
 
 - [ ] 3.1 Codex revisa el frontend, Claude revisa el endpoint — Responsable: ambos | Estado: pendiente | Depende de: 1.1, 2.1, 2.2.
+
+## Continuación por Codex solicitada por el usuario
+
+Codex asume también el frontend tras el handoff de Claude. La propuesta se
+amplía con inicio a pedido y sesiones nuevas; ver diseño y escenarios nuevos.
+
+- [x] C1 Servir WAV/Range y crear/iniciar pruebas con límites — Responsable: Codex | Estado: terminada. 116 tests Python correctos: 200/206/404, controles deshabilitados fuera de demo, idempotencia, dos workers, veinte sesiones retenidas, rechazo de sesión terminal.
+- [x] C2 Reproductor, inicio tras playing, historial independiente y resaltado temporal — Responsable: Codex | Estado: terminada. 14 tests Node, 5 pruebas de navegador y 2 de integración correctos. Integración reproduce WAV real con inferencia falsa explícita, verifica inicio, IDs distintos, resaltado y pausa al cambiar de sesión. Build y Ruff correctos.
+- [ ] C3 Revisión cruzada de la implementación — Responsable: Claude | Estado: pendiente. Claude no está activo; no se afirma revisión ni se integra código propio automáticamente.
+
+Las tareas 1.1/2.1/2.2 originales quedan cubiertas por C1/C2; autoría de la
+implementación final Codex, propuesta inicial Claude. La integración 3.1 queda
+pendiente de revisión. No se valida aquí calidad ni cumplimiento de latencia.
+
+Prueba adicional con inferencia real: backend aislado 18767 y Vite 5176,
+Whisper/Gemma locales. Playwright comprobó audio avanzando (`paused=false`,
+`muted=false`, volumen 1, readyState 4) y traducción ES visible tras Iniciar
+prueba. No equivale a confirmar el volumen del dispositivo físico ni p95.

@@ -6,8 +6,10 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi.responses import FileResponse
 
 from decilo.gateway import SessionGateway
 from decilo.models import Session, SessionCatalog
@@ -20,6 +22,8 @@ SAMPLES_DIR = Path(__file__).parent.parent.parent / "samples"
 registry = SessionRegistry()
 gateways: dict[str, SessionGateway] = {}
 _background_tasks: set[asyncio.Task] = set()
+audio_sources: dict[str, Path] = {}
+file_tasks: dict[str, asyncio.Task] = {}
 
 
 def _gateway_for(session_id: str) -> SessionGateway:
@@ -31,10 +35,11 @@ def _gateway_for(session_id: str) -> SessionGateway:
     return gateway
 
 
-def _start_background(coro) -> None:
+def _start_background(coro) -> asyncio.Task:
     task = asyncio.create_task(coro)
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
+    return task
 
 
 async def _start_sample_sessions() -> None:
@@ -55,17 +60,24 @@ async def _start_sample_sessions() -> None:
             continue
         session = Session(
             id=session_id, title=title, source_language=lang,
-            translation_languages=translations, target_locale="es-AR", status="live",
+            translation_languages=translations, target_locale="es-AR", status="starting",
         )
         registry.register(session)
-        gateway = _gateway_for(session_id)
-        _start_background(run_file_session(gateway.stream, gateway, audio_path))
+        audio_sources[session_id] = audio_path
+        if os.environ.get("DECILO_DEMO_AUTOSTART", "1") == "1":
+            await start_session(session_id)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _start_sample_sessions()
-    yield
+    try:
+        yield
+    finally:
+        tasks = list(_background_tasks)
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 app = FastAPI(title="Decilo", lifespan=lifespan)
@@ -104,6 +116,73 @@ def main() -> None:
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+
+def _audio_source(session_id: str) -> Path:
+    try:
+        registry.get(session_id)
+    except SessionNotFound:
+        raise HTTPException(404, "sesión no encontrada") from None
+    path = audio_sources.get(session_id)
+    if path is None or not path.is_file():
+        raise HTTPException(404, "audio no disponible")
+    return path
+
+
+def _require_demo() -> None:
+    if os.environ.get("DECILO_DEMO_SESSIONS") != "1":
+        raise HTTPException(404, "modo de pruebas no habilitado")
+
+
+@app.get("/api/v1/sessions/{session_id}/audio")
+async def session_audio(session_id: str):
+    return FileResponse(_audio_source(session_id), media_type="audio/wav")
+
+
+@app.post("/api/v1/sessions/{session_id}/runs", response_model=Session, status_code=201)
+async def create_run(session_id: str):
+    _require_demo()
+    path = _audio_source(session_id)
+    if len(audio_sources) >= 20:
+        raise HTTPException(429, "Límite de pruebas alcanzado; reiniciá el servidor local.")
+    source = registry.get(session_id).session
+    session = source.model_copy(update={"id": f"run-{uuid4().hex}", "status": "starting"})
+    registry.register(session)
+    audio_sources[session.id] = path
+    return session
+
+
+@app.post("/api/v1/sessions/{session_id}/start", response_model=Session)
+async def start_session(session_id: str):
+    _require_demo()
+    path = _audio_source(session_id)
+    record = registry.get(session_id)
+    if session_id in file_tasks and not file_tasks[session_id].done():
+        return record.session
+    if record.session.status != "starting":
+        raise HTTPException(409, "Creá una nueva prueba para volver a empezar.")
+    if sum(not task.done() for task in file_tasks.values()) >= 2:
+        raise HTTPException(429, "Ya hay dos pruebas procesando audio; esperá a que terminen.")
+    gateway = _gateway_for(session_id)
+    gateway.publish_nowait(gateway.stream.record_status(record.session.model_copy(update={"status": "live"})))
+
+    async def run():
+        try:
+            await run_file_session(gateway.stream, gateway, path)
+        except Exception:
+            gateway.publish_nowait(gateway.stream.record_error(
+                "inference_unavailable", "No se pudo procesar el audio de esta prueba.", retryable=False,
+            ))
+            gateway.publish_nowait(gateway.stream.record_status(
+                gateway.stream.session.model_copy(update={"status": "error"}),
+            ))
+        finally:
+            file_tasks.pop(session_id, None)
+
+    file_tasks[session_id] = _start_background(run())
+    return record.session
 
 
 if __name__ == "__main__":

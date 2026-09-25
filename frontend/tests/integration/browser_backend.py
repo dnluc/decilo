@@ -26,3 +26,24 @@ async def publish(session_id: str, body: dict):
 @app.get("/api/_test/subscribers")
 async def subscribers():
     return {key: len(value._subscribers) for key, value in gateways.items()}
+
+# Playback test uses a real WAV/HTTP/WS/player; inference is explicitly fake.
+import asyncio
+import os
+import decilo.app as application
+
+os.environ["DECILO_DEMO_SESSIONS"] = "1"
+os.environ["DECILO_DEMO_AUTOSTART"] = "0"
+
+
+async def playback_worker(stream, gateway, path):
+    await asyncio.sleep(.15)
+    gateway.publish_nowait(stream.upsert_caption(CaptionData(
+        segment_id="audio-1", segment_seq=1, kind="transcript", language="en",
+        revision=1, source_revision=None, text="Playback integration test", status="final",
+        start_ms=0, end_ms=5000,
+    )))
+    gateway.publish_nowait(stream.record_status(stream.session.model_copy(update={"status": "ended"})))
+
+
+application.run_file_session = playback_worker

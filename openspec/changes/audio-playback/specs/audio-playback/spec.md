@@ -29,3 +29,25 @@ descargar el archivo completo de nuevo.
 - **WHEN** se pide el audio de una sesión inexistente o sin fuente de
   audio configurada
 - **THEN** el servidor responde `404`
+
+### Requirement: Inicio de prueba audible
+El modo demo local SHALL permitir iniciar una sesión preparada mediante POST
+`/api/v1/sessions/{id}/start`, con un único worker por sesión y límite de dos
+workers activos. El navegador SHALL pedir el inicio tras comenzar el audio.
+
+#### Scenario: Iniciar dos veces
+- **WHEN** se repite start en una sesión live
+- **THEN** responde con la misma sesión sin crear otro worker
+
+#### Scenario: Repetir una prueba
+- **WHEN** se pide POST `/api/v1/sessions/{id}/runs`
+- **THEN** se crea una sesión starting con ID nuevo y el mismo audio
+- **AND** no se mezclan los subtítulos de la sesión anterior
+
+#### Scenario: Presupuesto de recursos agotado
+- **WHEN** hay dos workers activos al iniciar otro, o 20 sesiones con audio al crear otra
+- **THEN** devuelve 429 sin iniciar trabajo adicional
+
+#### Scenario: Reproducción local alterada
+- **WHEN** se pausa o busca en el reproductor
+- **THEN** la interfaz informa que la inferencia sigue y la reproducción ya no representa el ritmo original de la prueba

@@ -89,3 +89,12 @@ input { accent-color: #3e734b; }
   .event-name { font-size: 10px; } .notices { padding: 0 18px; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+.playback { padding: 1rem; border-bottom: 1px solid #d8d6cb; }
+.playback[hidden] { display: none; }
+.playback audio { display: block; width: 100%; margin-top: .75rem; }
+.playback p { font-size: .85rem; line-height: 1.5; }
+.caption.audio-current { border-left: 4px solid #28775a; background: #e9f1e9; }
+#start-test { border: 1px solid #39754c; border-radius: .5rem; background: #39754c; color: white; padding: .65rem 1rem; font: inherit; cursor: pointer; }
+#start-test:disabled { opacity: .6; cursor: wait; }
+#start-test:focus-visible { outline: 3px solid #243e2b; outline-offset: 3px; }
