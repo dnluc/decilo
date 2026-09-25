@@ -217,3 +217,15 @@ acepta paquetes menores sin cambiar el protocolo; emitir cada 100–200ms hará
 visibles las pausas antes. Este cambio no toca frontend ni promete menor
 latencia con el transporte actual. La detección semántica con texto parcial,
 contexto entre fragmentos forzados y validación de calidad quedan pendientes.
+
+## Proveedores de IA configurables — 2026-09-25
+
+Codex: `DECILO_AI_PROVIDER=local|gemini`, default local. Overrides por etapa:
+`DECILO_STT_PROVIDER`, `DECILO_TRANSLATION_PROVIDER`. Se carga .env al arrancar
+sin sobrescribir entorno; validar proveedor/clave antes de iniciar sesiones.
+Gemini usa generateContent por segmento WAV inline y traducción de texto,
+modelo configurable DECILO_GEMINI_MODEL (default gemini-3.8-flash).
+No cambia contrato público ni frontend. Whisper se importa al usar proveedor
+local. No fallback ni retries automáticos; errores sanitizados sin contenido,
+headers o credenciales. Timeout 30s, respuesta completa STOP requerida.
+No acredita streaming Live, comprensión semántica ni menor latencia sostenida.
