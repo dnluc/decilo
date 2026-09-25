@@ -192,3 +192,45 @@ cada 5s, no se puede emitir antes de recibirlos. Se admiten paquetes menores
 sin cambiar la API. En modo pause, el presupuesto de audio pendiente es dos
 veces la duración máxima de segmento (12s por defecto), con número de entradas
 acotado; una sobrecarga se sigue notificando con gaps.
+
+### Traducción progresiva y preparación (experimental)
+
+`DECILO_STREAM_TRANSLATION=1` consume el flujo real de Ollama y publica texto
+provisional; confirma al recibir fin correcto de generación. Se publica el primer
+contenido y se agrupan actualizaciones posteriores cada 300ms como mínimo, sin
+retrasar el final. Timeout absoluto 30s, salida máxima 8192 bytes. Desconexión o
+límite de generación deja el parcial sin confirmar y publica un error.
+Default desactivado: quitar la variable restaura traducción solo final.
+
+`DECILO_PREWARM=1` prepara Whisper EN/ES y Ollama en segundo plano antes de
+permitir iniciar audio. `GET /health/ready` devuelve 503 mientras prepara o si
+falla; catálogo y health siguen accesibles. Readiness desactivada por defecto;
+`disabled` no acredita modelos calientes. Preparación limitada a 90s. La carga
+síncrona de Whisper en un thread no puede abortarse forzosamente al vencer el
+plazo; se mantiene la entrada cerrada y no se relanza en bucle.
+Esta preparación carga pesos: no sustituye el warmup representativo del benchmark.
+`DECILO_OLLAMA_KEEP_ALIVE` controla residencia de peticiones streaming/preparación
+(default `5m`; `-1` solicita residencia indefinida a Ollama).
+
+El cliente HTTP se comparte durante el lifespan del backend; los scripts deben
+usar `ollama_lifespan()` para reutilizarlo a través de varias llamadas. Las dos
+etapas son opt-in y no reinician ni modifican la instancia Ollama del sistema.
+
+Medición: exportar `DECILO_STREAM_TRANSLATION=1` para comparar. El JSON separa
+`first_summary` (primera aparición) de `summary` (final), sin contar revisiones
+como nuevos subtítulos. `first_from_start`/`final_from_start` usan inicio del
+intervalo fuente; métricas anteriores usan su fin. Mide publicación backend,
+no renderizado ni utilidad semántica. Registra etapas internas Ollama (duraciones
+convertidas de ns) y subtítulos sin confirmar. Para WAV humanos propios:
+
+```sh
+DECILO_STREAM_TRANSLATION=1 uv run python scripts/measure_latency.py \
+  --sessions both --warmup --keep-all --overlap-translation --segmentation pause \
+  --audio-en /ruta/charla-en.wav --reference-en /ruta/charla-en.txt \
+  --audio-es /ruta/charla-es.wav --reference-es /ruta/charla-es.txt \
+  --timeout 1500 --output /tmp/decilo-streaming.json
+```
+
+Los WAV deben ser PCM16 mono; referencia opcional (sin referencia no se calcula
+WER). No ejecutar en paralelo con otra prueba de modelos; comparar el mismo
+comando con el flag de streaming desactivado. WER no evalúa traducción.
