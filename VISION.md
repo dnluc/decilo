@@ -99,24 +99,22 @@ indicador numérico de confianza solo tiene sentido si la medida está validada.
 
 ## Dirección tecnológica propuesta
 
-- Python como núcleo de ingestión, buffers, sesiones, scheduling y
-  distribución (decisión confirmada 2026-09-24 en
-  `openspec/changes/arquitectura-base/design.md`; el cómputo pesado corre
-  en procesos/APIs externos — Whisper, Ollama — sea cual sea el lenguaje
-  orquestador, y Python reduce la fricción de iterar bajo el plazo del
-  hackathon).
-- whisper.cpp como primer candidato de ASR local; Gemma vía Ollama como
-  candidato de traducción y contexto. Versiones, capacidades y rendimiento
-  requieren pruebas. La lluvia de ideas informa Gemma descargado; este
-  documento no verifica el estado local de la instalación.
+- Python como núcleo de ingestión, buffers, sesiones y distribución. La
+  implementación usa FastAPI/asyncio y faster-whisper en threads dentro del
+  mismo proceso; Ollama corre como servicio y Gemini es externo. No se deduce
+  aislamiento de CPU del lenguaje elegido.
+- faster-whisper es el ASR local implementado: parciales `base`, finales
+  `small` EN/ES al PR #22, configurables en los puntos documentados. whisper.cpp
+  fue un candidato inicial, no el motor actual. Gemma `gemma3n:e2b` vía Ollama
+  traduce texto; Gemini Live ofrece la alternativa de STT continuo en nube.
 - Interfaces conceptuales `Transcriber`, `Translator`, `ContextProvider`,
   `SpeakerDetector` y `VisualAnalyzer`, junto con políticas reemplazables de
   segmentación y latencia. Pueden ser módulos del mismo proceso.
 - Go es opcional para administración si aparece una necesidad concreta;
   no requiere crear otro servicio para la primera demo.
 - Opus es una opción para cliente→servidor, decodificando una vez al formato
-  interno acordado. WebRTC o WebSocket de audio quedan por decidir; evitar
-  ciclos redundantes de compresión y descompresión.
+  interno acordado. El transporte actual usa PCM16 sobre WebSocket; Opus/WebRTC siguen siendo
+  opciones futuras, evitando ciclos redundantes de compresión y descompresión.
 - Colas pequeñas y acotadas, métricas, backpressure y cancelación por sesión.
   Compartir resultados de una sesión entre espectadores en vez de repetir
   inferencia por usuario. Kafka no es necesario para el primer alcance.
@@ -157,5 +155,10 @@ su lugar como extensiones del desafío.
 6. Cambiar de modelo solo si el costo de carga y la memoria lo permiten;
    incorporar histéresis para no oscilar continuamente entre estrategias.
 
-Estas condiciones son aportes de revisión de Codex para concretar la visión;
-el contrato exacto y los parámetros siguen pendientes de diseño y medición.
+Estas condiciones son objetivos de la visión. El contrato v1 y varios parámetros
+ya existen; su aceptación completa no está acreditada. Al PR #22 hay cortes
+heurísticos por oración, sin controlador semántico adaptativo; Live puede
+confirmar la última provisional al cerrar/reconectar, lo que difiere del criterio
+1/4 de conservar explícitamente la incertidumbre. Es una divergencia a resolver,
+no una eliminación de ese objetivo. Ver [arquitectura](docs/ARQUITECTURA.md) y
+[estado OpenSpec](openspec/README.md) para implementación y límites vigentes.

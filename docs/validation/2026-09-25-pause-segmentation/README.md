@@ -1,5 +1,8 @@
 # Segmentación por pausas
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Verificación: 143 tests Python, Ruff y 4 pruebas de integración con navegador
 correctos. OpenSpec mvp-pipeline validado en modo estricto.
 

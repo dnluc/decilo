@@ -1,17 +1,16 @@
-# Decilo — borrador para Devpost
+# Decilo — borrador local actualizado para Devpost
 
-Revisión inicial del 24/09/2026 sobre `0bbdfd9`, actualizada el 25/09/2026
-con el pipeline disponible en `c884ebe`. Contenido guardado en
-el borrador de Devpost: nombre, descripción breve, historia (Inspiración hasta
-Próximos pasos), tecnologías y repositorio. También se guardaron los campos
-adicionales de repositorio, stack, Argentina y aceptación de términos de la
-Vibeathon; el usuario confirmó explícitamente país y aceptación.
+**Base de este texto:** PRs #21/#22 (`e4b9f90`), 25/09/2026. Este borrador
+actualiza la documentación del repositorio; **no se ha copiado al formulario**
+en esta tarea y no se realizó envío final.
 
-Estado verificado mediante una segunda carga: **DRAFT, 4/5 steps done**.
-El usuario confirmó que todavía no tiene video. No se hizo el envío final.
+La última comprobación externa registrada fue **DRAFT, 4/5 steps done**, con
+video vacío. Nombre, pitch, historia y campos adicionales se habían guardado
+sobre versiones anteriores (`0bbdfd9`/`c884ebe`); país y aceptación fueron
+confirmados por el usuario. Ese estado es histórico, no una consulta actual.
+[Seguimiento](../openspec/changes/entrega-devpost/tasks.md).
 
 [Formulario de Decilo](https://devpost.com/submit-to/31268-nerdearla-vibeathon-2026/manage/submissions/1196509-decilo/project-overview).
-
 Evento: [Nerdearla Vibeathon 2026](https://nerdearla26.devpost.com/).
 
 ## Nombre del proyecto
@@ -32,24 +31,22 @@ pensada desde el principio para varios escenarios.
 
 ## Qué hace
 
-Decilo es un proyecto abierto de transcripción y traducción para conferencias.
-Cada sesión tiene un idioma de origen configurado y cada espectador elige la
-charla y el idioma de los subtítulos entre las salidas disponibles. La visión
-es ampliar los idiomas de origen y destino que puede ofrecer cada sesión.
+Decilo toma audio autorizado de una pestaña del navegador y genera subtítulos
+originales en inglés o español y traducción de inglés a español. Se puede
+reproducir una charla de YouTube, elegir procesamiento local o nube y compartir
+la pestaña con audio. Cada captura crea su sesión; otras audiencias pueden
+adjuntarse al mismo ID sin repetir inferencia.
 
-El alcance inicial cubre transcripción en el idioma original, español o inglés,
-y traducción de inglés a español, el par obligatorio del MVP de la Vibeathon.
-Español a inglés y otros pares, como portugués, son ampliaciones previstas y
-permitidas por las bases; todavía no se presentan como traducciones implementadas.
+La interfaz muestra texto provisional que se revisa y confirma, con historial
+reciente, controles de lectura y recuperación por snapshot. Cuando todavía falta
+una traducción, muestra el original con estilo provisional. Hay detección inicial
+EN/ES opcional y cortes inferidos por oración para oradores sin pausas claras.
 
-La vista web distingue subtítulos provisionales y confirmados, conserva un
-historial reciente y muestra avisos de conexión. Se adapta a móviles y ofrece
-tamaños de texto ajustables y un modo de lectura centrado en los subtítulos.
-El pipeline actual procesa archivos de audio por segmentos y produce
-transcripciones y traducciones confirmadas. Su validación completa con dos
-sesiones hasta el navegador y la medición de latencia siguen pendientes.
-La interfaz también ofrece una muestra rotulada con textos sintéticos,
-independiente del procesamiento de audio.
+El camino local usa Whisper; el de nube usa Gemini Live. La capacidad mínima
+se administra con un límite nominal de dos trabajos activos, con una reserva
+pendiente durante autodetección. Todavía falta aceptación sostenida de calidad
+y latencia con dos charlas humanas. Español→inglés, otros idiomas, diarización
+y contexto visual son ampliaciones previstas, no funcionalidades demostradas.
 
 ## Cómo lo construimos
 
@@ -60,12 +57,17 @@ vincula cada traducción a la revisión del original, para evitar mostrar una
 traducción desactualizada cuando cambia la transcripción. El cliente recupera
 el estado mediante snapshots después de una desconexión o un salto de secuencia.
 
-El backend está implementado con Python y FastAPI. Usa Whisper mediante
-faster-whisper para transcribir archivos de audio y Gemma 3n (`gemma3n:e2b`)
-servido por Ollama para traducir de inglés a español. Las sesiones declaran su
-idioma de origen y las salidas disponibles; el selector de audiencia consume
-esa información. Ofrecer un nuevo destino requiere que el traductor lo soporte
-y validar su calidad, además de mostrarlo en la interfaz.
+El backend usa Python, FastAPI, asyncio y un contrato v1 de eventos. El audio
+viaja en PCM16 mono a 16 kHz, en paquetes de 100 ms. Localmente usa
+faster-whisper base para parciales y small para finales EN/ES, con Gemma 3n e2b
+en Ollama para traducir. En nube, Gemini Live transcribe de forma continua y
+Gemini REST traduce los originales cerrados. Los defaults del código son
+`gemini-3.5-transcribe-live` y `gemini-3.5-flash-lite`, con configuración por entorno.
+
+La autodetección sigue usando Whisper local aun en nube. Hay fallback inicial
+de Live a Gemini por segmentos, no cambio oculto de nube a local. Las claves
+permanecen en el backend. Colas y revisiones evitan trabajo/publicación sin límites,
+pero el estado no es durable ni la arquitectura es ya un scheduler distribuido.
 
 Usamos OpenSpec para acordar contratos y registrar decisiones, avances y
 validaciones. Claude y Codex colaboran en worktrees separados, con reparto por
@@ -78,25 +80,19 @@ revisiones, traducciones y reconexiones. Implementamos invalidación de traducci
 obsoletas, descarte de eventos de conexiones anteriores y recuperación de estado
 para que cambiar de charla no mezcle contenidos.
 
-Otro desafío fue distinguir las capacidades de un modelo de las que expone su
-runtime: la comprobación documentada de Gemma 3n en Ollama mostró entrada de texto,
-sin audio. Por eso el diseño separa reconocimiento de voz y traducción. El
-siguiente desafío es medir calidad y latencia con dos sesiones simultáneas
-hasta el navegador. La segmentación actual por ventanas fijas puede cortar
-palabras y degradar la transcripción en los bordes; mejorar esos cortes es
-parte del trabajo pendiente.
+Otro desafío es separar mejora percibida de fidelidad. Los cortes locales usan
+pausas y límites textuales inferidos; Live puede cerrar texto antes de la final
+oficial. Esas decisiones reducen espera en algunos casos pero requieren evaluar
+calidad, tiempos y correcciones. Las mediciones históricas se conservan con sus
+modelos, sin presentarlas como garantía de la configuración nueva.
 
 ## Logros
 
-Tenemos una vista de audiencia, un pipeline de audio implementado y un contrato
-compartido que contempla revisiones, traducciones, fallos y reconexión. La
-interfaz incluye controles de lectura, navegación por teclado y avisos visibles
-de interrupciones. El desarrollo del backend registra pruebas con Whisper y
-Ollama ejecutando inferencia sobre archivos de audio. En la revisión del
-frontend del 24 de septiembre, `npm test` y `npm run build` finalizaron
-correctamente; las pruebas de navegador registradas cubren móvil, cambios de
-sesión e idioma y reconexiones con una API simulada. Falta completar la
-validación conjunta y demostrar el rendimiento bajo carga concurrente.
+Integramos captura real de pestaña, proveedor por sesión, STT provisional/final,
+traducción, snapshots y una UI de lectura. La CI ejecuta pruebas Python/Node,
+compilación/build y navegador/integración con inferencia simulada. El repositorio
+conserva pruebas cortas con modelos reales y avances registrados de Gemini Live;
+esos registros no reemplazan la evaluación larga con dos fuentes humanas.
 
 ## Qué aprendimos
 
@@ -115,7 +111,7 @@ Completar la validación de dos sesiones simultáneas con audio hasta el navegad
 y publicar instrucciones reproducibles y mediciones de calidad y latencia.
 Ampliar la configuración de origen y destino con traducción español a inglés
 y más idiomas, conservando inglés a español como parte del alcance inicial.
-Después queremos avanzar hacia unidades de sentido, glosarios técnicos,
+Después queremos validar los cortes heurísticos hacia unidades de sentido, añadir glosarios técnicos,
 perfiles regionales y control adaptativo del retraso. Diarización y contexto
 visual forman parte de la exploración futura, no de las capacidades demostradas.
 
@@ -124,21 +120,21 @@ visual forman parte de la exploración futura, no de las capacidades demostradas
 Implementadas en el frontend: JavaScript, HTML, CSS, Vite, WebSocket.
 Herramientas de verificación: Node.js, Playwright. Especificación: OpenSpec.
 
-Backend implementado: Python, FastAPI, faster-whisper, Whisper, Ollama,
-Gemma 3n (`gemma3n:e2b`). Traducción actual: inglés a español.
+Backend implementado: Python, FastAPI, asyncio, faster-whisper, Whisper, Ollama,
+Gemma 3n (`gemma3n:e2b`), Gemini Live, Gemini REST y WebSocket. Traducción actual: inglés a español.
 
 ## Enlaces y materiales
 
 - Repositorio indicado por el README: https://github.com/dnluc/decilo
 - Licencia del repositorio: Apache-2.0.
-- Video demo: pendiente de URL de YouTube con audio real; el usuario confirmó
-  que no lo tiene todavía. Campo vacío en Devpost.
+- Video demo: campo pendiente en la última comprobación del formulario. No se
+  volvió a consultar Devpost para esta actualización documental.
 - Sitio público: no se encontró una URL de despliegue en el checkout.
 - Imágenes: pendientes de elegir según los campos del formulario.
 - Equipo existente en Devpost conservado sin cambios. País: Argentina,
   confirmado por el usuario.
 
-Etiquetas de «Built with»: javascript, html5, css3, vite, websocket,
+Etiquetas guardadas en la última revisión externa (todavía sin actualizar las de Gemini): javascript, html5, css3, vite, websocket,
 node.js, playwright, openspec, python, fastapi, faster-whisper, ollama, gemma.
 
 ## Revisión necesaria antes de la entrega final
@@ -151,6 +147,6 @@ mostrar subtítulos y procesar al menos dos sesiones simultáneas. El cierre es 
 
 Actualizar este texto al completar la validación conjunta. Verificar acceso público al
 repositorio, instrucciones completas y video. No presentar como resultados
-medidos los objetivos de 3s p95 o menos de 1,5s, ni la muestra sintética como
-prueba del pipeline. El README raíz contiene afirmaciones de ejecución local
-completa y escalado que todavía no están respaldadas por este checkout.
+medidos los objetivos de 3s p95 o menos de 1,5s, ni las pruebas sintéticas como
+validación de una charla humana. El README y la arquitectura describen las rutas
+actuales y sus límites; revisar material de demo real antes del envío.

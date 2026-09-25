@@ -1,5 +1,8 @@
 # Tasks
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Las rutas WAV/runs/start siguen implementadas; el reproductor de archivos y su resaltado se retiraron de la UI. Este artefacto conserva el alcance histórico de esa entrega.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## 1. Contrato y backend
 
 - [ ] 1.1 Implementar `GET /api/v1/sessions/{session_id}/audio` con `FileResponse` (soporte `Range` incluido), 404 sin audio — Responsable: Codex | Estado: pendiente | Depende de: ninguna. Verificación: pedido sin `Range` da 200 con el archivo completo; con `Range` da 206; sesión inexistente/sin audio da 404.

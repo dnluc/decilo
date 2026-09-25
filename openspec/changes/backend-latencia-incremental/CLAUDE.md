@@ -1,5 +1,8 @@
 # Handoff para Claude
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** PRs #20–#22 integrados: parciales, heurística textual y Live. Requisitos de presupuesto semántico, finalización incierta y evaluación sostenida siguen abiertos; diseño original es el objetivo, no una declaración de cumplimiento.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 Trabajá en ~/projects/decilo-claude. Leé COLLABORATION.md, VISION.md y los
 artefactos de backend-latencia-incremental. Codex implementa backend; vos frontend
 y revisión cruzada. Actualizá main sin perder tus cambios y abrí rama/PR para código.

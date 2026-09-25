@@ -1,5 +1,8 @@
 # Perfil del backend: espera, Whisper y Gemma
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Instrumentación interna optativa; sin cambios en HTTP/WebSocket ni frontend.
 `run_file_session(..., observe=callback)` entrega muestras por bloque:
 

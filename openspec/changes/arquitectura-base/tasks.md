@@ -1,5 +1,8 @@
 # Tasks
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Implementación: Python/FastAPI, faster-whisper base/small, Ollama y Gemini Live/REST. El diseño y los benchmarks iniciales quedan como historia; aceptación sostenida pendiente.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## 1. Documentar drivers y diagrama
 
 - [x] 1.1 Escribir `proposal.md` (why/what/capabilities) — Responsable: Claude | Estado: terminada | Depende de: ninguna. Verificación: archivo existe y cubre motivación, cambios y capacidad `system-architecture`.
@@ -78,3 +81,22 @@ Validación documental: 17 diagramas renderizados a SVG con Mermaid CLI 11,
 todos los enlaces relativos del documento resuelven a archivos existentes,
 `openspec validate arquitectura-base --strict` correcto y `git diff --check`
 sin errores. No se repitieron tests de aplicación porque solo cambió documentación.
+
+## Actualización integral de documentación — Codex, 2026-09-25
+
+Base `e4b9f90`, tras PRs #21/#22 de Claude. README ES/EN y frontend ahora
+explican la UI/captura vigentes, Live y fallback, configuración y pruebas.
+Arquitectura actualiza diagramas, modelos, clientes HTTP, cortes y finalización.
+Índices de docs/OpenSpec/evidencia separan estado actual, requisitos pendientes
+y resultados históricos. Se actualizan colaboración, visión y borrador LOCAL
+Devpost; los JSON de evidencia conservan sus datos. Esta tarea no cambia código,
+`.env`, modelos, procesos de demo ni formulario externo. No ejecuta inferencia.
+
+Validación documental: revisados los enlaces relativos a archivos/directorios
+de los 67 Markdown del repositorio, sin destinos faltantes; 21 diagramas Mermaid
+renderizados a SVG (19 en arquitectura). Los siete cambios con specs pasan
+`openspec validate <cambio> --strict`; entrega-devpost es seguimiento sin spec.
+`git diff --check` sin errores. Solo se modifican Markdown; no se ejecutaron
+tests de aplicación ni inferencias para esta actualización. Se documentaron
+las diferencias de finalización Live y timestamps de cortes locales sin
+marcar sus requisitos de aceptación como completos.

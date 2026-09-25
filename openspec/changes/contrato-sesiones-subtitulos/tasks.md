@@ -1,5 +1,8 @@
 # Tasks
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Contrato público v1 implementado. Conservar sus requisitos; las divergencias actuales de finalización, gaps y tiempos están registradas en el índice, no se consideran resueltas por integrar PRs.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## 1. Propuesta y acuerdo compartido
 
 - [x] 1.1 Redactar propuesta, dos specs y diseño con ejemplos JSON — Responsable: Codex | Estado: terminada | Depende de: lectura de `arquitectura-base` y `VISION.md`. Verificación: los artefactos describen catálogo, revisiones, traducciones, snapshot, fallos y límites; no contienen implementación.

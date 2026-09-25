@@ -1,5 +1,8 @@
 # Vista de audiencia
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** La UI vigente es captura de pestaña, video y dock. El catálogo visual y ?demo=1 pertenecen a una versión anterior; el reductor y contrato v1 continúan en uso.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 Implementa las tareas 3.1/3.2 de `contrato-sesiones-subtitulos` contra su
 contrato aceptado, sin modificar el backend de Claude. Rama: `codex/audiencia`.
 

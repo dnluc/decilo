@@ -2,361 +2,263 @@
 
 **¿Qué dice?** — Transcripción y traducción en vivo, open source, para conferencias.
 
-Proyecto construido para la [Nerdearla Vibeathon 2026](https://nerdearla.com).
+Construido para Nerdearla Vibeathon 2026. Documentación sincronizada con
+`e4b9f90` (PRs #21 y #22), 25/09/2026. [English quick start](#english).
 
-📐 [Arquitectura detallada y diagramas Mermaid](docs/ARQUITECTURA.md): componentes,
-flujos de audio/subtítulos, proveedores, contratos, configuración y límites de la implementación actual.
+[Arquitectura con Mermaid](docs/ARQUITECTURA.md) · [Guía del frontend](frontend/README.md) ·
+[Índice documental](docs/README.md) · [CI](docs/ci.md) · [Estado OpenSpec](openspec/README.md)
 
----
+## Qué funciona
 
-## Español
+- Captura autorizada de **audio de una pestaña** del navegador, con YouTube embebido.
+- Transcripción original en inglés o español; traducción **inglés → español**.
+- Selector por captura: local (Whisper + Gemma/Ollama) o nube (Gemini).
+- Originales provisionales que se revisan y confirman; historial reciente y reconexión.
+- Detección inicial de idioma opcional, controles de lectura y cortes inferidos por oración.
+- API de sesiones/archivos y distribución de una transcripción a varios espectadores.
 
-### ¿Qué es esto?
+ES→EN, otros idiomas, diarización, análisis de video, exportación completa y
+control adaptativo de latencia siguen pendientes. El video se reproduce en el
+navegador: no se envían frames a modelos ni se captura el micrófono.
 
-Decilo es una solución open source de transcripción simultánea a escala, pensada para conferencias como Nerdearla. Toma audio en vivo de un escenario y produce subtítulos en tiempo real: transcripción en el idioma original y traducción al español (y, opcionalmente, del español al inglés).
+## Caminos de procesamiento
 
-Está pensado para reemplazar el esquema actual de herramientas comerciales de transcripción/traducción, que es caro, depende de operación manual y no escala a múltiples sesiones en simultáneo.
+| Entrada y proveedor | Reconocimiento | Traducción EN→ES |
+| --- | --- | --- |
+| Captura local | Parciales con Whisper `base`; finales con `small` EN/ES | `gemma3n:e2b` en Ollama |
+| Captura Gemini, Live habilitado | `gemini-3.5-transcribe-live`, PCM continuo | `gemini-3.5-flash-lite` mediante `generateContent`, thinking `MINIMAL` |
+| Captura Gemini con Live apagado o fallo al conectar | WAV por segmento con `generateContent` | Mismo adaptador Gemini por texto |
+| Archivo WAV | Procesamiento por segmentos, proveedor configurable | Ollama o Gemini; no usa Live |
 
-### Objetivo del MVP
+Estos nombres son los defaults del código, no una garantía de disponibilidad
+para todas las cuentas. Las variables exportadas y el `.env` elegido pueden
+sustituirlos. `language=auto` usa **Whisper local**, incluso con Gemini.
+Elegir EN/ES explícitamente evita esa dependencia durante la captura en nube.
 
-- Recibir audio en vivo de al menos una fuente (micrófono, archivo o stream).
-- Generar transcripción en tiempo real del idioma original (español o inglés).
-- Generar traducción en tiempo real de inglés a español.
-- Mostrar los subtítulos en una vista para la audiencia (web, overlay, terminal).
-- Procesar al menos dos sesiones en simultáneo.
+## Levantar la demo
 
-### Modelo y requisitos
+Requisitos: Python 3.12+, `uv`, Node.js 22.12+ y Chrome con captura de audio de
+pestaña. Para inferencia local: Ollama y sus modelos; Whisper corre en CPU
+int8 y descarga sus pesos cuando se necesitan. Memoria y capacidad dependen
+del perfil; no se promete una cantidad de sesiones por tamaño de RAM.
 
-Corre 100% local usando [Gemma 3n](https://ai.google.dev/gemma) a través de [Ollama](https://ollama.com), sin depender de servicios en la nube.
-
-- **Ollama** instalado y corriendo (`ollama serve`, expuesto en `localhost:11434`).
-- Modelo `gemma3n:e4b` descargado (`ollama pull gemma3n:e4b`).
-- Recomendado: 16GB+ de RAM. No requiere GPU dedicada (corre sobre CPU).
-
-### Cómo levantarlo
-
-```bash
-# 1. Instalar Ollama (ver https://ollama.com/download)
-# 2. Bajar el modelo
-ollama pull gemma3n:e4b
-
-# 3. Clonar este repo
-git clone https://github.com/dnluc/decilo
+```sh
+git clone https://github.com/dnluc/decilo.git
 cd decilo
-
-# (instrucciones de ejecución del proyecto: en construcción durante la Vibeathon)
+uv sync --group dev
+npm --prefix frontend ci
 ```
 
-### Escalar a más sesiones
+Crear `.env` en la raíz, excluido de Git. Configuración local de ejemplo:
 
-Cada sesión corre como un proceso/worker independiente que consume audio y llama a la misma instancia de Ollama. Para escalar a 5-10 escenarios en paralelo, se puede repartir la carga entre múltiples instancias de Ollama (una por máquina/GPU disponible) detrás de un balanceador simple.
-
-### Licencia
-
-[Apache 2.0](./LICENSE)
-
----
-
-## English
-
-### What is this?
-
-Decilo is an open source, scalable live-transcription solution built for conferences like Nerdearla. It takes live audio from a stage and produces real-time captions: transcription in the original language and translation into Spanish (and optionally Spanish-to-English).
-
-It's meant to replace the current setup of commercial transcription/translation tools, which is expensive, depends on manual operation, and doesn't scale to multiple simultaneous sessions.
-
-### MVP goals
-
-- Receive live audio from at least one source (microphone, file, or stream).
-- Generate real-time transcription in the original language (Spanish or English).
-- Generate real-time English-to-Spanish translation.
-- Display captions in an audience-facing view (web, overlay, terminal).
-- Handle at least two sessions running simultaneously.
-
-### Model and requirements
-
-Runs 100% locally using [Gemma 3n](https://ai.google.dev/gemma) via [Ollama](https://ollama.com), no cloud dependency.
-
-- **Ollama** installed and running (`ollama serve`, exposed on `localhost:11434`).
-- `gemma3n:e4b` model pulled (`ollama pull gemma3n:e4b`).
-- Recommended: 16GB+ RAM. No dedicated GPU required (runs on CPU).
-
-### Getting started
-
-```bash
-# 1. Install Ollama (see https://ollama.com/download)
-# 2. Pull the model
-ollama pull gemma3n:e4b
-
-# 3. Clone this repo
-git clone https://github.com/dnluc/decilo
-cd decilo
-
-# (run instructions: work in progress during the Vibeathon)
+```dotenv
+DECILO_AI_PROVIDER=local
+DECILO_DEMO_SESSIONS=1
+DECILO_DEMO_AUTOSTART=0
+DECILO_PREWARM=0
+DECILO_SEGMENTATION=pause
+DECILO_PARTIALS=1
+DECILO_TRANSLATION_QUEUE=1
+DECILO_STREAM_TRANSLATION=0
 ```
 
-### Scaling to more sessions
-
-Each session runs as an independent process/worker consuming audio and calling the same Ollama instance. To scale to 5-10 concurrent stages, load can be split across multiple Ollama instances (one per available machine/GPU) behind a simple load balancer.
-
-### License
-
-[Apache 2.0](./LICENSE)
-
-### Prueba audible en el navegador
-
-Con Whisper y Ollama configurados, iniciá el backend sin procesar los WAV
-hasta que pulses Play:
+Para local, tener Ollama activo y descargar la traducción:
 
 ```sh
-DECILO_DEMO_SESSIONS=1 DECILO_DEMO_AUTOSTART=0 uv run uvicorn decilo.app:app --host 127.0.0.1 --port 8000
+ollama pull gemma3n:e2b
+# Si Ollama no está corriendo como servicio, ejecutarlo en otra terminal:
+ollama serve
 ```
 
-En otra terminal:
-
-```sh
-npm --prefix frontend install
-npm --prefix frontend run dev
-```
-
-Abrí la URL de Vite, elegí una charla y pulsá **Iniciar prueba**. Se crea una
-sesión nueva, comienza el audio y se solicita la transcripción/traducción real.
-Si el navegador bloquea la reproducción automática, pulsá Play en el audio.
-Los WAV incluidos son sintéticos. El audio no se retrasa para ocultar la demora
-de inferencia; los subtítulos se muestran al llegar. El borde verde indica el
-intervalo correspondiente al tiempo de reproducción, si su texto ya existe.
-
-Pausar o buscar mueve solo el audio local; el procesamiento continúa. Los
-controles del audio también permiten escuchar el historial de una sesión
-terminada. **Iniciar prueba** vuelve a generar texto en otra sesión, sin
-reutilizar subtítulos anteriores. Máximo dos workers simultáneos y veinte
-sesiones con audio por proceso; reiniciar el servidor limpia las pruebas.
-
-Este modo está pensado para uso local. El inicio de inferencia se solicita
-cuando el navegador empieza a reproducir, con un desfase de red/scheduling;
-no constituye una medición exacta de latencia hasta pantalla. La inferencia
-actual puede quedar muy por detrás del audio en CPU.
-
-### YouTube y audio de pestaña (experimental)
-
-El reproductor incluye el video proporcionado para la prueba:
-[API Gateway — Vlad Tomashpolskyi, Nerdearla](https://www.youtube.com/watch?v=IW0unWVDnrI).
-Usá el mismo backend en modo demo local y el frontend de la sección anterior.
-
-1. Pulsá **Cargar video**. Si YouTube no permite embeberlo, usá el enlace para
-   abrirlo en otra pestaña.
-2. Seleccioná el idioma original y pulsá **Compartir audio de pestaña**.
-3. En Chrome elegí la pestaña donde se reproduce el video y marcá **Compartir
-   audio**. Compartir una ventana o pantalla puede no ofrecer audio.
-4. Dale Play al video; los subtítulos aparecen en una sesión nueva debajo.
-5. **Detener captura** libera las pistas y deja terminar lo pendiente.
-
-Se envía solo PCM mono de audio al backend local. El permiso de pantalla es
-parte de la API del navegador; no se envían frames de video, no se usa micrófono
-ni se descargan subtítulos de YouTube. La compatibilidad depende del navegador
-([getDisplayMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)).
-Los timestamps parten del inicio de captura, no del minuto de YouTube.
-
-Bloques de hasta 5s, dos bloques pendientes por sesión: si la inferencia no
-alcanza, se descarta el pendiente más antiguo y aparece un aviso de interrupción.
-Esto limita la cola, pero no garantiza baja latencia ni calidad. Máximo dos
-workers simultáneos entre archivos/captura, captura de hasta una hora y veinte
-sesiones en el catálogo para admitir nuevas capturas. El servidor cierra tras
-15s sin recibir audio; al detener espera hasta 90s para drenar el trabajo.
-
-Para acotar también los frames en la capa WebSocket del servidor, agregá a
-uvicorn `--ws-max-size 160004 --ws-max-queue 4`. El formato se valida además en
-la aplicación. Este ingreso es experimental y requiere revisión; no tiene
-autenticación para desplegarlo públicamente.
-
-Para probar la cola experimental también en captura de pestaña, iniciá el
-backend con `DECILO_TRANSLATION_QUEUE=1` además de las variables anteriores.
-El log de arranque muestra `Translation queue: True`. No requiere cambios del
-frontend. Al detener, se espera a las traducciones pendientes antes de finalizar,
-con un presupuesto total de 90s para drenar audio y texto. Sigue siendo un
-experimento: benefició al inglés en el corpus corto, pero no mejoró español.
-
-### Cortes por pausas (primera etapa hacia unidades de sentido)
-
-El backend usa `DECILO_SEGMENTATION=pause` por defecto: busca una pausa de
-400ms después de al menos 1s y fuerza corte a los 6s si el hablante continúa.
-No entiende todavía si terminó una idea: es un detector acústico por energía.
-Conserva timestamps y distingue `pause`, `deadline` y `end_of_stream` en el campo
-`boundary_reason` existente. Silencios detectados no se envían a Whisper.
-
-Configuración opcional: `DECILO_MIN_SEGMENT_SECONDS`, `DECILO_PAUSE_SECONDS`,
-`DECILO_MAX_SEGMENT_SECONDS`, `DECILO_SILENCE_RMS` (defaults 1, .4, 6 y .01).
-Voz débil puede confundirse con silencio; ajustar el umbral requiere evaluar el
-audio real. `DECILO_SEGMENTATION=fixed` permite volver a los cortes anteriores.
-El benchmark compara con `--segmentation fixed` y `--segmentation pause`.
-
-La captura aún depende de cuándo recibe audio: si el frontend envía paquetes
-cada 5s, no se puede emitir antes de recibirlos. Se admiten paquetes menores
-sin cambiar la API. En modo pause, el presupuesto de audio pendiente es dos
-veces la duración máxima de segmento (12s por defecto), con número de entradas
-acotado; una sobrecarga se sigue notificando con gaps.
-
-### Transcripción palabra por palabra (provisional → corrección final)
-
-Mientras una frase sigue abierta, el backend re-transcribe su audio acumulado
-(beam 1, anticipo barato) y publica revisiones **provisionales** del mismo
-segmento; al cerrar la frase por pausa, la pasada final (beam completo) la
-corrige y la **confirma**. La UI comunica el estado solo con color: texto
-apagado mientras es provisional, pleno al confirmarse — nunca aparece
-«traduciendo» ni ningún cartel de espera. Hay a lo sumo una transcripción
-provisional en vuelo y solo se conserva la instantánea más reciente; una
-provisional que termina después del cierre se descarta sin publicarse.
-
-Activo por defecto en la captura con segmentación por pausas.
-`DECILO_PARTIALS=0` lo apaga (útil en máquinas donde la CPU no acompaña:
-las provisionales compiten con la pasada final y con Ollama).
-
-Rendimiento local: las provisionales usan un Whisper chico dedicado
-(`base`, configurable con `DECILO_WHISPER_FAST`) — medido en esta máquina:
-0.55s por pasada contra 1.5s de `small` y 3.9s de `medium` —, el español
-pasó de `medium` a `small` para la pasada final (`DECILO_WHISPER_ES=medium`
-lo restaura) y los modelos usan la mitad de los núcleos para convivir con
-la traducción.
-
-### Traducción provisional: el espectador solo ve su idioma
-
-Quien lee en español nunca ve crecer el texto en inglés. En nube, cada
-hipótesis provisional del original se traduce también en vivo (una en
-vuelo, gana la más nueva; `DECILO_PROVISIONAL_TRANSLATION=0` lo apaga):
-el español aparece palabra por palabra ~0.5s detrás del original, y al
-confirmarse la frase completa se re-traduce entera y reemplaza a la
-provisional. En local, la traducción progresiva (`DECILO_STREAM_TRANSLATION=1`)
-muestra el español a medida que Gemma lo genera. Mientras no haya nada de
-traducción, la fila espera invisible: jamás un cartel de estado ni el
-idioma ajeno. El prompt además pide resolver palabras ambiguas o mal
-transcriptas por contexto, sin marcadores de duda.
-
-Cambiar el **procesamiento** (local/nube) o el **idioma** con la captura
-andando reconecta la sesión al vuelo, sin recargar la página ni volver a
-pedir permisos de pestaña.
-
-### Corte por fin de oración (orador rápido)
-
-Si alguien habla sin pausas, el corte acústico no llega y las oraciones se
-apilaban en un segmento larguísimo. Ahora, cuando la transcripción
-provisional muestra que una oración terminó **y la siguiente ya empezó**,
-el segmento se corta en ese límite exacto (timestamp del segmento de
-Whisper en local; posición del texto acumulado en Gemini Live) sin esperar
-la pausa: la oración completa se confirma y su traducción sale ya. Nunca
-se corta por un punto al final del texto a medias — Whisper puntúa
-cualquier hipótesis y eso cortaría palabras al medio.
-
-### Autodetección del idioma de entrada
-
-La captura acepta `language=auto` (opción por defecto en la UI). El backend
-responde `{"type": "detecting"}`, junta ~2.5s de audio con voz (tope 12s; si
-no llega voz cierra con código 4408), detecta el idioma con Whisper
-restringido a en/es y recién entonces crea la sesión y envía `ready`. Ningún
-paquete se pierde: el audio de la fase de detección también se transcribe.
-
-### Traducción progresiva y preparación (experimental)
-
-`DECILO_STREAM_TRANSLATION=1` consume el flujo real de Ollama y publica texto
-provisional; confirma al recibir fin correcto de generación. Se publica el primer
-contenido y se agrupan actualizaciones posteriores cada 300ms como mínimo, sin
-retrasar el final. Timeout absoluto 30s, salida máxima 8192 bytes. Desconexión o
-límite de generación deja el parcial sin confirmar y publica un error.
-Default desactivado: quitar la variable restaura traducción solo final.
-
-`DECILO_PREWARM=1` prepara Whisper EN/ES y Ollama en segundo plano antes de
-permitir iniciar audio. `GET /health/ready` devuelve 503 mientras prepara o si
-falla; catálogo y health siguen accesibles. Readiness desactivada por defecto;
-`disabled` no acredita modelos calientes. Preparación limitada a 90s. La carga
-síncrona de Whisper en un thread no puede abortarse forzosamente al vencer el
-plazo; se mantiene la entrada cerrada y no se relanza en bucle.
-Esta preparación carga pesos: no sustituye el warmup representativo del benchmark.
-`DECILO_OLLAMA_KEEP_ALIVE` controla residencia de peticiones streaming/preparación
-(default `5m`; `-1` solicita residencia indefinida a Ollama).
-
-El cliente HTTP se comparte durante el lifespan del backend; los scripts deben
-usar `ollama_lifespan()` para reutilizarlo a través de varias llamadas. Las dos
-etapas son opt-in y no reinician ni modifican la instancia Ollama del sistema.
-
-Medición: exportar `DECILO_STREAM_TRANSLATION=1` para comparar. El JSON separa
-`first_summary` (primera aparición) de `summary` (final), sin contar revisiones
-como nuevos subtítulos. `first_from_start`/`final_from_start` usan inicio del
-intervalo fuente; métricas anteriores usan su fin. Mide publicación backend,
-no renderizado ni utilidad semántica. Registra etapas internas Ollama (duraciones
-convertidas de ns) y subtítulos sin confirmar. Para WAV humanos propios:
-
-```sh
-DECILO_STREAM_TRANSLATION=1 uv run python scripts/measure_latency.py \
-  --sessions both --warmup --keep-all --overlap-translation --segmentation pause \
-  --audio-en /ruta/charla-en.wav --reference-en /ruta/charla-en.txt \
-  --audio-es /ruta/charla-es.wav --reference-es /ruta/charla-es.txt \
-  --timeout 1500 --output /tmp/decilo-streaming.json
-```
-
-Los WAV deben ser PCM16 mono; referencia opcional (sin referencia no se calcula
-WER). No ejecutar en paralelo con otra prueba de modelos; comparar el mismo
-comando con el flag de streaming desactivado. WER no evalúa traducción.
-
-### Proveedor local o Gemini
-
-Desde la interfaz hay un selector **Procesamiento** con dos opciones: «En esta
-máquina» (Whisper y Gemma locales, el audio no sale del equipo) y «En la nube
-(Gemini)». La elección se fija al abrir cada captura y viaja en esa sesión, así
-que dos capturas simultáneas pueden usar proveedores distintos y cambiar el
-selector no altera una sesión ya en curso.
-
-Si el servidor no tiene `GEMINI_API_KEY`, la opción de nube aparece
-deshabilitada en vez de fallar al conectar. El navegador nunca recibe la clave:
-`GET /api/v1/providers` solo informa si hay credenciales configuradas.
-
-
-El backend carga `.env` de la raíz al iniciar; las variables exportadas tienen
-prioridad. `DECILO_ENV_FILE` permite indicar otro archivo (útil para tests
-aislados). El archivo `.env` está excluido de Git. Default: `local` (Whisper/Ollama).
-Para usar nube, configurar y reiniciar el backend:
+Para habilitar nube, agregar a `.env` la clave de la cuenta y, si se desea,
+seleccionar Gemini como default del backend:
 
 ```dotenv
 DECILO_AI_PROVIDER=gemini
-GEMINI_API_KEY=tu_clave
+GEMINI_API_KEY=tu_clave_local
+DECILO_GEMINI_LIVE=1
+DECILO_GEMINI_LIVE_MODEL=gemini-3.5-transcribe-live
 DECILO_GEMINI_MODEL=gemini-3.5-flash-lite
+DECILO_GEMINI_THINKING=MINIMAL
 ```
 
-Para mezclar: `DECILO_STT_PROVIDER=local` y
-`DECILO_TRANSLATION_PROVIDER=gemini`; estos valores prevalecen sobre
-`DECILO_AI_PROVIDER`. Aplican a archivos y capturas que omiten `provider`.
-La elección explícita del navegador prevalece sobre ambos para esa captura:
-`provider=local` o `provider=gemini` selecciona las dos etapas. Un fallo al
-preparar modelos locales no bloquea una captura elegida en nube.
-La clave queda solamente en el backend. Gemini recibe audio si se usa
-para STT y texto si se usa para traducción; aplican cuotas/costos del proyecto.
-No hay fallback automático ni reintentos ocultos. Timeout por petición: 30s.
+La clave permanece en backend. No hace falta Ollama para una captura con
+ambas etapas en Gemini e idioma explícito. Las dependencias Python del
+proyecto siguen incluyendo faster-whisper.
 
-### Nube en streaming: Gemini Live (el camino rápido)
+Backend, desde la raíz del worktree que lo operará:
 
-Con proveedor `gemini`, la captura no espera pausas ni sube WAVs: cada paquete
-de 100ms del navegador se reenvía tal cual (ya es PCM16 mono a 16kHz, el
-formato exacto de la [Live API](https://ai.google.dev/gemini-api/docs/live-api/live-transcribe))
-a `gemini-3.5-transcribe-live`, que devuelve la transcripción palabra por
-palabra mientras se habla. Los resultados intermedios se publican como
-revisiones provisionales y el resultado de cada frase como final, que dispara
-la traducción con `gemini-3.5-flash-lite` y `thinkingLevel: MINIMAL` (medido:
-~0.6s por frase contra ~1.5s del modelo anterior con thinking por defecto).
+```sh
+DECILO_ENV_FILE="$PWD/.env" DECILO_DEMO_SESSIONS=1 DECILO_DEMO_AUTOSTART=0 \
+  uv run uvicorn decilo.app:app --host 127.0.0.1 --port 8000
+```
 
-Latencias medidas de punta a punta en esta máquina: primera palabra visible
-~1.3s después de empezar a hablar, revisiones cada ~0.5s, final ~0.8s después
-de la pausa y traducción ~0.8s después del final. Antes (por segmento, CPU
-local compitiendo): el texto aparecía recién al cerrar la frase y la
-traducción llegaba 13–20s tarde.
+Frontend, en otra terminal:
 
-- `DECILO_GEMINI_LIVE=0` desactiva el streaming y vuelve al envío por
-  segmento con `generateContent`; si Google no responde al conectar, la
-  captura cae sola a ese camino (se avisa con un error retryable).
-- `DECILO_GEMINI_LIVE_MODEL` cambia el modelo de streaming.
-- La sesión de Google se renueva sola antes de su límite de 10 minutos, sin
-  perder la numeración de segmentos.
-- La credencial viaja solo en el header, nunca en la URL.
+```sh
+npm --prefix frontend run dev
+```
 
-Con proveedor local, o como fallback, se usa
-[generateContent](https://ai.google.dev/api/generate-content) por segmento.
-Se preservan el protocolo de subtítulos, las colas y los cortes por pausa.
-Los scripts de medición requieren variables exportadas (la carga automática de
-`.env` ocurre en el arranque de la app).
+Abrir **http://localhost:5173/**:
+
+1. Pegar el enlace de YouTube y pulsar **Cargar**.
+2. Elegir idioma del audio y **Procesamiento**. Si no hay preferencia guardada,
+   el selector adopta el default comunicado por el backend cuando hay clave.
+3. Pulsar **Compartir audio de pestaña**, seleccionar la pestaña que reproduce
+   el video y habilitar **Compartir audio** en Chrome.
+4. Dar Play. Si el video no permite embedding, abrirlo en otra pestaña y compartirla.
+5. **Detener** libera la captura y deja terminar el trabajo pendiente.
+
+Video usado durante el desarrollo: [API Gateway — Vlad Tomashpolskyi](https://www.youtube.com/watch?v=IW0unWVDnrI).
+Los tiempos se cuentan desde el inicio de captura, no desde el minuto de YouTube.
+Cambiar el proveedor o el idioma con la captura andando reconecta la sesión al
+vuelo (misma pestaña compartida, sin recargar). Quien lee en otro idioma nunca
+ve el original: cada hipótesis provisional se traduce también en vivo en nube
+(el español aparece palabra por palabra ~0.5s detrás y la frase completa se
+re-traduce al confirmarse) y, sin traducción todavía, la fila espera invisible.
+
+## Parámetros y comportamiento
+
+- `.env` se carga al iniciar; variables exportadas tienen prioridad. Usar
+  `DECILO_ENV_FILE` explícito al trabajar con varias carpetas.
+- `DECILO_STT_PROVIDER` y `DECILO_TRANSLATION_PROVIDER` permiten un backend
+  híbrido cuando el cliente omite `provider`; el selector explícito de la UI
+  elige ambas etapas para esa captura.
+- `DECILO_GEMINI_LIVE=0` vuelve al camino Gemini por segmentos. El fallo inicial
+  de Live publica un error y cae a ese camino **en nube**, no a Whisper.
+  Una falla durante Live intenta reconectar; no hay replay durable de audio.
+- `DECILO_GEMINI_THINKING=` omite `thinkingConfig` para un modelo que no lo admita.
+  No hay reintentos automáticos en `generateContent`; Live sí reconecta.
+- `DECILO_WHISPER_FAST=base` configura el modelo provisional. `DECILO_WHISPER_ES=small`
+  configura el final ES; `medium` permite volver al perfil histórico. EN final usa `small`.
+  Cada modelo se construye con `max(4, cpu_count // 2)` threads; no es una reserva
+  exclusiva de CPU ni un límite global entre modelos.
+- `DECILO_PARTIALS=0` apaga parciales y señal textual local en el camino por segmentos.
+  No apaga los interims de Live. El corte local textual necesita timestamps de Whisper;
+  no existe ese corte en el fallback `generateContent`.
+- `DECILO_PROVISIONAL_TRANSLATION=0` apaga la traducción en vivo de hipótesis
+  provisionales (solo camino Live). En Live, un interim que ya termina la
+  oración se confirma al instante (la puntuación de Gemini es confiable; el
+  Whisper local no dispara por un punto al final del texto a medias).
+- `DECILO_STREAM_TRANSLATION=1` (activado en el `.env` de ejemplo) muestra la
+  traducción local a medida que Gemma la genera; el prompt pide resolver
+  palabras ambiguas por contexto, sin marcadores de duda.
+- El segmentador usa mínimo 1 s, pausa 0,4 s, máximo 6 s y RMS 0,01, configurables
+  con `DECILO_MIN_SEGMENT_SECONDS`, `DECILO_PAUSE_SECONDS`,
+  `DECILO_MAX_SEGMENT_SECONDS` y `DECILO_SILENCE_RMS`.
+- El corte textual busca una oración terminada seguida de otra en la hipótesis.
+  Es una heurística, no comprensión semántica validada. Actualmente emite motivo
+  `pause`; Live corta texto y aproxima tiempos, no alinea palabras a muestras exactas.
+- `DECILO_SEGMENTATION=fixed`: archivos en ventanas de 5 s; captura por paquete
+  recibido. No usarlo como si ambos fueran el mismo baseline temporal.
+- `DECILO_TRANSLATION_QUEUE=1`: dos originales pendientes y un traductor activo.
+  Se frena al productor si la cola se llena; la inferencia no se vuelve ilimitada.
+- `DECILO_STREAM_TRANSLATION=1`: streaming NDJSON de Ollama con revisiones cada
+  ~300 ms; Gemini traduce con una respuesta final. Es independiente de Gemini Live STT.
+- `DECILO_PREWARM=1`: prepara modelos finales de Whisper y Ollama, con presupuesto
+  de 90 s. No prepara el modelo rápido `base` ni una conexión Live.
+  `DECILO_OLLAMA_KEEP_ALIVE` controla residencia de preparación/streaming (default `5m`).
+
+Ver los [detalles y límites de cada camino](docs/ARQUITECTURA.md), incluida la
+confirmación local de hipótesis que hace Live al finalizar/reconectar, que no
+siempre representa una final recibida de Google ni dispara traducción.
+
+## Sesiones, muestras y capacidad
+
+Hay admisión nominal de dos trabajos activos; las detecciones automáticas aún
+no reservan cupo hasta crear sesión. No es aislamiento estricto frente a muchas
+conexiones simultáneas. El catálogo tiene límites de demo y el historial retiene
+hasta 100 segmentos/100 gaps, con snapshots de hasta 1 MiB; no es archivo completo.
+
+Para probar dos fuentes, abrir dos pestañas de Decilo, cargar videos y compartir
+cada fuente en una captura distinta; elegir idioma explícito para evitar la
+fase de detección. Para compartir solo la audiencia, abrir
+`http://localhost:5173/?session=<id>` con un ID del catálogo
+`GET /api/v1/sessions`. Otra audiencia no genera otra inferencia.
+
+Los [WAV sintéticos incluidos](samples/README.md) tienen referencias de texto.
+El backend conserva `GET .../{id}/audio`, `POST .../{id}/runs` y
+`POST .../{id}/start`; la UI actual **no** tiene reproductor de WAV ni botón
+«Iniciar prueba». Para benchmark desde la raíz:
+
+```sh
+uv run python scripts/measure_latency.py --sessions both --warmup \
+  --keep-all --overlap-translation --segmentation pause --output /tmp/decilo-benchmark.json
+```
+
+Ese comando ejecuta modelos reales: no forma parte de CI. Los scripts requieren
+variables exportadas y no cargan automáticamente el `.env` de la app. Miden
+archivos/publicación backend, no Gemini Live, ASR provisional de captura ni render.
+Los resultados históricos en [docs/validation](docs/validation/README.md) conservan
+sus modelos y configuración; no acreditan el rendimiento de los PRs #21/#22.
+
+Escalar exige medir recursos y dirigir ingreso/audiencia al dueño de cada
+sesión. `uvicorn --workers N` por sí solo separa registros en memoria y no
+resuelve ese routing. No hay scheduler distribuido ni persistencia. El objetivo
+de 3 s p95 con dos sesiones y audio humano sigue sin aceptación sostenida.
+
+## Verificación y diagnóstico
+
+```sh
+uv run python -m pytest tests -q -m 'not model'
+uv run python -m ruff check src scripts tests
+npm --prefix frontend test
+npm --prefix frontend run build
+```
+
+Pruebas de navegador e integración en [frontend/README.md](frontend/README.md).
+La CI excluye inferencia real; no despliega, ni ejecuta Sonar o CodeRabbit.
+
+- Página: Vite en 5173. API: `/health` en 8000.
+- `/health/ready` comprueba preparación local; `disabled` no prueba disponibilidad de modelos.
+- Nube deshabilitada: revisar `/api/v1/providers` y el `.env` del backend activo.
+- Selecciona pestaña pero no empieza: comprobar modo demo, handshake, readiness y cupos.
+- Modo `auto` tarda: detección/carga local; elegir EN/ES explícitamente si ya se conoce.
+
+La demo no trae autenticación ni cuotas por usuario: usar la escucha local del
+comando anterior. Para producción hacen falta servidor de estáticos, proxy WS,
+TLS y controles de acceso. El audio «local» se procesa en la máquina del backend,
+que puede ser distinta de la del navegador.
+
+## English
+
+Decilo captures authorized browser-tab audio, transcribes English/Spanish and
+translates **English into Spanish**. Choose local Whisper + Ollama/Gemma or
+Gemini per capture. Cloud capture uses Gemini Live by default; file processing
+and cloud fallback use per-segment `generateContent`. Automatic language detection
+still uses local Whisper; select English/Spanish explicitly for cloud-only inference.
+
+Requirements: Python 3.12+, uv, Node.js 22.12+, Chrome. From the repository root:
+
+```sh
+uv sync --group dev
+npm --prefix frontend ci
+```
+
+Create a Git-ignored `.env` using one of the configurations above. For local
+translation run Ollama with `gemma3n:e2b`; for cloud configure `GEMINI_API_KEY`
+on the backend. Exported environment variables override `.env`.
+
+```sh
+DECILO_ENV_FILE="$PWD/.env" DECILO_DEMO_SESSIONS=1 DECILO_DEMO_AUTOSTART=0 \
+  uv run uvicorn decilo.app:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal run `npm --prefix frontend run dev`. Open
+http://localhost:5173/, paste a YouTube link, choose language/provider, share
+the video tab **with audio enabled**, then play it. Stop capture when finished.
+
+Local provisional ASR uses `base`, final EN/ES uses `small`, and translation
+uses `gemma3n:e2b`. Cloud defaults are `gemini-3.5-transcribe-live` for live ASR
+and `gemini-3.5-flash-lite` for translation. These are configurable code defaults;
+account availability and sustained performance are not guaranteed by the docs.
+
+The demo has a nominal two-job limit, recent in-memory history and no durable
+replay/authentication. Two audience tabs do not test two audio sources. Multiple
+server workers need session-aware routing; adding workers alone is insufficient.
+Spanish→English, diarization and visual AI are not implemented. Historical
+benchmarks do not validate current sustained quality or the 3 s p95 target.
+
+## Licencia / License
+
+[Apache-2.0](LICENSE).

@@ -1,5 +1,8 @@
 # Proposal
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** PRs #20–#22 integrados: parciales, heurística textual y Live. Requisitos de presupuesto semántico, finalización incierta y evaluación sostenida siguen abiertos; diseño original es el objetivo, no una declaración de cumplimiento.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Why
 
 Decilo necesita reducir la demora del primer subtítulo español útil sin ocultar

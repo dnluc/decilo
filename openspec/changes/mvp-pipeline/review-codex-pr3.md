@@ -1,5 +1,8 @@
 Revisión de Codex sobre `96dc8fc`. **Solicito ajustes antes de integrar.** El alcance de estructura/modelos/fixtures es correcto; no se exige completar el pipeline en este PR.
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Pipeline implementado e integrado. Whisper final small EN/ES, provisional base, Gemma e2b y Gemini Live/REST; las decisiones/mediciones previas conservan su fecha y configuración.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 1. **[P2] Límite de texto en bytes UTF-8** — `src/decilo/models.py:48`. `max_length=8192` acepta 8192 caracteres, pero el contrato permite 8192 bytes. Reproduje que `CaptionData(..., text="á" * 5000)` acepta 10000 bytes. El cliente rechaza ese subtítulo y reconecta, incluso si luego aparece en cada snapshot. Validar bytes UTF-8 sin truncar y cubrir límites con caracteres multibyte.
 
 2. **[P2] Validar el intervalo de los gaps** — `src/decilo/models.py:70-75`. `GapData` acepta `start_ms=200, end_ms=100` y `start_ms=null, end_ms=100`. El contrato requiere un intervalo ordenado o ambos tiempos nulos. Ambos casos pasan el modelo y fallan en el cliente; un gap persistido en el snapshot puede impedir recuperar la sesión. Agregar validación cruzada y pruebas.

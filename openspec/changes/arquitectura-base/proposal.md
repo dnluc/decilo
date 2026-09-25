@@ -1,5 +1,8 @@
 # Proposal
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Implementación: Python/FastAPI, faster-whisper base/small, Ollama y Gemini Live/REST. El diseño y los benchmarks iniciales quedan como historia; aceptación sostenida pendiente.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Why
 
 Antes de repartir tareas entre Claude y Codex o de elegir un stack, hace

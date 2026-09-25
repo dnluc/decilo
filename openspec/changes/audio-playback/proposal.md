@@ -1,5 +1,8 @@
 # Proposal
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Las rutas WAV/runs/start siguen implementadas; el reproductor de archivos y su resaltado se retiraron de la UI. Este artefacto conserva el alcance histórico de esa entrega.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Why
 
 Para el video demo y para que la vista de audiencia sea más convincente,

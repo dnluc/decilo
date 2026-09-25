@@ -1,5 +1,8 @@
 # Spec Delta
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Implementación: Python/FastAPI, faster-whisper base/small, Ollama y Gemini Live/REST. El diseño y los benchmarks iniciales quedan como historia; aceptación sostenida pendiente.
+> [Estado global, divergencias y evidencia](../../../../README.md).
+
 ## Purpose
 
 Define los atributos de calidad (no funcionales) exigidos al sistema
@@ -8,9 +11,9 @@ transversal a las capacidades funcionales (captura de audio,
 transcripción, distribución de subtítulos, vista de audiencia) que se
 especifiquen en cambios posteriores.
 
-Estado: propuesta revisada por Codex el 2026-09-24. La meta numérica de
-3s p95 sigue pendiente de confirmación del usuario; no es una exigencia
-numérica del concurso ni un rendimiento ya demostrado.
+Drivers revisados el 2026-09-24. La meta de 3s p95 fue confirmada por el
+usuario según tasks.md 2.2; no es una exigencia numérica del concurso ni
+un rendimiento ya demostrado. La aceptación sostenida continúa pendiente.
 La aspiración de <1,5s en `VISION.md` requiere acordar métrica y salida;
 no sustituye esta meta provisional. Las capacidades incrementales y
 multimodales tendrán sus propios requisitos en cambios posteriores.

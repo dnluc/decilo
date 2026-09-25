@@ -1,9 +1,13 @@
 # Design
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** PRs #20–#22 integrados: parciales, heurística textual y Live. Requisitos de presupuesto semántico, finalización incierta y evaluación sostenida siguen abiertos; diseño original es el objetivo, no una declaración de cumplimiento.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Estado y etapas
 
-Estado: propuesta de implementación; revisión de Claude pendiente. Ninguna tarea
-de código de este cambio se considera hecha por escribir sus requisitos.
+Diseño objetivo por etapas. Claude registró revisión/objeciones en tasks.md;
+PRs #20–#22 implementaron parte de A–C. Consultar el estado al inicio: lo
+implementado no acredita automáticamente todos los requisitos de este diseño.
 Se reutilizan la cola opt-in, segmentador por pausas, modelo residente, worker
 fuera del event loop y controles de revisión existentes. Preservar VAD y filtros
 de no-habla de PR #14. No duplicar sus implementaciones.

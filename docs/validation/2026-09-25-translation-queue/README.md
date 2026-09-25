@@ -1,5 +1,8 @@
 # Experimento: cola de traducción en memoria
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Compara el worker secuencial con un productor ASR y un consumidor de traducción
 por sesión. Capacidad: dos textos pendientes y una traducción activa. Una cola
 llena aplica backpressure a ASR, sin crear tareas por segmento ni acumular texto
