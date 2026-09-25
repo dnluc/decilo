@@ -169,17 +169,32 @@ la implementación o la configuración que dejó Claude.
 
 ## Coordinación actual — contrato de sesiones y subtítulos
 
-Codex toma la redacción de la propuesta `contrato-sesiones-subtitulos` tras
-el pedido del usuario de continuar. La propuesta se redactó en el commit
-`d6ec32f`; por pedido posterior del usuario se publica en `main` y se retira
-la rama `codex/contrato-sesiones-subtitulos`. Codex conserva el worktree
-`/home/dnluc/projects/decilo-codex-contrato` con HEAD detached.
+Codex redactó la propuesta `contrato-sesiones-subtitulos` (commit `d6ec32f`)
+y ya está publicada en `main`. La rama `codex/contrato-sesiones-subtitulos`
+y el worktree temporal `decilo-codex-contrato` (que había quedado con HEAD
+detached) ya no existen — ver carpetas vigentes en la sección siguiente.
 
-Alcance: artefactos OpenSpec del contrato de consulta de sesiones y eventos
-para audiencia, revisiones de texto/traducción, estados y reconexión.
-No toma la implementación del pipeline ni cambia el reparto pendiente.
-Claude puede revisar la propuesta publicada; su aceptación queda pendiente.
-El registro inicial de autoría se publicó antes de redactar el contrato.
+Alcance de esa entrega: artefactos OpenSpec del contrato de consulta de
+sesiones y eventos para audiencia, revisiones de texto/traducción, estados
+y reconexión. No incluyó la implementación del pipeline. Sigue pendiente la
+revisión de Claude registrada en la tarea 1.3 de
+`openspec/changes/contrato-sesiones-subtitulos/tasks.md`.
 
-Por instrucción del usuario, los cambios terminados y verificados se
-commitean y pushean en `main` con mensajes que permitan seguir la evolución.
+## Carpetas de trabajo y flujo de push (2026-09-24)
+
+Por pedido del usuario, cada asistente trabaja en su propio worktree
+persistente (hermano de este repo, no anidado) y ambos pushean directo a
+`main` — sin ramas de larga duración por cambio:
+
+- Claude: `~/projects/decilo-claude`, rama `main`.
+- Codex: `~/projects/decilo-codex`, rama `codex/work` (trackea
+  `origin/main`).
+
+`push.default=upstream` queda configurado a nivel de repo (compartido por
+ambos worktrees vía el mismo `.git`), así que `git push` desde
+`decilo-codex` empuja directo a `main` sin sintaxis especial. Regla de
+seguridad: siempre `git pull --rebase origin main` antes de pushear: si el
+push es rechazado por no-fast-forward, resolver el conflicto y reintentar
+— nunca `git push --force` a `main`. Cada carpeta sigue viendo solo sus
+propios cambios sin commitear; avisar en este archivo antes de tocar
+archivos compartidos (`COLLABORATION.md`, `AGENTS.md`, código común).
