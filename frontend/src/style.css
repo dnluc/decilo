@@ -17,7 +17,9 @@
   --topbar: 62px;
 }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+/* Alto exacto de la ventana, no mínimo: así la columna del historial queda
+   acotada a la pantalla y scrollea por dentro en vez de estirar la página. */
+body { margin: 0; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
 button, select, input { font: inherit; color: inherit; }
 button, select { cursor: pointer; }
 a { color: inherit; text-underline-offset: 4px; }
@@ -43,14 +45,16 @@ button.primary:hover { background: #63cd8a; }
 
 /* Escenario a la izquierda, transcripción a la derecha. */
 .theater { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 18px; padding: 18px 24px 22px; }
-.stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 60dvh; background: #000; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+/* El escenario también se acota y scrollea por su cuenta si no entra: no
+   debe empujar al historial ni estirar la página. */
+.stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; overflow-y: auto; }
+.video-frame { position: relative; width: 100%; flex-shrink: 0; aspect-ratio: 16 / 9; max-height: 60dvh; background: #000; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-frame[data-loaded='true'] .video-empty { display: none; }
 .video-empty { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
 
 /* El último subtítulo, debajo del video: lo que se está diciendo ahora. */
-.live-caption { margin: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 22px; min-height: 76px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(16px, 1.45vw, 21px); line-height: 1.5; text-wrap: balance; }
+.live-caption { margin: 0; flex-shrink: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 22px; min-height: 76px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(16px, 1.45vw, 21px); line-height: 1.5; text-wrap: balance; }
 .live-caption[data-empty='true']::after { content: ''; display: block; width: 62px; height: 2px; background: var(--border); border-radius: 2px; }
 body[data-text-size='large'] .live-caption { font-size: clamp(20px, 2vw, 28px); }
 body[data-text-size='extra'] .live-caption { font-size: clamp(25px, 2.7vw, 37px); }
@@ -78,6 +82,8 @@ select { background: var(--surface-2); border: 1px solid var(--border); border-r
 .chat-status[data-kind='disconnected'], .chat-status[data-kind='incompatible'] { color: var(--warn); }
 .chat-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-color: #33403a transparent; }
 .chat-empty { margin: auto; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.6; }
+/* Lo más reciente arriba: se separa del resto para encontrarlo de un vistazo. */
+.turn.current { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .turn { display: grid; gap: 3px; }
 .turn-time { font-family: ui-monospace, monospace; font-size: 9.5px; color: #75837b; }
 .turn p { margin: 0; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
@@ -97,8 +103,11 @@ input[type='checkbox'] { accent-color: var(--accent); }
 .reading-focus .video-frame { max-height: 64dvh; }
 
 @media (max-width: 1040px) {
+  /* Apilado: acá sí conviene que la página scrollee como una página normal. */
+  body { height: auto; min-height: 100dvh; overflow: visible; }
   .theater { grid-template-columns: 1fr; padding: 14px 16px 18px; }
-  .chat { height: 46dvh; }
+  .stage { overflow: visible; }
+  .chat { height: 60dvh; }
   .topbar { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
   .url-bar { order: 3; flex-basis: 100%; max-width: none; margin: 0; }
   .video-frame { max-height: none; }

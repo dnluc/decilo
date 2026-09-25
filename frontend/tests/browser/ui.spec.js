@@ -82,6 +82,42 @@ test('los subtítulos se acumulan en el historial y el último va a la barra', a
   await expect(page.locator('#chat-count')).toContainText('2');
 });
 
+test('lo último dicho encabeza el historial', async ({ page }) => {
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+  for (const [i, text] of ['Primera.', 'Segunda.', 'Tercera.'].entries()) {
+    sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+      caption({ segment_id: `seg-${i + 1}`, segment_seq: i + 1, start_ms: i * 3000,
+        end_ms: i * 3000 + 2500, text, status: 'final' }), i + 1)));
+  }
+  await expect(page.locator('.turn')).toHaveCount(3);
+  await expect(page.locator('.turn').first()).toContainText('Tercera.');
+  await expect(page.locator('.turn').last()).toContainText('Primera.');
+  // La más reciente es además la marcada como actual.
+  await expect(page.locator('.turn.current')).toContainText('Tercera.');
+});
+
+test('el historial no estira la página: se acota a la pantalla y scrollea solo', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+  for (let i = 0; i < 40; i++) {
+    sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+      caption({ segment_id: `seg-${i + 1}`, segment_seq: i + 1, start_ms: i * 3000,
+        end_ms: i * 3000 + 2500, text: `Intervención número ${i + 1} de la charla.`, status: 'final' }), i + 1)));
+  }
+  await expect(page.locator('.turn')).toHaveCount(40);
+
+  const chat = await page.locator('.chat').boundingBox();
+  expect(chat.y + chat.height).toBeLessThanOrEqual(901);
+  // El scroll es del historial, no de la página.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1)).toBe(true);
+  expect(await page.evaluate(() => {
+    const log = document.getElementById('transcript');
+    return log.scrollHeight > log.clientHeight;
+  })).toBe(true);
+});
+
 test('un subtítulo no desaparece antes de poder leerlo', async ({ page }) => {
   const sockets = await openSession(page);
   await page.selectOption('#language', 'en');
