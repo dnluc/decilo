@@ -36,3 +36,23 @@ Validación: 186 tests Python, 23 Node, 20 navegador y 3 de integración correct
 Ruff y build frontend correctos. Inferencia simulada: no se hicieron llamadas
 pagas ni se acredita calidad/latencia de Gemini 3.1 con estos tests. Servidores
 de backend, frontend y Ollama detenidos por pedido del usuario.
+
+## Incidente de arranque durante la prueba manual — 2026-09-25
+
+El usuario pudo abrir el selector de Chrome, pero no iniciar captura. El proceso
+en 8000 se había iniciado desde el worktree de Claude sin
+`DECILO_DEMO_SESSIONS=1` y sin la configuración de nube: catálogo vacío,
+`cloud_available=false`, conexión de captura rechazada con HTTP 403.
+
+Codex sincronizó el PR #20 integrado (`a24071a`) y reinició solo el backend
+desde su worktree, fijando `DECILO_ENV_FILE` a su `.env`, modo demo habilitado,
+autostart y prewarm desactivados. El frontend de Claude en 5173 se conserva.
+Verificación a través de su proxy: captura con `provider=local` y con
+`provider=gemini` recibe `ready`/`live` y cierra con código 1000 al enviar `stop`.
+No se envió PCM ni se invocaron modelos; no se consumió saldo. Nube vuelve a
+estar disponible en `/api/v1/providers`. La selección real de pestaña/audio
+continúa siendo una prueba manual del usuario.
+
+Para futuros arranques compartidos, usar la configuración explícita del backend
+de Codex: `DECILO_ENV_FILE=/home/dnluc/projects/decilo-codex/.env`.
+No copiar claves al repo ni iniciar otro backend sin modo demo en el mismo puerto.
