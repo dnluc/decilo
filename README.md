@@ -218,6 +218,23 @@ pasó de `medium` a `small` para la pasada final (`DECILO_WHISPER_ES=medium`
 lo restaura) y los modelos usan la mitad de los núcleos para convivir con
 la traducción.
 
+### Traducción provisional: el espectador solo ve su idioma
+
+Quien lee en español nunca ve crecer el texto en inglés. En nube, cada
+hipótesis provisional del original se traduce también en vivo (una en
+vuelo, gana la más nueva; `DECILO_PROVISIONAL_TRANSLATION=0` lo apaga):
+el español aparece palabra por palabra ~0.5s detrás del original, y al
+confirmarse la frase completa se re-traduce entera y reemplaza a la
+provisional. En local, la traducción progresiva (`DECILO_STREAM_TRANSLATION=1`)
+muestra el español a medida que Gemma lo genera. Mientras no haya nada de
+traducción, la fila espera invisible: jamás un cartel de estado ni el
+idioma ajeno. El prompt además pide resolver palabras ambiguas o mal
+transcriptas por contexto, sin marcadores de duda.
+
+Cambiar el **procesamiento** (local/nube) o el **idioma** con la captura
+andando reconecta la sesión al vuelo, sin recargar la página ni volver a
+pedir permisos de pestaña.
+
 ### Corte por fin de oración (orador rápido)
 
 Si alguien habla sin pausas, el corte acústico no llega y las oraciones se

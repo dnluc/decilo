@@ -337,21 +337,29 @@ test('la barra distingue provisional de confirmado solo por color', async ({ pag
   expect(await page.locator('body').textContent()).not.toContain('Traduciendo');
 });
 
-test('sin traducción lista, el original ocupa su lugar como provisional', async ({ page }) => {
+test('leyendo en español nunca se ve el inglés: provisional y final en español', async ({ page }) => {
   const sockets = await openSession(page);
-  // Vista en español; llega solo el original en inglés.
+  // Vista en español; llega solo el original en inglés: no se muestra nada.
   sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
     caption({ text: 'Original english line.', status: 'final' }), 1)));
-  await expect(page.locator('#live-caption')).toHaveText('Original english line.');
-  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'provisional');
-  await expect(page.locator('.turn.provisional')).toContainText('Original english line.');
+  await expect(page.locator('#live-caption')).toHaveText('');
+  expect(await page.locator('body').textContent()).not.toContain('Original english line.');
 
-  // Llega el español: reemplaza y se confirma.
+  // Llega la traducción provisional: se ve en español, apagada.
   sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
     caption({ kind: 'translation', language: 'es', source_revision: 1,
-      text: 'Línea original en español.', status: 'final' }), 2)));
+      text: 'Línea provisional en', status: 'provisional' }), 2)));
+  await expect(page.locator('#live-caption')).toHaveText('Línea provisional en');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'provisional');
+  await expect(page.locator('.turn.provisional')).toContainText('Línea provisional en');
+
+  // La final la reemplaza y se confirma.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ kind: 'translation', language: 'es', source_revision: 1, revision: 2,
+      text: 'Línea original en español.', status: 'final' }), 3)));
   await expect(page.locator('#live-caption')).toHaveText('Línea original en español.');
   await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'final');
+  expect(await page.locator('body').textContent()).not.toContain('Original english line.');
 });
 
 test('el dock vive en el borde inferior y el video ocupa el resto', async ({ page }) => {

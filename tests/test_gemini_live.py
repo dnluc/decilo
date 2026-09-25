@@ -80,6 +80,8 @@ async def test_final_submits_translation():
     live, gateway = make_live(translations=('es',), submit=submit)
     await live.handle({'serverContent': {'interimInputTranscription': {'text': 'Hello'}}})
     await live.handle({'serverContent': {'inputTranscription': {'text': 'Hello world.'}}})
+    for _ in range(3):
+        await asyncio.sleep(0)  # la traducción corre como tarea aparte
     assert [c.status for c in submitted] == ['final']
     assert submitted[0].text == 'Hello world.'
 
@@ -155,6 +157,8 @@ async def test_interim_with_sentence_boundary_splits_and_translates():
     live, gateway = make_live(translations=('es',), submit=submit)
     await live.handle({'serverContent': {'interimInputTranscription':
         {'text': 'First sentence is done. And then it'}}})
+    for _ in range(3):
+        await asyncio.sleep(0)  # la traducción corre como tarea aparte
 
     got = captions(gateway)
     assert [(c.segment_id, c.status, c.text) for c in got] == [
@@ -233,3 +237,45 @@ async def test_interim_buffer_restarting_after_the_final_is_a_new_utterance():
         {'text': 'Fresh start'}}})
     got = captions(gateway)
     assert (got[-1].segment_id, got[-1].status, got[-1].text) == ('seg-2', 'provisional', 'Fresh start')
+
+
+@pytest.mark.asyncio
+async def test_interim_ending_the_sentence_finalizes_immediately():
+    """La puntuación de Gemini alcanza: no se espera ni la pausa del VAD ni
+    ver el arranque de la oración siguiente."""
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'This sentence has now ended.'}}})
+    got = captions(gateway)
+    assert [(c.segment_id, c.status) for c in got] == [('seg-1', 'final')]
+
+    # El buffer que continúa no republica lo confirmado: solo la cola.
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'This sentence has now ended. More'}}})
+    got = captions(gateway)
+    assert (got[-1].segment_id, got[-1].status, got[-1].text) == ('seg-2', 'provisional', 'More')
+
+
+@pytest.mark.asyncio
+async def test_provisional_translation_is_published_for_open_segment(monkeypatch):
+    import decilo.translate
+
+    async def fake_translate(text, **kwargs):
+        return f'ES: {text}'
+
+    monkeypatch.setattr(decilo.translate, 'translate', fake_translate)
+    live, gateway = make_live(translations=('es',))
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'Hello everyone in the'}}})
+    worker = asyncio.create_task(live._provisional_translations())
+    await asyncio.sleep(0.05)
+    worker.cancel()
+    await asyncio.gather(worker, return_exceptions=True)
+
+    translations = [e.data for e in gateway.events
+                    if e.type == 'caption.upsert' and e.data.kind == 'translation']
+    assert [(t.status, t.text, t.revision) for t in translations] == [
+        ('provisional', 'ES: Hello everyone in the', 1)]
+    original = [e.data for e in gateway.events
+                if e.type == 'caption.upsert' and e.data.kind == 'transcript'][-1]
+    assert translations[0].source_revision == original.revision

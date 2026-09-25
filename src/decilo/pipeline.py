@@ -239,7 +239,8 @@ async def translate_caption(stream, gateway, transcript, observe=None):
             segment_seq=transcript.segment_seq,
             kind="translation",
             language=target_language,
-            revision=1,
+            # Por encima de cualquier traducción provisional ya publicada.
+            revision=stream.next_caption_revision(transcript.segment_id, "translation", target_language),
             source_revision=transcript.revision,
             text=translated_text,
             status="final",
@@ -257,7 +258,7 @@ async def _stream_translation(stream, gateway, transcript, language, observe):
     began = loop.time()
     last_emitted = None
     last_text = None
-    revision = 0
+    revision = stream.next_caption_revision(transcript.segment_id, 'translation', language) - 1
     # Explicit close releases HTTP resources even on cancellation/upsert failure.
     async with aclosing(translate_stream(transcript.text)) as updates:
         async for update in updates:

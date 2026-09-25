@@ -22,6 +22,7 @@ import os
 import re
 
 from decilo.models import CaptionData, GapData
+from decilo.partials import ends_sentence
 from decilo.pipeline import translate_caption
 
 RATE = 16000
@@ -69,6 +70,15 @@ class GeminiLiveTranscriber:
         # interim que no coincida es un arranque nuevo, no una reescritura.
         self.committed = ''
         self.committed_final = False
+        self._handle_errors = 0
+        # Traducciones: las finales corren como tareas para no frenar al
+        # lector (si esperara acá, un backlog de traducción congelaría los
+        # subtítulos); las provisionales van con un worker aparte, una en
+        # vuelo y gana la instantánea más nueva.
+        self._translation_tasks: set[asyncio.Task] = set()
+        self._pt_latest: tuple[int, str] | None = None
+        self._pt_wake = asyncio.Event()
+        self._pt_worker: asyncio.Task | None = None
 
     async def connect(self):
         import websockets
@@ -89,6 +99,8 @@ class GeminiLiveTranscriber:
             raise RuntimeError('Gemini Live no aceptó la configuración')
         self.connected_at = asyncio.get_running_loop().time()
         self._reader = asyncio.create_task(self._read())
+        if self._pt_worker is None and self.stream.session.translation_languages:
+            self._pt_worker = asyncio.create_task(self._provisional_translations())
 
     async def feed(self, pcm: bytes):
         """Un paquete PCM crudo del navegador → un mensaje a Gemini."""
@@ -118,13 +130,24 @@ class GeminiLiveTranscriber:
         await self.connect()
 
     async def _read(self):
-        try:
-            while True:
-                await self.handle(json.loads(await self.ws.recv()))
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            return  # feed() detecta el cierre y reconecta; no es fatal acá.
+        while True:
+            try:
+                raw = await self.ws.recv()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                return  # feed() detecta el cierre y reconecta; no es fatal acá.
+            try:
+                await self.handle(json.loads(raw))
+            except asyncio.CancelledError:
+                raise
+            except Exception as error:
+                # Un mensaje que no se pudo procesar no puede matar el lector:
+                # eso congelaba los subtítulos con el audio aún fluyendo.
+                self._handle_errors += 1
+                if self._handle_errors == 1:
+                    self.gateway.publish_nowait(self.stream.record_error(
+                        'inference_unavailable', f'Gemini Live: {error}', retryable=True))
 
     async def handle(self, msg: dict):
         activity = msg.get('voiceActivity') or {}
@@ -165,7 +188,17 @@ class GeminiLiveTranscriber:
             self.committed += effective[:cut]
             self.committed_final = False
             effective = effective[cut:]
-        self._publish(effective, final=False)
+        # La puntuación de Gemini es confiable: si el texto pendiente ya
+        # termina la oración, se confirma ahí mismo, sin esperar a ver el
+        # arranque de la siguiente ni la pausa del VAD.
+        if ends_sentence(effective):
+            await self._finalize(effective)
+            self.committed += effective
+            self.committed_final = False
+            return
+        caption = self._publish(effective, final=False)
+        if caption is not None:
+            self._queue_provisional_translation(caption)
 
     def _stream_ms(self) -> int:
         return self.base_ms + self.fed_samples * 1000 // RATE
@@ -197,14 +230,69 @@ class GeminiLiveTranscriber:
         """Confirma el segmento abierto con este texto y dispara su traducción."""
         caption = self._publish(text, final=True)
         if caption is not None and self.stream.session.translation_languages:
-            if self.submit_translation is not None:
-                await self.submit_translation(caption)
-            else:
-                await translate_caption(self.stream, self.gateway, caption)
+            # Como tarea: si el lector esperara acá un lugar en la cola de
+            # traducción, un backlog congelaría los subtítulos entrantes.
+            task = asyncio.create_task(self._translate_final(caption))
+            self._translation_tasks.add(task)
+            task.add_done_callback(self._translation_tasks.discard)
         self.open_seq = None
         self.revision = 0
         self.last_text = None
         self.start_ms = None
+
+    async def _translate_final(self, caption):
+        try:
+            if self.submit_translation is not None:
+                await self.submit_translation(caption)
+            else:
+                await translate_caption(self.stream, self.gateway, caption)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            self.gateway.publish_nowait(self.stream.record_error(
+                'inference_unavailable', f'Traducción: {error}', retryable=True))
+
+    def _queue_provisional_translation(self, caption):
+        """La traducción también va palabra por palabra: el espectador que lee
+        en otro idioma no debería ver el original crecer en un idioma ajeno."""
+        if not self.stream.session.translation_languages:
+            return
+        if os.environ.get('DECILO_PROVISIONAL_TRANSLATION', '1') == '0':
+            return
+        self._pt_latest = (caption.segment_seq, caption.text)
+        self._pt_wake.set()
+
+    async def _provisional_translations(self):
+        from decilo.translate import translate
+
+        while True:
+            await self._pt_wake.wait()
+            self._pt_wake.clear()
+            while self._pt_latest is not None:
+                seq, text = self._pt_latest
+                self._pt_latest = None
+                for language in self.stream.session.translation_languages:
+                    try:
+                        translated = (await translate(text)).strip()
+                    except Exception:
+                        break  # la traducción de la final va a llegar igual
+                    # Sin await entre la consulta y la publicación: la
+                    # traducción debe referir a la revisión vigente EXACTA
+                    # del original, y una final ya no debe pisarse.
+                    original = self.stream.latest_caption(f'seg-{seq}', 'transcript', self.language)
+                    if original is None or original.status == 'final' or not translated:
+                        continue
+                    existing = self.stream.latest_caption(f'seg-{seq}', 'translation', language)
+                    if existing is not None and existing.status == 'final':
+                        continue
+                    self.gateway.publish_nowait(self.stream.upsert_caption(CaptionData(
+                        segment_id=f'seg-{seq}', segment_seq=seq,
+                        kind='translation', language=language,
+                        revision=self.stream.next_caption_revision(f'seg-{seq}', 'translation', language),
+                        source_revision=original.revision, text=translated,
+                        status='provisional', start_ms=original.start_ms,
+                        end_ms=original.end_ms,
+                    )))
 
     async def _final(self, text: str):
         effective = self._after_committed(text)
@@ -267,6 +355,14 @@ class GeminiLiveTranscriber:
         except Exception:
             pass
         self._confirm_open_segment()
+        if self._pt_worker is not None:
+            self._pt_worker.cancel()
+            await asyncio.gather(self._pt_worker, return_exceptions=True)
+            self._pt_worker = None
+        # Terminar de encolar las traducciones finales pendientes antes de
+        # cerrar: la cola de traducción de la sesión las drena después.
+        if self._translation_tasks:
+            await asyncio.gather(*self._translation_tasks, return_exceptions=True)
         await self._close_ws()
 
     async def _close_ws(self):

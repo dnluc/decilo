@@ -31,9 +31,9 @@ test('el gateway real entrega revisiones, descarta tardías y libera conexiones'
   await expect(page.locator('.turn.provisional')).toContainText('Necesitamos');
 
   await publish({ type: 'caption', data: caption({ revision: 2, status: 'final', text: 'We need a code review.' }) });
-  // Sin traducción todavía, el original ocupa su lugar como provisional:
-  // nunca un cartel de estado.
-  await expect(page.locator('.turn.provisional')).toContainText('We need a code review.');
+  // Leyendo en español el inglés nunca se muestra: al revisarse el original
+  // la traducción provisional vieja se retira y la fila espera invisible.
+  await expect(page.locator('#transcript')).not.toContainText('We need a code review.');
 
   // Una traducción de la revisión vieja no debe volver a mostrarse.
   const late = await publish({ type: 'caption', data: caption({ kind: 'translation', language: 'es', source_revision: 1, revision: 2, text: 'Traducción vieja' }) });

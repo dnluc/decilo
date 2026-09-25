@@ -71,6 +71,18 @@ class SessionStream:
             else:
                 raise ValueError("los metadatos de sesión exceden el límite del snapshot")
 
+    def latest_caption(self, segment_id: str, kind: str, language: str) -> CaptionData | None:
+        """Subtítulo vigente para esa clave, si existe."""
+        return self._captions.get((segment_id, kind, language))
+
+    def next_caption_revision(self, segment_id: str, kind: str, language: str) -> int:
+        """Revisión que corresponde publicar a continuación para esa clave.
+
+        Sale del registro de revisiones, no del subtítulo vigente: cuando el
+        original se revisa, sus traducciones viejas se retiran pero el número
+        de revisión nunca retrocede."""
+        return self._revisions.get((segment_id, kind, language), 0) + 1
+
     def upsert_caption(self, caption: CaptionData) -> CaptionUpsertEvent | None:
         key = (caption.segment_id, caption.kind, caption.language)
         meta = self._segments.get(caption.segment_id)
