@@ -52,6 +52,7 @@ class PartialTranscriber:
         self._wake = asyncio.Event()
         self._snapshotted: dict[int, int] = {}  # start -> muestras ya instantaneadas
         self._revisions: dict[int, int] = {}    # start -> última revisión publicada
+        self._last_text: dict[int, str] = {}    # start -> último texto publicado
         self._closed: set[int] = set()
 
     def observe(self, start: int, pcm: bytes, has_voice: bool) -> None:
@@ -77,6 +78,7 @@ class PartialTranscriber:
         if self._latest is not None and self._latest[0] == start:
             self._latest = None
         self._snapshotted.pop(start, None)
+        self._last_text.pop(start, None)
         return self._revisions.pop(start, 0) + 1
 
     async def worker(self) -> None:
@@ -98,6 +100,9 @@ class PartialTranscriber:
                 # revisión final podría chocar con su número.
                 if start in self._closed or not text.strip():
                     continue
+                if text.strip() == self._last_text.get(start):
+                    continue  # nada nuevo que mostrar: ni revisión ni render
+                self._last_text[start] = text.strip()
                 revision = self._revisions.get(start, 0) + 1
                 self._revisions[start] = revision
                 seq = self.seq_for(start)

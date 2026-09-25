@@ -82,3 +82,24 @@ test('cambiar de sesión limpia la barra y lo que estaba en cola', () => {
   h.advance(MAX_HOLD_MS * 2);
   assert.equal(h.shown.at(-1), '', 'nada de la sesión anterior debe aparecer después');
 });
+
+test('una provisional que reescribe el comienzo sin contenido nuevo no hace temblar la barra', () => {
+  const h = harness();
+  h.pacer.push('seg-1:es', 'Arrancamos con el', 'provisional');
+  // Reescritura temprana sin más contenido: se sostiene lo mostrado.
+  h.pacer.push('seg-1:es', 'Arranquemos con lo', 'provisional');
+  assert.equal(h.shown.at(-1), 'Arrancamos con el');
+  // Con contenido claramente nuevo, sí se avanza aunque reescriba.
+  h.pacer.push('seg-1:es', 'Arranquemos con lo básico de scheduling', 'provisional');
+  assert.equal(h.shown.at(-1), 'Arranquemos con lo básico de scheduling');
+  // La final siempre reemplaza, sin heurística.
+  h.pacer.push('seg-1:es', 'Arrancamos con lo básico de scheduling.', 'final');
+  assert.equal(h.shown.at(-1), 'Arrancamos con lo básico de scheduling.');
+});
+
+test('una provisional que solo extiende el texto avanza siempre', () => {
+  const h = harness();
+  h.pacer.push('seg-1:es', 'Bienvenidos a', 'provisional');
+  h.pacer.push('seg-1:es', 'Bienvenidos a todos a esta charla', 'provisional');
+  assert.equal(h.shown.at(-1), 'Bienvenidos a todos a esta charla');
+});

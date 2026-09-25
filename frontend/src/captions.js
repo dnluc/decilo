@@ -21,6 +21,23 @@ export function holdTimeFor(text) {
   return Math.min(MAX_HOLD_MS, Math.max(MIN_HOLD_MS, Math.round(text.length * MS_PER_CHAR)));
 }
 
+// Una hipótesis provisional nueva puede reescribir el comienzo de la anterior
+// (la traducción del parcial se rehace entera y cambia palabras ya leídas).
+// Para que la barra no "tiemble", solo se avanza: si el texto nuevo extiende
+// al mostrado, o trae bastante más contenido, se muestra; una reescritura
+// temprana sin contenido nuevo se sostiene hasta que la final decida.
+export function stabilized(previous, next) {
+  if (!previous || next.startsWith(previous)) return next;
+  const prevWords = previous.split(' ');
+  const nextWords = next.split(' ');
+  let common = 0;
+  while (common < prevWords.length && common < nextWords.length
+      && prevWords[common] === nextWords[common]) common++;
+  const rewritesStart = common < prevWords.length - 2;
+  const addsContent = nextWords.length > prevWords.length + 1;
+  return rewritesStart && !addsContent ? previous : next;
+}
+
 export function createCaptionPacer({ onShow, now = () => Date.now(), schedule = setTimeout, cancel = clearTimeout }) {
   let pending = [];
   let showing = null; // { key, text, until }
@@ -56,10 +73,13 @@ export function createCaptionPacer({ onShow, now = () => Date.now(), schedule = 
       if (showing?.key === key) {
         // Crece o se confirma en el lugar, sin reiniciar su tiempo de
         // lectura: así el texto aparece palabra por palabra sin saltos.
-        if (showing.text !== text || showing.state !== state) {
-          showing.text = text;
+        // Entre provisionales, además, sin retroceder.
+        const shown = state === 'provisional' && showing.state === 'provisional'
+          ? stabilized(showing.text, text) : text;
+        if (showing.text !== shown || showing.state !== state) {
+          showing.text = shown;
           showing.state = state;
-          onShow(text, state);
+          onShow(shown, state);
         }
         return;
       }

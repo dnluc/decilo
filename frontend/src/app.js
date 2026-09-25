@@ -89,9 +89,14 @@ function render() {
   if (state.restarted) notices.push('La transmisión se reinició. Parte del historial anterior puede no estar disponible.');
   if (state.historyTruncated) notices.push('Mostramos el historial reciente; el comienzo de la charla ya no está disponible.');
   if (state.error) notices.push(state.error.message);
-  for (const gap of state.gaps) {
+  // Un gap que solo retira texto provisional (la pasada final descartó ruido
+  // o música que se había anticipado) no interrumpe la charla: no se avisa.
+  // De las interrupciones reales se muestran las últimas; el resto se resume.
+  const interruptions = state.gaps.filter(gap => !(gap.discard_captions?.length));
+  for (const gap of interruptions.slice(-3)) {
     notices.push(`Interrupción ${gap.start_ms === null ? 'en la charla' : `${timestamp(gap.start_ms)}–${timestamp(gap.end_ms)}`}: ${gapReason[gap.reason]}`);
   }
+  if (interruptions.length > 3) notices.push(`(+${interruptions.length - 3} interrupciones anteriores)`);
   $('notices').replaceChildren(...notices.map(text => node('p', '', text)));
 
   const language = $('language').value;
