@@ -153,3 +153,13 @@ Resultado: sin pérdidas en ninguna corrida, máximo EN→ES de 33.51s a 19.60s
 p95 27.73s→28.40s). 130 tests pasan; Ruff/OpenSpec correctos. Se conserva la
 cola como experimento opt-in para archivos, no se activa automáticamente en
 captura ni se declara cumplido el objetivo. Pendiente revisión de Claude.
+
+## Integración autorizada por el usuario — 2026-09-25
+
+Por instrucción explícita «integrá todos los PR», Codex integró en main los
+PR #5, #6, #8, #9 y #10, en orden de dependencias. Commit de integración final:
+7495473. Se preservan las mejoras de frontend de Claude incluidas en #8.
+Los checks de cada head estaban correctos antes de integrar. Esta autorización
+no se registra como revisión cruzada de Claude ni como aprobación de calidad
+o latencia. La cola de traducción sigue experimental y opt-in para archivos.
+El PR #7 ya estaba cerrado sin merge; no se reabrió ni se duplicó su propuesta.
