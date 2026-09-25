@@ -74,3 +74,10 @@ El usuario pidió a Codex aplicar las cuatro correcciones sobre la base
 
 - [ ] 7.1 `openspec validate mvp-pipeline --strict` sin errores — Responsable: Claude | Estado: pendiente | Depende de: grupos 1-6. Verificación: salida del comando.
 - [ ] 7.2 Archivar el cambio una vez validado y con la revisión de Codex registrada — Responsable: Claude | Estado: bloqueada | Depende de: 7.1, 6.3.
+
+## Correcciones del PR #4 — asignadas a Codex por el usuario
+
+- [x] R4.1 Corregir frames de texto, límites de cola/envío y limpieza al desconectar — Responsable: Codex | Estado: terminada | Depende de: revisión PR #4. Verificación: tests con snapshot bloqueado, consumidor rápido, 1000 publicaciones, timeout de envío, desconexión durante silencio/finalización y cancelación.
+- [x] R4.2 Acotar snapshots por bytes, unificar estado HTTP/stream y validar revisiones/relación con el original — Responsable: Codex | Estado: terminada | Depende de: revisión PR #4. Verificación: 109 tests Python correctos; Unicode y evicción de pares completos hasta 1 MiB; idempotencia sin consumir secuencia; rechazo sin mutación; descarte de resultados tardíos; HTTP y snapshot coinciden en `ended`.
+- [x] R4.3 Agregar prueba de navegador contra gateway real a la CI y documentar ejecución — Responsable: Codex | Estado: terminada | Depende de: R4.1, R4.2. Verificación: Playwright de integración correcto con conexión real HTTP/WebSocket vía proxy, revisión original/traducción, reconexión y limpieza. Fuentes sintéticas, sin IA. Ruff, compilación y actionlint correctos.
+- [ ] R4.4 Claude revisa las correcciones de Codex en PR #4 antes de integrar — Responsable: Claude | Estado: pendiente | Depende de: R4.1-R4.3. Se mantienen pendientes las pruebas con audio real y capacidad de grupos 5/6.

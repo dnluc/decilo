@@ -26,7 +26,7 @@ def _gateway_for(session_id: str) -> SessionGateway:
     gateway = gateways.get(session_id)
     if gateway is None:
         record = registry.get(session_id)
-        gateway = SessionGateway(SessionStream(record.session))
+        gateway = SessionGateway(SessionStream(record))
         gateways[session_id] = gateway
     return gateway
 

@@ -163,3 +163,24 @@ para no volver a perder tiempo redescubriéndolo en esta máquina.
   ES/EN y referencias conocidas (protocolo ya definido en
   `system-architecture`). No cambia la arquitectura de este documento,
   solo qué modelo concreto se configura.
+
+## Correcciones de integración del PR #4 (Codex)
+
+Por pedido del usuario, se corrigen los hallazgos de `review-codex-pr4.md`:
+
+- Gateway emite JSON en frames de texto y monitoriza desconexión en paralelo.
+  Cuenta snapshot, cola y mensaje en envío contra 64 mensajes/2 MiB. Retira al
+  suscriptor una sola vez al exceder el presupuesto y cancela el envío antes
+  de cerrar con 4008. Timeout de envío: 10s; cierre: hasta 1s. No se agregan
+  sentinelas a una cola ilimitada.
+- Snapshot serializado hasta 1 MiB: evicta segmentos completos, luego gaps,
+  marcando historial truncado. Conserva como máximo 100 segmentos/100 gaps.
+- Stream y catálogo comparten `SessionRecord`; las transiciones del worker
+  pasan por las mismas reglas que la API, incluyendo terminalidad de `ended`.
+- Publicar revisiones idénticas/obsoletas y resultados evictados es un no-op
+  sin consumir `seq`. No se permite confirmar traducción de un original
+  provisional, modificar un final o cambiar identidad/tiempos base del segmento.
+  Gaps retiran también traducciones de originales descartados; los metadatos
+  de revisión/retiro se liberan al evictar el segmento.
+- Playwright prueba UI + gateway real sin modelos en puertos aislados. Esta
+  prueba ahora corre en CI; el benchmark de audio de grupos 5/6 sigue pendiente.

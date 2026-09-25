@@ -90,3 +90,22 @@ def test_session_detail_404():
     client = TestClient(app)
     resp = client.get("/api/v1/sessions/no-existe")
     assert resp.status_code == 404
+
+
+def test_stream_status_is_shared_with_http_and_validated():
+    from decilo.app import _gateway_for, gateways
+    registry._records.clear()
+    gateways.clear()
+    registry.register(make_session("status-test", status="live"))
+    stream = _gateway_for("status-test").stream
+    stream.record_status(stream.session.model_copy(update={"status": "ended"}))
+    client = TestClient(app)
+    assert client.get("/api/v1/sessions/status-test").json()["status"] == "ended"
+    assert client.get("/api/v1/sessions").json()["sessions"][0]["status"] == "ended"
+    assert stream.snapshot().data.session.status == "ended"
+    with pytest.raises(InvalidTransition):
+        stream.record_status(stream.session.model_copy(update={"status": "live"}))
+    assert stream.seq == 1
+    assert stream.session.status == "ended"
+    registry._records.clear()
+    gateways.clear()
