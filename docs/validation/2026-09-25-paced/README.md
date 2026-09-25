@@ -1,5 +1,8 @@
 # Medición con archivo a ritmo real — PR #5
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Codex continuó el handoff de Claude. El worker espera hasta el fin de cada
 chunk antes de inferir; `started_at` permite compartir el reloj monotónico
 con el medidor. La espera está dentro del `try/finally` para eliminar el

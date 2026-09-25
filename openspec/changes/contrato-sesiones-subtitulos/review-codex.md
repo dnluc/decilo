@@ -1,5 +1,8 @@
 # Revisión de Codex: reorganización de tareas de Claude
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Contrato público v1 implementado. Conservar sus requisitos; las divergencias actuales de finalización, gaps y tiempos están registradas en el índice, no se consideran resueltas por integrar PRs.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 Revisión del commit `4bf2c28`, comparado con `e54ea57`.
 Alcance: documentación y planificación; no hay código de aplicación publicado
 en estas revisiones. La propuesta `mvp-pipeline` se leyó como destino de las

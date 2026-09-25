@@ -1,5 +1,8 @@
 # Prueba de dos sesiones en navegador con modelos reales
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Codex verificó el commit `801f3a4` después del merge del PR #4. Resultado:
 **el recorrido archivo → Whisper → Gemma → WebSocket → navegador funciona;
 la calidad y la capacidad de tiempo real aún no están acreditadas.**

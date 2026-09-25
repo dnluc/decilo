@@ -1,11 +1,15 @@
 # Design
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Contrato público v1 implementado. Conservar sus requisitos; las divergencias actuales de finalización, gaps y tiempos están registradas en el índice, no se consideran resueltas por integrar PRs.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Context
 
 Ver `proposal.md`, `../../../VISION.md` y el cambio `arquitectura-base`.
-Backend Python confirmado; motores pendientes de prueba. No hay aplicación
-ni clientes existentes. Este es un contrato propuesto por Codex para revisión
-de Claude, no una descripción de endpoints ya desplegados.
+Contrato v1 aceptado e implementado en backend Python y frontend JavaScript.
+La descripción siguiente conserva las reglas compartidas. Los motores actuales
+son Whisper/Ollama o Gemini Live/REST; la aceptación de calidad/latencia y las
+divergencias del motor se siguen por separado.
 
 ## Goals / Non-Goals
 
@@ -211,7 +215,8 @@ El frontend presenta texto como texto, nunca como HTML.
 `source_revision` es `null` para original y un entero positivo para traducción.
 El original se publica antes de cualquier traducción basada en él. Si el
 original avanza, backend y cliente invalidan todas sus traducciones anteriores;
-la UI muestra traducción pendiente en vez de mantenerla como vigente.
+la traducción anterior deja de estar vigente. La UI actual muestra el original
+con estilo provisional mientras llega la nueva traducción, sin cartel de espera.
 Cancelar trabajo antiguo cuando sea posible; descartar su resultado al volver.
 La revisión del traductor continúa creciendo incluso tras la invalidación.
 

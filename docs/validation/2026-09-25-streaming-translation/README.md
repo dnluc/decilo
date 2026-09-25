@@ -1,5 +1,8 @@
 # Traducción progresiva: verificación de integración
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Etapa B de backend-latencia-incremental. Conserva VAD de Claude (PR #14), contratos
 v1 y default solo final. Implementa cliente HTTP por lifespan/event loop,
 preparación opt-in, streaming NDJSON, provisionales y confirmación explícita.

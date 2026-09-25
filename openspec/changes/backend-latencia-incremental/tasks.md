@@ -1,5 +1,8 @@
 # Tasks
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** PRs #20–#22 integrados: parciales, heurística textual y Live. Requisitos de presupuesto semántico, finalización incierta y evaluación sostenida siguen abiertos; diseño original es el objetivo, no una declaración de cumplimiento.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## 1. Contrato y baseline
 - [x] 1.1 Revisar diseño/handoff y registrar objeciones concretas — Responsable: Claude | Estado: terminada | Depende de: ninguna. Ver «Objeciones de Claude» al final.
 - [ ] 1.2 Inventario y baseline reproducible: reutilizar mediciones previas, incorporar audio humano, pérdidas y dos sesiones — Responsable: Codex | Estado: pendiente | Depende de: ninguna
@@ -7,7 +10,7 @@
 
 ## 2. Recursos y traducción progresiva
 - [x] 2.1 Cliente HTTP con lifespan, preparación de modelos y cierre/cancelación probados — Responsable: Codex | Estado: terminada | Depende de: instrumentación parcial de 1.3
-- [x] 2.2 Consumir NDJSON y emitir revisiones de traducción sobre original final; tratar truncamiento/errores — Responsable: Codex | Estado: terminada (implementación opt-in; revisión 1.1 pendiente) | Depende de: 2.1
+- [x] 2.2 Consumir NDJSON y emitir revisiones de traducción sobre original final; tratar truncamiento/errores — Responsable: Codex | Estado: terminada (implementación opt-in; revisión de diseño 1.1 registrada, evaluación sostenida pendiente) | Depende de: 2.1
 - [x] 2.3 Tests de revisiones tardías, stop, timeout, snapshot y aislamiento de sesiones — Responsable: Codex | Estado: terminada (etapa B: originales finales) | Depende de: 2.2
 
 ## 3. Reconocimiento y segmentación
@@ -101,3 +104,16 @@ resulta inestable lo resuelvo del lado de la presentación, no pidiendo cambios
 al backend.
 
 Nada de esto requiere cambiar el protocolo v1.
+
+## Sincronización documental posterior a PRs #21/#22 — Codex
+
+Base `e4b9f90`. Se conservan arriba smokes, conteos y autoría de Claude como
+registros históricos; no se reejecutaron ni se generalizan a rendimiento sostenido.
+En particular, la autodetección intenta clasificar al alcanzar el tope aun sin
+2,5 s de voz; 4408 no significa que todo silencio se descarte. Live renueva a
+los nueve minutos según código, no garantiza continuidad sin pérdidas.
+
+Documentadas las diferencias con los requisitos: final residual sin confirmación
+remota/traducción, motivo pause para cortes textuales, riesgo de retroceso de
+end_ms al recortar un segmento ya publicado, reserva de cupos y cierre de clientes.
+No se marcaron completas tareas 1.2/1.3, 4.3 ni evaluación/cierre por actualizar docs.

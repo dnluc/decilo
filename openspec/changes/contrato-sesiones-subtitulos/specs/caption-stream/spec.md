@@ -1,5 +1,8 @@
 # Spec Delta
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Contrato público v1 implementado. Conservar sus requisitos; las divergencias actuales de finalización, gaps y tiempos están registradas en el índice, no se consideran resueltas por integrar PRs.
+> [Estado global, divergencias y evidencia](../../../../README.md).
+
 ## Purpose
 
 Entregar subtítulos por sesión con revisiones explícitas, relación entre

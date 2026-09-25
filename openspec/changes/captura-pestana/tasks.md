@@ -1,4 +1,7 @@
 # Tasks
+
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Ingreso actual de 100 ms, provider por captura y language auto/en/es. Hay caminos distintos Live y por segmentos; consultar design.md actualizado para sus límites.
+> [Estado global, divergencias y evidencia](../../README.md).
 - [x] 1. Compartir inferencia entre archivos y captura — Responsable: Codex
 - [x] 2. Implementar ingreso PCM, límites, gaps y cierre — Responsable: Codex
 - [x] 3. Embeber video y capturar pestaña con permiso — Responsable: Codex

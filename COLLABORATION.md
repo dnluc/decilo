@@ -50,10 +50,19 @@ Cambio solicitado por el usuario el 2026-09-25: Codex toma el backend y
 Claude el frontend. Aplica al trabajo pendiente y nuevo; las tareas terminadas
 conservan su autoría. Cada asistente mantiene su carpeta y la revisión cruzada.
 
-Próximo objetivo compartido: demo con audio audible y subtítulos. Codex prepara
-el contrato y backend para iniciar sesiones a pedido y alimentar audio a su
-ritmo real; Claude implementa el reproductor y los controles del navegador.
-El contrato se registra en OpenSpec antes de implementar ambos lados.
+Estado compartido al PR #22 (`e4b9f90`, 2026-09-25): captura de pestaña,
+originales provisionales, proveedor por sesión, Gemini Live y cortes textuales
+ya integrados. El usuario amplió el alcance de Claude al backend incremental,
+según `backend-latencia-incremental/tasks.md`; esa asignación específica prevalece
+sobre el reparto general y se conserva su autoría. Próximo trabajo de aceptación:
+validación sostenida con dos fuentes humanas, calidad y latencia hasta pantalla.
+Consultar [estado de OpenSpec](openspec/README.md) antes de tomar una tarea vieja.
+
+Operación compartida: un único backend en 8000 y un frontend en 5173. Fijar
+`DECILO_ENV_FILE` al `.env` del worktree que opera el backend; no reemplazar un
+servidor de prueba por otro sin conservar modo demo/proveedores. No compartir
+claves por commits. La documentación no certifica qué proceso/configuración
+está activo en un momento dado.
 
 Separar todas las tareas por componente; quien no implementa una tarea la
 valida antes de que se integre a `main`. No se trabaja en paralelo sobre
@@ -90,30 +99,28 @@ de dejarla duplicada y "sin asignar" en dos archivos.
 
 ## Estado de los cambios de OpenSpec
 
-- `arquitectura-base`: drivers y diagrama aceptados por ambos. Falta
-  cerrar cuando `mvp-pipeline` resuelva su spike (grupo 2) y la medición
-  end-to-end (grupo 6).
-- `contrato-sesiones-subtitulos`: contrato aceptado por Claude. Falta que
-  Codex cree su propio cambio de OpenSpec para la vista de audiencia y
-  que se integren ambos lados (grupo 4).
-- `mvp-pipeline`: en curso, Codex. Ver `openspec/changes/mvp-pipeline/tasks.md`.
-  **Nota de Claude (2026-09-25) antes de pasar a frontend**: mientras medía
-  latencia con las dos sesiones, encontré el mismo problema que documentó
-  Codex en `docs/validation/2026-09-25-two-sessions/` — el worker procesa
-  el archivo tan rápido como puede, sin esperar el ritmo real del audio
-  (por eso mis mediciones daban valores negativos: el pipeline se
-  adelantaba al propio audio). **Ya lo arreglé en la PR #5**
-  (`claude/handoff-latency-notes`, sin mergear): cada chunk espera a que
-  transcurra su intervalo real antes de procesarse. Codex: revisar esa PR
-  antes de reimplementar el "alimentar audio a su ritmo real" del párrafo
-  de abajo, para no duplicar el fix. También encontré (y revertí, no
-  quedó en el repo) que limitar `cpu_threads` de faster-whisper para
-  repartir los 16 cores entre sesiones **empeora** la latencia bastante
-  (p50 de ~1s pasó a ~11-17s) — no vale la pena repetir ese experimento
-  tal cual. La causa raíz de la degradación bajo 2 sesiones concurrentes
-  sigue sin diagnosticar.
-- CI mínima: PR #1 revisada y mergeada a `main` (Ruff + pytest + detección
-  de `src/`, ver `docs/ci.md`).
+Referencia actual: [openspec/README.md](openspec/README.md).
+
+- `arquitectura-base`: drivers aceptados; documento de implementación en
+  `docs/ARQUITECTURA.md`; aceptación sostenida de latencia pendiente.
+- `contrato-sesiones-subtitulos`: v1 implementado y compartido por ambos caminos;
+  algunas políticas de confirmación/gaps del motor aún divergen de objetivos.
+- `mvp-pipeline`: archivos, captura, modelos, colas y proveedores implementados;
+  los grupos de benchmark/aislamiento conservan pendientes y evidencia histórica.
+- `vista-audiencia` / `audio-playback`: la primera UI y reproductor WAV son
+  históricos; UI vigente en `frontend/README.md`, rutas WAV siguen en backend.
+- `captura-pestana`: transporte de 100 ms, selector local/nube y ruta Live;
+  límites y excepciones documentados sin asumir aprobación de calidad.
+- `backend-latencia-incremental`: PRs #20–#22 integrados, medición larga y
+  reconciliación de semántica de final/cortes aún pendientes.
+- CI: Python y Audience ejecutan tests sin inferencia y build; no hay CD,
+  Sonar ni CodeRabbit en los workflows actuales.
+- `entrega-devpost`: borrador y seguimiento documental; actualizar un Markdown
+  no actualiza el formulario externo ni constituye envío de la propuesta.
+
+Los benchmarks previos conservan sus modelos/threads: el perfil local nuevo
+(base/small y threads por modelo) necesita comparación propia; no se presenta
+la medición antigua como evidencia de ese perfil.
 
 ## Entrega e integración
 

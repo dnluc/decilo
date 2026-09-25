@@ -1,5 +1,8 @@
 # Prueba mínima: backend activo con Gemini
 
+> Evidencia histórica: conserva modelos, parámetros y resultados de esta corrida.
+> No describe por sí sola el perfil actual de PRs #21/#22; ver [índice de evidencia](../README.md).
+
 Solicitada por el usuario con cuenta prepaga: limitar solicitudes. Se usó main
 f5bdbc2 (PRs 15/17/16 integrados), backend real en 8000 y frontend en 5173.
 Configuración LOCAL: STT y traducción Gemini 3.8 Flash; sin prewarm ni autostart;

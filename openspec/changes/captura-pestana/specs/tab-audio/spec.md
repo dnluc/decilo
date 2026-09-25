@@ -1,5 +1,8 @@
 ## ADDED Requirements
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Ingreso actual de 100 ms, provider por captura y language auto/en/es. Hay caminos distintos Live y por segmentos; consultar design.md actualizado para sus límites.
+> [Estado global, divergencias y evidencia](../../../../README.md).
+
 ### Requirement: Capturar audio de pestaña
 El sistema SHALL capturar solo audio autorizado y mostrar subtítulos nuevos.
 
@@ -8,8 +11,9 @@ El sistema SHALL capturar solo audio autorizado y mostrar subtítulos nuevos.
 - **THEN** libera las pistas y muestra un mensaje sin iniciar inferencia
 
 #### Scenario: Cola llena
-- **WHEN** hay dos bloques pendientes y llega otro
-- **THEN** descarta el más antiguo y publica session.gap overload
+- **WHEN** el camino por segmentos excede su presupuesto de audio pendiente
+- **THEN** descarta segmentos antiguos y publica session.gap overload
+- **AND** el presupuesto depende de la segmentación configurada; Live tiene otro flujo
 
 #### Scenario: Detener captura
 - **WHEN** el usuario pulsa Detener
@@ -38,3 +42,16 @@ y traducción de una captura sin modificar otras sesiones ni el entorno global.
 #### Scenario: Preparación local fallida
 - **WHEN** los modelos locales no están listos y una captura elige Gemini
 - **THEN** la preparación local no bloquea esa captura de nube
+
+### Requirement: Ruteo de captura en nube
+El sistema SHALL seleccionar Live para STT Gemini si está habilitado y conservar
+el contrato v1 de audiencia con independencia del proveedor de reconocimiento.
+
+#### Scenario: Live desactivado
+- **WHEN** DECILO_GEMINI_LIVE es 0 y se selecciona Gemini
+- **THEN** la captura procesa segmentos mediante Gemini REST
+
+#### Scenario: Falla de setup Live
+- **WHEN** la conexión inicial Live no puede completarse
+- **THEN** se informa un error y se continúa por segmentos con el proveedor Gemini
+- **AND** no se afirma con este fallback una recuperación sin pérdidas durante una sesión Live ya iniciada

@@ -2,9 +2,9 @@
 
 Generadas desde `src/decilo/models.py` (`scripts/gen_fixtures.py`), que
 implementa el envelope y los eventos de
-`openspec/changes/contrato-sesiones-subtitulos/`. Sirven para construir y
-probar la vista de audiencia sin esperar al backend real — el contrato ya
-está aceptado, estas fixtures son válidas contra los modelos.
+`openspec/changes/contrato-sesiones-subtitulos/`. Sirven para probar la vista de audiencia sin inferencia. El backend ya está
+implementado: las fixtures son ejemplos sintéticos del contrato, no resultados
+de modelos ni evidencia de rendimiento.
 
 | Archivo | Qué es |
 | --- | --- |
@@ -24,3 +24,9 @@ Regenerar tras cambiar `src/decilo/models.py`:
 ```sh
 uv run scripts/gen_fixtures.py
 ```
+
+El contrato público v1 se conserva con Gemini Live y Whisper. `detecting` y
+`ready` pertenecen al socket de captura y no a estos envelopes de audiencia.
+El manejo de mensajes Live se prueba en `tests/test_gemini_live.py`; un evento
+`final` válido estructuralmente no demuestra calidad ni finalización oficial del
+proveedor. Ver [arquitectura](../docs/ARQUITECTURA.md).

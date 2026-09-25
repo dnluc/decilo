@@ -1,5 +1,8 @@
 # Design
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Pipeline implementado e integrado. Whisper final small EN/ES, provisional base, Gemma e2b y Gemini Live/REST; las decisiones/mediciones previas conservan su fecha y configuración.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 ## Context
 
 Ver `proposal.md`. Backend en Python (confirmado en `arquitectura-base`).

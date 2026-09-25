@@ -1,45 +1,65 @@
-# CI mínima para la Vibeathon
+# Integración continua y validación
 
-GitHub Actions ejecuta `.github/workflows/ci.yml` en cada push y pull request.
-Usa Python 3.12, verifica dependencias, compila bytecode, revisa errores básicos
-con Ruff y ejecuta pytest. No genera un ejecutable ni despliega servicios.
+Estado documental al PR #22 (`e4b9f90`), 25/09/2026. Dos workflows corren en
+push, pull request y ejecución manual. No despliegan ni invocan modelos reales.
 
-Hasta que Claude incorpore `src/`, el resumen indica explícitamente que el
-backend está pendiente y esos controles se omiten. Un resultado verde en esta
-etapa no valida la aplicación. Con `src/` presente, faltar dependencias o tests
-es un error: no se oculta el código de salida de pytest cuando no encuentra tests.
+| Workflow | Controles |
+| --- | --- |
+| [CI Python](../.github/workflows/ci.yml) | Python 3.12, instalar dependencias y `pip check`, compileall, Ruff básico, pytest excluyendo `model` |
+| [Audience](../.github/workflows/audience.yml) | Node 22, npm ci, tests Node, build Vite, Playwright de navegador e integración HTTP/WS real con inferencia simulada |
 
-Contrato para el backend:
+Python usa `ruff --select E9,F63,F7,F82` en CI: no equivale a lint exhaustivo,
+SAST ni análisis de dependencias vulnerables. El detector de `src/` queda como
+soporte del arranque del proyecto; hoy el backend ya existe y se ejecutan sus checks.
 
-- Dependencias en un `pyproject.toml` instalable o `requirements.txt`.
-  Si existe `requirements-dev.txt`, también se instala.
-- Tests en `tests/`, con transcriptor y traductor simulados. Incluir las
-  dependencias de los tests en el manifiesto o en `requirements-dev.txt`.
-- Marcar con `@pytest.mark.model` las pruebas que descargan modelos o necesitan
-  Ollama/Whisper reales. Se ejecutan localmente; la CI las excluye. Debe haber
-  tests sin modelos: excluir todos los tests hace fallar el job.
+Las actions están fijadas por SHA y los jobs usan permisos de lectura. Sonar,
+CodeRabbit, análisis adicional de seguridad y despliegue automático no están
+implementados en estos workflows. La nota histórica de secret scanning/push
+protection fue verificada el 24/09; esta actualización no revalida ajustes externos.
 
-Las regresiones prioritarias ya están previstas en `mvp-pipeline`: traducciones
-obsoletas, reconexión/snapshot, clientes lentos y aislamiento de dos sesiones.
-Se ejecutan con pytest; no hace falta otra herramienta o una suite duplicada.
-La calidad de traducción y la latencia con audio real requieren su validación
-local por separado.
+## Aislamiento
 
-Las actions se fijan por SHA y el workflow tiene permisos de lectura, no usa
-secretos ni runners locales. GitHub ya tiene secret scanning y push protection
-activados (verificado el 2026-09-24). Sonar, CodeRabbit, análisis adicional de
-seguridad y despliegue automático quedan postergados para priorizar la demo.
+- `tests/conftest.py` excluye el `.env` del desarrollador y bloquea transportes
+  HTTP reales en pruebas sin marca `model`. No es un bloqueo universal de sockets:
+  las pruebas de Gemini Live deben simular también sus conexiones WebSocket.
+- `frontend/tests/integration/browser_backend.py` usa configuración de prueba,
+  sin clave y con inferencia falsa; no ejecuta Whisper/Ollama/Gemini.
+- Marcar `model` solo para pruebas que realmente requieren modelos/servicios;
+  la CI ejecuta `-m "not model"` y exige tests restantes.
 
-Para reproducir localmente, instalar las mismas dependencias del workflow y correr:
+Se cubren revisiones, finales inmutables, traducciones obsoletas, snapshots,
+reconexión, clientes lentos, PCM, colas, segmentación, selección local/nube,
+parciales, detección inicial y mensajes simulados de Gemini Live. Las pruebas
+no sustituyen una sesión humana larga con calidad anotada ni validan cuotas.
+
+## Reproducir
+
+Desde la raíz, luego de `uv sync --group dev` y `npm --prefix frontend ci`:
 
 ```sh
-python -m pip check
-python -m compileall -q src tests
-python -m ruff check --select E9,F63,F7,F82 src tests
-python -m pytest tests -q -m "not model" -o "markers=model: requiere modelos o servicios reales"
+uv run python -m compileall -q src tests
+uv run python -m ruff check --select E9,F63,F7,F82 src tests
+uv run python -m pytest tests -q -m 'not model'
+npm --prefix frontend test
+npm --prefix frontend run build
 ```
 
-El flujo acordado ahora usa PRs para código/configuración y permite documentación
-directa a `main`. Revisar la CI y la aceptación del otro asistente antes de
-integrar. Esto es un acuerdo de trabajo: aún no hay protección de rama que
-bloquee merges o pushes automáticamente.
+Para navegador/integración, desde `frontend/`:
+
+```sh
+npx playwright install chromium
+npm run test:browser
+uv run --project .. npm run test:integration
+```
+
+La integración utiliza 18764 y 5174, separados de la demo 8000/5173. Sus
+servidores se detienen al terminar. Ver [frontend](../frontend/README.md)
+para Chrome del sistema/NixOS. No se publican conteos como si se hubieran
+repetido pruebas durante una actualización exclusivamente documental.
+
+## Publicación y evidencia
+
+Código/configuración por PR con revisión según [COLLABORATION.md](../COLLABORATION.md);
+documentación puede ir a main. El estado externo de protecciones de rama no
+se deduce de los archivos de workflow. Cada corrida de inferencia conserva su
+configuración y límites en [validation](validation/README.md).

@@ -1,5 +1,8 @@
 Revisión de Codex sobre `c884ebe`. **Solicito cambios antes de integrar**: los tests actuales pasan, pero hay un bloqueo de conexión con la audiencia y casos del contrato que no ejercitan.
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** Pipeline implementado e integrado. Whisper final small EN/ES, provisional base, Gemma e2b y Gemini Live/REST; las decisiones/mediciones previas conservan su fecha y configuración.
+> [Estado global, divergencias y evidencia](../../README.md).
+
 1. **[P1] Publicar JSON como frames de texto** — `src/decilo/gateway.py:66,73`. `send_bytes()` hace que el navegador entregue un Blob; `frontend/src/connection.js` exige `typeof data === 'string'` antes de parsear. La UI rechaza incluso el primer snapshot y reconecta indefinidamente. Reproduje el frame binario mediante el endpoint real con TestClient (`['type', 'bytes']`). Usar frames de texto y agregar una prueba del gateway con el consumidor real; los fakes actuales solo prueban bytes contra bytes.
 
 2. **[P1] Detener y cerrar efectivamente al suscriptor desbordado** — `src/decilo/gateway.py:50-73`. Tras llenar la cola se agrega otro `None` por cada evento a una Queue sin maxsize. Reproduje **1000 elementos pendientes**, aunque el límite anunciado es 64. Además el cierre queda detrás del backlog y no se alcanza si `send_bytes` está bloqueado. Marcar/retirar al cliente una sola vez, acotar cola y send pendiente, y poder cerrar/cancelar el envío sin esperar a drenar todo el backlog. Probar un websocket cuyo envío se bloquea y comprobar memoria acotada y cierre 4008, además del consumidor rápido.

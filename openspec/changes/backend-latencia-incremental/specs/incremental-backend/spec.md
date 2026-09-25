@@ -1,5 +1,8 @@
 # Spec Delta
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** PRs #20–#22 integrados: parciales, heurística textual y Live. Requisitos de presupuesto semántico, finalización incierta y evaluación sostenida siguen abiertos; diseño original es el objetivo, no una declaración de cumplimiento.
+> [Estado global, divergencias y evidencia](../../../../README.md).
+
 ## ADDED Requirements
 
 ### Requirement: Ingesta independiente de la inferencia

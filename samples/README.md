@@ -35,3 +35,11 @@ Sirve para medir el pipeline de forma reproducible (mismo audio, misma
 referencia, siempre), pero antes de la demo final conviene probar también
 con un fragmento de audio real de una charla de Nerdearla (permitido
 explícitamente por las bases del desafío para el video demo).
+
+## Usar las muestras con el código actual
+
+El backend en modo demo registra estos WAV; se pueden servir/iniciar mediante
+la API o medir con `scripts/measure_latency.py`. El frontend vigente captura
+pestañas y ya no tiene el reproductor WAV de la primera demo. Ver
+[README](../README.md) y [arquitectura](../docs/ARQUITECTURA.md).
+Los scripts de archivos no ejercitan Gemini Live ni los parciales de captura.

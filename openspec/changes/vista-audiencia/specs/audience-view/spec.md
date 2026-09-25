@@ -1,5 +1,8 @@
 ## ADDED Requirements
 
+> **Lectura al 25/09/2026, PR #22 (`e4b9f90`):** La UI vigente es captura de pestaña, video y dock. El catálogo visual y ?demo=1 pertenecen a una versión anterior; el reductor y contrato v1 continúan en uso.
+> [Estado global, divergencias y evidencia](../../../../README.md).
+
 ### Requirement: Selección y lectura accesible
 La vista SHALL permitir elegir sesión e idioma habilitado, mostrar texto como
 texto y diferenciar provisional, definitivo y traducción pendiente.

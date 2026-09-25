@@ -1,7 +1,10 @@
-# Vista de audiencia de Decilo
+# Frontend de Decilo
 
-Cliente del contrato v1 de `contrato-sesiones-subtitulos`. Requiere Node.js
-22.12 o superior. No necesita Ollama ni Whisper para probar la UI.
+Estado: PRs #21/#22 (`e4b9f90`), 25/09/2026. JavaScript con módulos ES, HTML,
+CSS y Vite; Node.js 22.12+. Contrato de subtítulos v1.
+[Arranque completo](../README.md) · [Arquitectura](../docs/ARQUITECTURA.md).
+
+## Ejecutar
 
 ```sh
 cd frontend
@@ -9,89 +12,86 @@ npm ci
 npm run dev
 ```
 
-Abrir **http://127.0.0.1:5173/**. Seleccionar sesión e idioma; los subtítulos
-se actualizan sin duplicar revisiones. La conexión del espectador y el estado
-de la charla se muestran por separado. Se conservan hasta 100 segmentos y
-100 discontinuidades recientes; no es una exportación completa.
-
-Para ver ejemplos sin backend, abrir **http://127.0.0.1:5173/?demo=1**.
-El modo de muestra está rotulado: textos sintéticos y tiempos simulados,
-no transcripción ni traducción real. No se activa ante errores de conexión.
-
-## Conectar el backend de Claude
-
-El proxy local envía HTTP y WebSocket de `/api/` a `http://127.0.0.1:8000`.
-Cambiar el destino si Claude usa otro puerto:
+Abrir http://localhost:5173/. El frontend necesita backend en 8000 para captura
+real; el proxy reenvía HTTP y WebSocket de `/api` bajo el mismo origen:
 
 ```sh
 DECILO_BACKEND_URL=http://127.0.0.1:8001 npm run dev
 ```
 
-Rutas consumidas:
+El backend debe tener `DECILO_DEMO_SESSIONS=1`. Su `.env` contiene proveedores
+y claves; el frontend no necesita ni recibe `GEMINI_API_KEY`.
 
-- `GET /api/v1/sessions`, respuesta `{ "sessions": [...] }`.
-- `WS /api/v1/sessions/{session_id}/events`, empezando con snapshot.
+## Recorrido actual
 
-No requiere CORS abierto: el navegador consume el mismo origen del frontend.
-La UI no cambia de sesión automáticamente, no publica audio y no llama a los
-modelos. El backend determina los idiomas disponibles.
+1. Pegar URL de YouTube y pulsar **Cargar**.
+2. Elegir idioma EN/ES o detección automática, y proveedor local/nube.
+3. **Compartir audio de pestaña**, autorizar audio en Chrome y dar Play.
+4. Elegir idioma de lectura entre las salidas de esa sesión; **Detener** termina captura.
 
-## Pruebas y build
+La captura se vuelve la sesión seleccionada. `?session=<id>` permite adjuntarse
+a una sesión existente sin repetir inferencia. El catálogo permanece en la API,
+pero no hay selector general de charlas en la pantalla actual. `?demo=1` y el
+reproductor de WAV de la primera UI fueron retirados; las fixtures se usan en tests.
+
+Sin preferencia guardada y con nube disponible, el selector adopta el default
+del backend. `localStorage` conserva proveedor y tamaño de texto. Cambiar el
+selector no modifica una captura en curso. `cloud_available` solo indica que
+hay clave configurada, no comprueba acceso al modelo ni saldo.
+
+## Captura y eventos
+
+- `getDisplayMedia` nace del clic y requiere permiso real; no se pide micrófono.
+- AudioContext a 16 kHz, mezcla mono y PCM16 LE en paquetes de 100 ms, con offset uint32.
+- El worklet no reproduce audio adicional. Hasta 16 paquetes pendientes y un ACK en vuelo;
+  los descartes conservan salto de offset y se informan.
+- WS `/api/v1/capture?language=auto|en|es&provider=local|gemini`: control `detecting`/`ready`
+  y PCM. El modo automático necesita Whisper local incluso si se elige nube.
+- Al recibir `ready`, la UI abre `/api/v1/sessions/{id}/events`: snapshot y eventos JSON v1.
+- `/api/v1/providers` informa opciones; `/api/v1/sessions/{id}` resuelve el adjunto por URL.
+
+Gemini Live y Whisper tienen mecanismos internos distintos; la UI consume el
+mismo contrato. Una revisión reemplaza el texto del mismo segmento. Original
+final no equivale a traducción disponible: mientras falta español se muestra
+el original con estilo provisional, sin cartel «Traduciendo».
+
+## Presentación y recuperación
+
+Dock inferior de subtítulos, historial con lo último arriba y paleta sobria.
+El color distingue provisional/final. La barra sostiene cada entrada entre
+1,6 y 7 s; revisiones del mismo segmento se actualizan en el lugar. Al drenar
+una tanda de más de tres pendientes salta a la última, conservando el historial
+reciente de hasta 100 segmentos/100 gaps. No es una exportación completa.
+
+**Tamaño del texto** ofrece Normal, Grande y Muy grande. **Solo subtítulos**
+activa lectura; se sale con el botón de vuelta o Escape, sin abrir otro socket.
+Un live region anuncia finales. El texto del modelo se inserta con `textContent`.
+
+`state.js` valida y aplica eventos. `connection.js` recupera snapshot ante
+reconexión/hueco de secuencia, sin duplicar revisiones. Recargar la página
+capturadora termina su audio; un snapshot solo recupera contenido ya publicado.
+Los códigos de rechazo anteriores a aceptar el WS pueden verse como HTTP 403
+sin detalle de cierre en JavaScript; revisar también la configuración del backend.
+
+## Verificar sin inferencia
 
 ```sh
 npm test
 npm run build
 npx playwright install chromium
 npm run test:browser
-```
-
-En NixOS se puede usar el Chrome del sistema en lugar del navegador descargado:
-
-```sh
-CHROMIUM_PATH=/run/current-system/sw/bin/google-chrome npm run test:browser
-```
-
-Los tests de Node cubren el estado del protocolo y la recuperación de conexión.
-Playwright prueba selección, actualizaciones, aislamiento, tratamiento seguro
-de texto, errores HTTP y reconexión en navegador con API simulada. No acreditan
-calidad de inferencia ni el objetivo de latencia; falta la integración con audio real.
-
-`npm run build` produce `dist/`. Para desplegar, servir esos archivos y enrutar
-`/api/` al backend **bajo el mismo origen**, con soporte de WebSocket. Usar HTTPS
-para obtener WSS automáticamente. Vite es el servidor de desarrollo; este cambio
-no incluye despliegue de producción.
-
-## Opciones de lectura
-
-El selector **Tamaño del texto** ofrece Normal, Grande y Muy grande. Se recuerda
-la preferencia en este navegador cuando el almacenamiento local está disponible;
-si está bloqueado, sigue funcionando durante la visita.
-
-Después de elegir una sesión, **Solo subtítulos** oculta el catálogo y la
-presentación. Mantiene idioma, conexión, avisos y la identificación de muestra.
-Volver con **Volver a las charlas** o **Escape**. El modo no abre una conexión
-nueva ni se restaura automáticamente al recargar, para poder elegir otra charla.
-
-## Integración con el gateway real, sin inferencia
-
-Con Python 3.12 y las dependencias del backend instaladas (`pip install -e .`
-desde la raíz, o `uv sync`), ejecutar desde `frontend/`:
-
-```sh
-npm run test:integration
-# Si el entorno Python se gestiona con uv:
 uv run --project .. npm run test:integration
 ```
 
-Requiere Chromium instalado como las otras pruebas de navegador. Levanta
-servidores exclusivos de prueba en `127.0.0.1:18764` y `127.0.0.1:5174` y
-los detiene al terminar; falla si esos puertos están ocupados. No usa los puertos
-habituales de desarrollo de Claude/Codex.
+La integración requiere dependencias Python instaladas (`uv sync --group dev`
+desde la raíz) y puertos libres 18764/5174. Levanta y cierra servidores exclusivos;
+usa app, gateway, proxy, AudioWorklet y WS reales con inferencia simulada.
+No emplea credenciales pagas ni demuestra calidad/latencia real.
+Los endpoints `/api/_test/` solo existen en el módulo de pruebas.
 
-La app FastAPI, el registro, el stream, el gateway, el proxy y la UI son reales.
-Solo se sustituyen las fuentes de eventos por publicaciones sintéticas desde
-un módulo de prueba; no se ejecutan Whisper/Ollama. Los endpoints `/api/_test/`
-se agregan únicamente en ese módulo y no existen al iniciar `decilo.app:app`.
-Verifica el transporte WebSocket real, revisiones, HTTP/estado, cambio de sesión,
-reconexión por snapshot y limpieza de suscripciones. No mide calidad ni latencia
-con audio real.
+En NixOS, `CHROMIUM_PATH=/run/current-system/sw/bin/google-chrome` permite usar
+Chrome instalado para `test:browser` y `test:integration`.
+
+`npm run build` produce `dist/`. Para producción, servir esos archivos con
+`/api` bajo el mismo origen, soporte WebSocket y HTTPS. Vite es desarrollo;
+no hay despliegue automático ni configuración de producción incluida.
