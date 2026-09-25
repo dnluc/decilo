@@ -60,5 +60,6 @@ No afecta código todavía (todavía no hay implementación). Afecta:
 - El contrato de eventos de sesión/subtítulos que Claude y Codex acuerden
   en un cambio posterior (`COLLABORATION.md`), que deberá cumplir estos
   drivers (en particular latencia y aislamiento de fallos).
-- El reparto de tareas entre Claude y Codex, todavía pendiente de decisión
-  del usuario.
+- ~~El reparto de tareas entre Claude y Codex, todavía pendiente de decisión
+  del usuario~~ — resuelto 2026-09-24: ver `COLLABORATION.md` § "Reparto
+  confirmado".

@@ -15,12 +15,12 @@
 ## 3. Spike técnico: compatibilidad, calidad y capacidad de inferencia
 
 - [x] 3.1 Comprobar modalidades y API del runtime instalado — Responsable: Claude | Estado: terminada (compatibilidad confirmada; falta transcripción real ES/EN y traducción EN→ES comparadas con referencias) | Depende de: ninguna. Verificación (2026-09-24): `ollama show gemma3n:e4b` reporta `Capabilities: completion` (sin audio/visión); `curl -s localhost:11434/api/show -d '{"model":"gemma3n:e4b"}'` confirma `"capabilities":["completion"]`. Ollama NO expone entrada de audio para este modelo en esta instalación. Siguiente paso: evaluar STT local separado (Whisper vía `whisper.cpp` o `faster-whisper`) + traducción de texto EN→ES con un modelo vía Ollama.
-- [ ] 3.2 Medir inferencia, cola y calidad con dos fuentes a velocidad real según `design.md`; registrar límites de cola y timeout propuestos — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.1. Verificación: configuración, duración, muestras, p50/p95, pérdidas y revisión de calidad documentados; una medición sin navegador se etiqueta como parcial y no como end-to-end.
-- [ ] 3.3 Registrar motor elegido o limitaciones y alternativa si falla compatibilidad, calidad o capacidad; alinear el README ES/EN — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.1, 3.2 cuando el candidato sea compatible. Verificación: `design.md` y README describen solo el camino probado; no atribuyen recepción de audio a Ollama sin evidencia.
+- [x] 3.2 ~~Medir inferencia, cola y calidad con dos fuentes~~ — movida a `openspec/changes/mvp-pipeline/tasks.md` 2.1-2.2 (Claude), 2026-09-24 | Estado: movida.
+- [x] 3.3 ~~Registrar motor elegido~~ — movida a `openspec/changes/mvp-pipeline/tasks.md` 2.3 (Claude), 2026-09-24 | Estado: movida.
 
 La prueba final de latencia hasta el navegador, reconexión, aislamiento y
-sobrecarga corresponde al cambio de implementación del MVP. Debe quedar como
-tarea pendiente allí antes de cerrar este cambio; no está realizada por esta revisión.
+sobrecarga corresponde al cambio de implementación del MVP — ver
+`mvp-pipeline` grupo 6. No duplicar el seguimiento acá.
 
 ## 4. Cierre del cambio
 

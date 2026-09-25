@@ -5,8 +5,9 @@
 Ver `proposal.md` - Why. Restricciones conocidas: notebook de desarrollo
 sin GPU dedicada (Intel Iris Xe, CPU-only para inferencia), Ollama
 corriendo local exponiendo su API HTTP en `localhost:11434`, deadline el
-25/09/2026 12:00 ART. El reparto de tareas entre Claude y Codex todavía no
-está decidido; este documento no depende de esa decisión.
+25/09/2026 12:00 ART. El reparto de tareas entre Claude y Codex quedó
+confirmado el 2026-09-24 (ver `COLLABORATION.md`); este documento no
+dependía de esa decisión y sigue vigente igual.
 
 **Revisión de Codex (2026-09-24):** drivers aprobados con las correcciones
 registradas aquí y en `spec.md`. Rust y la meta propuesta de 3s p95 siguen
@@ -248,9 +249,9 @@ mínima; un panel de monitoreo completo sigue siendo opcional.
 
 ## Risks / Trade-offs
 
-- [Riesgo] Rust reduce la velocidad de desarrollo bajo el plazo del
-  hackathon → [Mitigación] crates de alto nivel + alcance de MVP acotado
-  (ver Decisions).
+- ~~[Riesgo] Rust reduce la velocidad de desarrollo~~ — no aplica: se
+  descartó Rust y se confirmó Python desde el inicio (ver Decisions),
+  nunca se llegó a pagar ese costo.
 - [Riesgo] CPU-only puede no cumplir 3s p95 con dos sesiones → medir
   temprano, evaluar modelos más pequeños y capacidad adicional. Reducir
   tamaño de un modelo no agrega soporte de audio ni garantiza calidad.
@@ -269,14 +270,20 @@ mínima; un panel de monitoreo completo sigue siendo opcional.
   Se descarta el envío de audio directo a Ollama; el motor de STT pasa a
   evaluarse por separado (Whisper/whisper.cpp o `faster-whisper`), ver
   tasks.md 3.1.
-- Runtime de STT, modelo de traducción y hardware con evidencia de calidad
-  y capacidad concurrente. Resolver en el spike, antes de tratar el diseño
-  como implementable y cerrado.
-- Contrato compartido de sesiones/eventos: sigue en un cambio posterior;
-  acordarlo antes de implementar backend y frontend por separado.
+- ~~Runtime de STT, modelo de traducción y hardware con evidencia de
+  calidad y capacidad concurrente~~ — el spike se movió a
+  `openspec/changes/mvp-pipeline/tasks.md` grupo 2 (Claude); no duplicar
+  aquí, seguir el estado desde ese archivo.
+- ~~Contrato compartido de sesiones/eventos: sigue en un cambio
+  posterior~~ — resuelto 2026-09-24: `contrato-sesiones-subtitulos`
+  redactado por Codex, aceptado por Claude, integrado a `main`.
 - ~~`VISION.md` nombraba Rust~~ — resuelto 2026-09-24: actualizado a Python
   en "Dirección tecnológica propuesta" y en el Nivel 1 de su tabla de
   progresión, por decisión del usuario.
+
+Este cambio (`arquitectura-base`) queda listo para cerrarse en cuanto
+`mvp-pipeline` resuelva el spike (grupo 2) y complete la medición
+end-to-end (grupo 6) — ver tarea 4.1/4.2 de este archivo.
 
 ## Fuentes de la revisión técnica
 
