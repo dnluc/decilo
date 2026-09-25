@@ -35,6 +35,12 @@
             <option value="es">Español</option>
           </select>
         </label>
+        <label class="field"><span>Procesamiento</span>
+          <select id="provider" aria-describedby="provider-note">
+            <option value="local">En esta máquina</option>
+            <option value="gemini">En la nube (Gemini)</option>
+          </select>
+        </label>
         <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
         <button id="capture-stop" type="button" disabled>Detener</button>
         <label class="field"><span>Tamaño del texto</span>
@@ -47,6 +53,7 @@
         <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
       </div>
       <p id="capture-message" class="hint" role="status">Cargá el video, compartí <em>esta</em> pestaña con el audio activado y dale Play. Solo se envía el audio que autorices; nunca el micrófono.</p>
+      <p id="provider-note" class="hint"></p>
     </section>
 
     <aside class="chat" aria-labelledby="chat-title">

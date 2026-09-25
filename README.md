@@ -237,6 +237,17 @@ comando con el flag de streaming desactivado. WER no evalúa traducción.
 
 ### Proveedor local o Gemini
 
+Desde la interfaz hay un selector **Procesamiento** con dos opciones: «En esta
+máquina» (Whisper y Gemma locales, el audio no sale del equipo) y «En la nube
+(Gemini)». La elección se fija al abrir cada captura y viaja en esa sesión, así
+que dos capturas simultáneas pueden usar proveedores distintos y cambiar el
+selector no altera una sesión ya en curso.
+
+Si el servidor no tiene `GEMINI_API_KEY`, la opción de nube aparece
+deshabilitada en vez de fallar al conectar. El navegador nunca recibe la clave:
+`GET /api/v1/providers` solo informa si hay credenciales configuradas.
+
+
 El backend carga `.env` de la raíz al iniciar; las variables exportadas tienen
 prioridad. El archivo está excluido de Git. Default: `local` (Whisper/Ollama).
 Para usar nube, configurar y reiniciar el backend:

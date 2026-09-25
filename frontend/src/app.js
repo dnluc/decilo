@@ -4,6 +4,7 @@ import { CaptionConnection } from './connection.js';
 import { setupReading } from './reading.js';
 import { setupCapture } from './capture.js';
 import { setupVideo } from './video.js';
+import { setupProviders } from './providers.js';
 import { createCaptionPacer } from './captions.js';
 
 const $ = id => document.getElementById(id);
@@ -144,6 +145,7 @@ $('language').onchange = render;
 $('follow').onchange = () => { if ($('follow').checked) render(); };
 setupReading();
 setupVideo();
+setupProviders();
 setupCapture({ selectSession: useSession });
 window.addEventListener('pagehide', () => client.stop());
 await attachRequestedSession();

@@ -54,7 +54,10 @@ export function setupCapture({ selectSession }) {
       if (context.sampleRate !== 16000) throw new Error('Este navegador no pudo preparar audio a 16 kHz.');
       await context.audioWorklet.addModule('/capture-worklet.js');
       const language = document.getElementById('capture-language').value;
-      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/capture?language=${language}`);
+      // El proveedor se fija al abrir la sesión: cambiarlo después afectaría
+      // a una captura en curso, que no es lo que espera nadie.
+      const provider = document.getElementById('provider').value;
+      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/capture?language=${language}&provider=${provider}`);
       socket.onmessage = async ({ data }) => {
         try {
           const event = JSON.parse(data);

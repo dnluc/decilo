@@ -9,10 +9,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi import FastAPI, HTTPException, Query, WebSocket
 from fastapi.responses import FileResponse
 
-from decilo.providers import load_config, provider
+from decilo.providers import cloud_available, load_config, provider, use_provider
 from decilo.gateway import SessionGateway
 from decilo.ollama_runtime import ollama_lifespan
 from decilo.translate import prepare_ollama
@@ -242,11 +242,31 @@ async def start_session(session_id: str):
 
 
 
+@app.get('/api/v1/providers')
+async def list_providers():
+    """Solo lectura: la interfaz necesita saber si puede ofrecer la nube.
+
+    No expone la clave ni permite cambiar nada; la elección viaja por sesión
+    en el WebSocket de captura.
+    """
+    return {
+        'default': provider('translation'),
+        'cloud_available': cloud_available(),
+    }
+
+
 @app.websocket('/api/v1/capture')
-async def capture_audio(websocket: WebSocket, language: str = 'en'):
+async def capture_audio(websocket: WebSocket, language: str = 'en',
+                        chosen_provider: str = Query('local', alias='provider')):
     from decilo.capture import receive_capture
 
     if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es'}:
+        await websocket.close(code=4403)
+        return
+    if chosen_provider not in {'local', 'gemini'} or (
+            chosen_provider == 'gemini' and not cloud_available()):
+        # Sin clave configurada, aceptar la sesión y después fallar en cada
+        # segmento sería peor: se rechaza acá con un motivo distinguible.
         await websocket.close(code=4403)
         return
     if not _models_ready():
@@ -261,6 +281,9 @@ async def capture_audio(websocket: WebSocket, language: str = 'en'):
     registry.register(session)
     task = asyncio.current_task()
     file_tasks[session.id] = task
+    # Antes de arrancar los workers: `create_task` y `asyncio.to_thread` copian
+    # el contexto, así que la elección viaja sola hasta transcribe/translate.
+    use_provider(chosen_provider)
     try:
         await websocket.accept()
         await receive_capture(websocket, _gateway_for(session.id),
