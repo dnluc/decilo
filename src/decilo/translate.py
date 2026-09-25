@@ -14,6 +14,7 @@ from dataclasses import dataclass
 import httpx
 
 from decilo.ollama_runtime import ollama_client
+from decilo.providers import provider
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "gemma3n:e2b"
@@ -28,6 +29,9 @@ SYSTEM_PROMPT = (
 
 
 async def translate(text: str, *, model: str = MODEL, timeout: float = 30.0) -> str:
+    if provider('translation') == 'gemini':
+        from decilo.gemini import translate as cloud_translate
+        return await cloud_translate(text, SYSTEM_PROMPT, timeout)
     payload = {
         "model": model,
         "messages": [
@@ -88,6 +92,13 @@ async def _ndjson(response):
 
 async def translate_stream(text, *, model=MODEL, timeout=30):
     """Real cumulative content, final only on an explicit successful done."""
+    # El selector de proveedor manda también acá: sin esto, activar streaming
+    # con DECILO_AI_PROVIDER=gemini iría igual a Ollama e ignoraría la elección.
+    # Un proveedor sin streaming publica una única actualización final; no se
+    # simulan parciales que el proveedor no entregó.
+    if provider('translation') != 'local':
+        yield TranslationUpdate(await translate(text, timeout=timeout), True)
+        return
     payload = {
         'model': model,
         'messages': [{'role': 'system', 'content': SYSTEM_PROMPT},

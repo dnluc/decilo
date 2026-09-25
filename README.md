@@ -234,3 +234,27 @@ DECILO_STREAM_TRANSLATION=1 uv run python scripts/measure_latency.py \
 Los WAV deben ser PCM16 mono; referencia opcional (sin referencia no se calcula
 WER). No ejecutar en paralelo con otra prueba de modelos; comparar el mismo
 comando con el flag de streaming desactivado. WER no evalúa traducción.
+
+### Proveedor local o Gemini
+
+El backend carga `.env` de la raíz al iniciar; las variables exportadas tienen
+prioridad. El archivo está excluido de Git. Default: `local` (Whisper/Ollama).
+Para usar nube, configurar y reiniciar el backend:
+
+```dotenv
+DECILO_AI_PROVIDER=gemini
+GEMINI_API_KEY=tu_clave
+DECILO_GEMINI_MODEL=gemini-3.8-flash
+```
+
+Para mezclar: `DECILO_STT_PROVIDER=local` y
+`DECILO_TRANSLATION_PROVIDER=gemini`; estos valores prevalecen sobre el selector
+global. La clave queda solamente en el backend. Gemini recibe audio si se usa
+para STT y texto si se usa para traducción; aplican cuotas/costos del proyecto.
+No hay fallback automático ni reintentos ocultos. Timeout por petición: 30s.
+
+Se usa [generateContent](https://ai.google.dev/api/generate-content) por segmento,
+no Live API ni resultados parciales. Se preservan el protocolo de subtítulos,
+las colas y los cortes por pausa; el selector no elimina la espera del transporte.
+Los scripts de medición requieren variables exportadas (la carga automática de
+`.env` ocurre en el arranque de la app).

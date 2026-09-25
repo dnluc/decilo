@@ -12,6 +12,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import FileResponse
 
+from decilo.providers import load_config, provider
 from decilo.gateway import SessionGateway
 from decilo.ollama_runtime import ollama_lifespan
 from decilo.translate import prepare_ollama
@@ -100,6 +101,10 @@ def _models_ready():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    load_config()
+    logging.getLogger("uvicorn.error").info(
+        "AI providers: STT=%s translation=%s", provider("stt"), provider("translation"),
+    )
     logging.getLogger("uvicorn.error").info(
         "Translation queue: %s", os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
     )
