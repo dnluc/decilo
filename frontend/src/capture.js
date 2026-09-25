@@ -58,13 +58,13 @@ export function setupCapture({ selectSession }) {
       // a una captura en curso, que no es lo que espera nadie.
       const provider = document.getElementById('provider').value;
       socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/v1/capture?language=${language}&provider=${provider}`);
-      socket.onmessage = async ({ data }) => {
-        try {
-          const event = JSON.parse(data);
-          if (event.type !== 'ready' || finishing) return;
-          ready = true;
-          selectSession(event.session);
-          processor = new AudioWorkletNode(context, 'capture-pcm');
+      // Con idioma automático el backend pide audio ANTES de crear la sesión
+      // (necesita escuchar para detectar): el worklet arranca en 'detecting'
+      // y la sesión llega después con 'ready'. Con idioma fijo, 'ready' es el
+      // primer mensaje y arranca todo junto.
+      const startProcessor = () => {
+        if (processor || finishing) return;
+        processor = new AudioWorkletNode(context, 'capture-pcm');
           processor.port.onmessage = ({ data }) => {
             if (data.stopped) { flush?.(); return; }
             if (data.dropped) {
@@ -84,18 +84,31 @@ export function setupCapture({ selectSession }) {
             }
             processor?.port.postMessage('ack');
           };
-          const source = context.createMediaStreamSource(new MediaStream(media.getAudioTracks()));
-          source.connect(processor);
-          const mute = context.createGain();
-          mute.gain.value = 0;
-          processor.connect(mute).connect(context.destination);
-          stop.disabled = false;
-          message.textContent = 'Capturando audio. Dale Play al video. Los subtítulos pueden llegar con retraso; Detener libera la captura.';
+        const source = context.createMediaStreamSource(new MediaStream(media.getAudioTracks()));
+        source.connect(processor);
+        const mute = context.createGain();
+        mute.gain.value = 0;
+        processor.connect(mute).connect(context.destination);
+        stop.disabled = false;
+        message.textContent = 'Capturando audio. Dale Play al video; Detener libera la captura.';
+      };
+      socket.onmessage = async ({ data }) => {
+        try {
+          const event = JSON.parse(data);
+          if (finishing) return;
+          if (event.type === 'detecting') { startProcessor(); return; }
+          if (event.type !== 'ready') return;
+          ready = true;
+          selectSession(event.session);
+          startProcessor();
         } catch (error) { await finish(error.message); }
       };
-      socket.onclose = async () => {
+      socket.onclose = async (event) => {
         clearTimeout(closeTimer);
-        await finish(ready ? 'Captura terminada. Los subtítulos quedan en la sesión.' : 'No se pudo abrir la captura: revisá el modo demo y el límite de dos sesiones.');
+        const failure = event.code === 4408
+          ? 'No llegó voz para identificar el idioma. Probá de nuevo o elegilo a mano.'
+          : 'No se pudo abrir la captura: revisá el modo demo y el límite de dos sesiones.';
+        await finish(ready ? 'Captura terminada. Los subtítulos quedan en la sesión.' : failure);
         if (ready) message.textContent = 'Captura terminada. Los subtítulos quedan en la sesión.';
         start.disabled = false;
       };

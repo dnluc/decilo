@@ -68,3 +68,30 @@ def transcribe(audio_path: Path, language: str, *, beam_size: int = 5) -> str:
     return " ".join(
         s.text.strip() for s in segments if s.no_speech_prob < NO_SPEECH_THRESHOLD
     )
+
+
+def detect_language(pcm: bytes) -> str:
+    """Detecta el idioma (en/es) sobre PCM crudo de 16kHz mono.
+
+    Argmax restringido a los idiomas que la sesión puede tener: aunque el
+    modelo crea escuchar portugués, elegir el más probable entre en/es es
+    mejor que crear una sesión con un idioma que el contrato no admite.
+    Usa `small` (el de inglés): para detectar alcanza y carga más rápido.
+    """
+    import tempfile
+    import wave
+
+    model = _get_model("en")
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as file:
+        path = Path(file.name)
+    try:
+        with wave.open(str(path), "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(16000)
+            wav.writeframes(pcm)
+        _segments, info = model.transcribe(str(path), language=None, vad_filter=True)
+        probs = dict(getattr(info, "all_language_probs", None) or [])
+        return "en" if probs.get("en", 0.0) >= probs.get("es", 0.0) else "es"
+    finally:
+        path.unlink(missing_ok=True)

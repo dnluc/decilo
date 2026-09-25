@@ -28,7 +28,7 @@ export function createCaptionPacer({ onShow, now = () => Date.now(), schedule = 
 
   function display(entry) {
     showing = { ...entry, until: now() + holdTimeFor(entry.text) };
-    onShow(entry.text);
+    onShow(entry.text, entry.state);
   }
 
   function drain() {
@@ -51,26 +51,29 @@ export function createCaptionPacer({ onShow, now = () => Date.now(), schedule = 
     // `key` identifica al subtítulo (segmento + idioma). Una revisión del que
     // ya se está mostrando se actualiza en el lugar, sin reiniciar su tiempo:
     // el texto corregido aparece enseguida y no se lo vuelve a encolar.
-    push(key, text) {
+    push(key, text, state = 'final') {
       if (!text) return;
       if (showing?.key === key) {
-        if (showing.text !== text) {
+        // Crece o se confirma en el lugar, sin reiniciar su tiempo de
+        // lectura: así el texto aparece palabra por palabra sin saltos.
+        if (showing.text !== text || showing.state !== state) {
           showing.text = text;
-          onShow(text);
+          showing.state = state;
+          onShow(text, state);
         }
         return;
       }
       const queued = pending.findIndex(entry => entry.key === key);
       if (queued >= 0) {
-        pending[queued] = { key, text };
+        pending[queued] = { key, text, state };
         return;
       }
       if (!showing) {
-        display({ key, text });
+        display({ key, text, state });
         arm();
         return;
       }
-      pending.push({ key, text });
+      pending.push({ key, text, state });
       arm();
     },
     // Al cambiar de sesión no debe quedar nada de la anterior en la barra.
@@ -79,7 +82,7 @@ export function createCaptionPacer({ onShow, now = () => Date.now(), schedule = 
       timer = null;
       pending = [];
       showing = null;
-      onShow('');
+      onShow('', 'final');
     },
   };
 }

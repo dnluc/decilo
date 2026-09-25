@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0f1311">
+  <meta name="theme-color" content="#0a0a14">
   <meta name="description" content="Subtítulos y traducción en vivo para cualquier charla de YouTube.">
   <title>Decilo — Subtítulos en vivo</title>
 </head>
@@ -22,38 +22,11 @@
   <p id="video-error" class="url-error" role="alert"></p>
 
   <main class="theater">
-    <section class="stage" aria-label="Video y subtítulos">
+    <section class="stage" aria-label="Video de la charla">
       <div id="video-frame" class="video-frame">
         <iframe title="Video de la charla" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
         <p class="video-empty">Pegá arriba el link de una charla de YouTube para empezar.</p>
       </div>
-      <p id="live-caption" class="live-caption" data-empty="true" tabindex="0"></p>
-      <div class="controls">
-        <label class="field"><span>Idioma del audio</span>
-          <select id="capture-language">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-          </select>
-        </label>
-        <label class="field"><span>Procesamiento</span>
-          <select id="provider" aria-describedby="provider-note">
-            <option value="local">En esta máquina</option>
-            <option value="gemini">En la nube (Gemini)</option>
-          </select>
-        </label>
-        <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
-        <button id="capture-stop" type="button" disabled>Detener</button>
-        <label class="field"><span>Tamaño del texto</span>
-          <select id="text-size">
-            <option value="normal">Normal</option>
-            <option value="large">Grande</option>
-            <option value="extra">Muy grande</option>
-          </select>
-        </label>
-        <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
-      </div>
-      <p id="capture-message" class="hint" role="status">Cargá el video, compartí <em>esta</em> pestaña con el audio activado y dale Play. Solo se envía el audio que autorices; nunca el micrófono.</p>
-      <p id="provider-note" class="hint"></p>
     </section>
 
     <aside class="chat" aria-labelledby="chat-title">
@@ -76,6 +49,38 @@
       </div>
     </aside>
   </main>
+
+  <footer class="dock">
+    <p id="live-caption" class="live-caption" data-empty="true" data-state="final" tabindex="0"></p>
+    <div class="controls">
+      <label class="field"><span>Idioma del audio</span>
+        <select id="capture-language">
+          <option value="auto" selected>Detectar automáticamente</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+      </label>
+      <label class="field"><span>Procesamiento</span>
+        <select id="provider" aria-describedby="provider-note">
+          <option value="local">En esta máquina</option>
+          <option value="gemini">En la nube (Gemini)</option>
+        </select>
+      </label>
+      <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
+      <button id="capture-stop" type="button" disabled>Detener</button>
+      <span class="spacer" aria-hidden="true"></span>
+      <label class="field"><span>Tamaño del texto</span>
+        <select id="text-size">
+          <option value="normal">Normal</option>
+          <option value="large">Grande</option>
+          <option value="extra">Muy grande</option>
+        </select>
+      </label>
+      <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
+    </div>
+    <p id="capture-message" class="hint" role="status">Cargá el video, compartí <em>esta</em> pestaña con el audio activado y dale Play. Solo se envía el audio que autorices; nunca el micrófono.</p>
+    <p id="provider-note" class="hint"></p>
+  </footer>
   <p id="live-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
   <script type="module" src="/src/app.js"></script>
 </body>

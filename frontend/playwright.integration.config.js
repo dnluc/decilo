@@ -11,7 +11,7 @@ export default defineConfig({
     {
       command: 'python -m uvicorn browser_backend:app --app-dir tests/integration --host 127.0.0.1 --port 18764',
       url: 'http://127.0.0.1:18764/health',
-      env: { PYTHONPATH: '../src', DECILO_DEMO_SESSIONS: '0' },
+      env: { PYTHONPATH: '../src', DECILO_DEMO_SESSIONS: '0', DECILO_PARTIALS: '0' },
     },
     {
       command: 'npm run dev -- --port 5174',

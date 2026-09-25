@@ -193,6 +193,29 @@ sin cambiar la API. En modo pause, el presupuesto de audio pendiente es dos
 veces la duración máxima de segmento (12s por defecto), con número de entradas
 acotado; una sobrecarga se sigue notificando con gaps.
 
+### Transcripción palabra por palabra (provisional → corrección final)
+
+Mientras una frase sigue abierta, el backend re-transcribe su audio acumulado
+(beam 1, anticipo barato) y publica revisiones **provisionales** del mismo
+segmento; al cerrar la frase por pausa, la pasada final (beam completo) la
+corrige y la **confirma**. La UI comunica el estado solo con color: texto
+apagado mientras es provisional, pleno al confirmarse — nunca aparece
+«traduciendo» ni ningún cartel de espera. Hay a lo sumo una transcripción
+provisional en vuelo y solo se conserva la instantánea más reciente; una
+provisional que termina después del cierre se descarta sin publicarse.
+
+Activo por defecto en la captura con segmentación por pausas.
+`DECILO_PARTIALS=0` lo apaga (útil en máquinas donde la CPU no acompaña:
+las provisionales compiten con la pasada final y con Ollama).
+
+### Autodetección del idioma de entrada
+
+La captura acepta `language=auto` (opción por defecto en la UI). El backend
+responde `{"type": "detecting"}`, junta ~2.5s de audio con voz (tope 12s; si
+no llega voz cierra con código 4408), detecta el idioma con Whisper
+restringido a en/es y recién entonces crea la sesión y envía `ready`. Ningún
+paquete se pierde: el audio de la fase de detección también se transcribe.
+
 ### Traducción progresiva y preparación (experimental)
 
 `DECILO_STREAM_TRANSLATION=1` consume el flujo real de Ollama y publica texto

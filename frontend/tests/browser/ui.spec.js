@@ -293,3 +293,65 @@ test('cada opción explica qué implica, incluido dónde va el audio', async ({ 
   await page.selectOption('#provider', 'gemini');
   await expect(page.locator('#provider-note')).toContainText('se envía a Google');
 });
+
+// Transcripción palabra por palabra: estados por color, nunca por carteles.
+
+test('la barra distingue provisional de confirmado solo por color', async ({ page }) => {
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'We are', status: 'provisional' }), 1)));
+  await expect(page.locator('#live-caption')).toHaveText('We are');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'provisional');
+
+  // La revisión crece en el lugar, sin reiniciar el tiempo de lectura.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ revision: 2, text: 'We are shipping', status: 'provisional' }), 2)));
+  await expect(page.locator('#live-caption')).toHaveText('We are shipping');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'provisional');
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ revision: 3, text: 'We are shipping today.', status: 'final' }), 3)));
+  await expect(page.locator('#live-caption')).toHaveText('We are shipping today.');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'final');
+
+  // En ningún momento un cartel de proceso.
+  expect(await page.locator('body').textContent()).not.toContain('Traduciendo');
+});
+
+test('sin traducción lista, el original ocupa su lugar como provisional', async ({ page }) => {
+  const sockets = await openSession(page);
+  // Vista en español; llega solo el original en inglés.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'Original english line.', status: 'final' }), 1)));
+  await expect(page.locator('#live-caption')).toHaveText('Original english line.');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'provisional');
+  await expect(page.locator('.turn.provisional')).toContainText('Original english line.');
+
+  // Llega el español: reemplaza y se confirma.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ kind: 'translation', language: 'es', source_revision: 1,
+      text: 'Línea original en español.', status: 'final' }), 2)));
+  await expect(page.locator('#live-caption')).toHaveText('Línea original en español.');
+  await expect(page.locator('#live-caption')).toHaveAttribute('data-state', 'final');
+});
+
+test('el dock vive en el borde inferior y el video ocupa el resto', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'local', cloud_available: true } }));
+  await page.goto('/');
+  const dock = await page.locator('.dock').boundingBox();
+  const video = await page.locator('#video-frame').boundingBox();
+  // El dock (subtítulo + controles) termina en el borde de la ventana.
+  expect(Math.round(dock.y + dock.height)).toBeGreaterThanOrEqual(898);
+  // Y el video aprovecha el alto que queda por encima.
+  expect(video.height).toBeGreaterThan(400);
+  expect(video.y + video.height).toBeLessThanOrEqual(dock.y + 1);
+});
+
+test('detectar idioma automáticamente es la opción por defecto', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#capture-language')).toHaveValue('auto');
+});

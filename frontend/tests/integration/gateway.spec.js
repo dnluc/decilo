@@ -31,7 +31,9 @@ test('el gateway real entrega revisiones, descarta tardías y libera conexiones'
   await expect(page.locator('.turn.provisional')).toContainText('Necesitamos');
 
   await publish({ type: 'caption', data: caption({ revision: 2, status: 'final', text: 'We need a code review.' }) });
-  await expect(page.locator('.turn.pending')).toContainText('Traduciendo');
+  // Sin traducción todavía, el original ocupa su lugar como provisional:
+  // nunca un cartel de estado.
+  await expect(page.locator('.turn.provisional')).toContainText('We need a code review.');
 
   // Una traducción de la revisión vieja no debe volver a mostrarse.
   const late = await publish({ type: 'caption', data: caption({ kind: 'translation', language: 'es', source_revision: 1, revision: 2, text: 'Traducción vieja' }) });
@@ -63,6 +65,7 @@ test('la captura envía PCM real del worklet y libera el audio al detener', asyn
     };
   });
   await page.goto('/');
+  await page.selectOption('#capture-language', 'en');
   await page.getByRole('button', { name: 'Compartir audio de pestaña', exact: true }).click();
   await expect(page.locator('#capture-message')).toContainText('Capturando audio');
   await page.locator('#language').selectOption('en');

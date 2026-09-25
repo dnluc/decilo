@@ -17,10 +17,13 @@ let announced = '';
 // La barra sostiene cada subtítulo un tiempo mínimo de lectura: el pipeline
 // puede entregar dos casi juntos y de otro modo alguno pasaría en milisegundos.
 const pacer = createCaptionPacer({
-  onShow(text) {
+  onShow(text, state) {
     const live = $('live-caption');
     live.textContent = text;
     live.dataset.empty = text ? 'false' : 'true';
+    // Provisional en un color, confirmado en otro: el color es el único
+    // indicador de estado — nunca un texto tipo "traduciendo".
+    live.dataset.state = state || 'final';
   },
 });
 
@@ -103,10 +106,13 @@ function render() {
     // Lo último arriba: lo que se acaba de decir es lo que más importa y no
     // debería haber que perseguirlo hasta el fondo de la lista.
     log.replaceChildren(...[...rows].reverse().map(({ segmentId, original, caption }, index) => {
-      const turn = node('div', `turn ${caption?.status || 'pending'}${index === 0 ? ' current' : ''}`);
+      // Sin traducción todavía, el original ocupa su lugar como provisional:
+      // texto real en vez de un cartel de estado.
+      const confirmed = caption?.status === 'final';
+      const turn = node('div', `turn ${confirmed ? 'final' : 'provisional'}${index === 0 ? ' current' : ''}`);
       turn.dataset.segment = segmentId;
       turn.append(node('span', 'turn-time', timestamp(original.start_ms)),
-        node('p', '', caption?.text || 'Traduciendo…'));
+        node('p', '', caption?.text || original.text));
       return turn;
     }));
   }
@@ -115,9 +121,14 @@ function render() {
   $('chat-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'intervención' : 'intervenciones'}` : '';
 
   // El último subtítulo va a la barra a través del marcador de ritmo, que
-  // decide cuándo mostrarlo; acá no se escribe la barra directamente.
+  // decide cuándo mostrarlo; acá no se escribe la barra directamente. Si la
+  // traducción no llegó, el original ocupa su lugar como provisional.
   const last = rows.at(-1);
-  if (last?.caption) pacer.push(`${last.segmentId}:${last.caption.language}`, last.caption.text);
+  if (last) {
+    const shown = last.caption ?? last.original;
+    const confirmed = last.caption?.status === 'final';
+    pacer.push(`${last.segmentId}:${language}`, shown.text, confirmed ? 'final' : 'provisional');
+  }
 
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';

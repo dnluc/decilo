@@ -259,9 +259,10 @@ async def list_providers():
 @app.websocket('/api/v1/capture')
 async def capture_audio(websocket: WebSocket, language: str = 'en',
                         chosen_provider: str | None = Query(None, alias='provider')):
-    from decilo.capture import receive_capture
+    from decilo.capture import detect_capture_language, receive_capture
+    from starlette.websockets import WebSocketDisconnect
 
-    if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es'}:
+    if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es', 'auto'}:
         await websocket.close(code=4403)
         return
     if chosen_provider not in {None, 'local', 'gemini'}:
@@ -281,23 +282,42 @@ async def capture_audio(websocket: WebSocket, language: str = 'en',
     if sum(not task.done() for task in file_tasks.values()) >= 2 or len(registry.list_sessions()) >= 20:
         await websocket.close(code=4429)
         return
-    session = Session(id=f'capture-{uuid4().hex}', title='Audio de pestaña',
-                      source_language=language, translation_languages=['es'] if language == 'en' else [],
-                      target_locale='es-AR', status='live')
-    registry.register(session)
-    task = asyncio.current_task()
-    file_tasks[session.id] = task
     # Antes de arrancar los workers: `create_task` y `asyncio.to_thread` copian
     # el contexto, así que la elección viaja sola hasta transcribe/translate.
     token = use_provider(chosen_provider)
+    session = None
     try:
         await websocket.accept()
+        prebuffered = ()
+        if language == 'auto':
+            # La sesión necesita idioma (el contrato lo exige) y el idioma
+            # necesita audio: fase intermedia que recibe paquetes antes de
+            # crear la sesión y los conserva para no perder muestras.
+            await websocket.send_json({"type": "detecting"})
+            try:
+                detected = await detect_capture_language(websocket)
+            except (ValueError, asyncio.TimeoutError, WebSocketDisconnect):
+                detected = None
+            if detected is None:
+                try:
+                    await websocket.close(code=4408)
+                except (RuntimeError, WebSocketDisconnect):
+                    pass
+                return
+            language, prebuffered = detected
+        session = Session(id=f'capture-{uuid4().hex}', title='Audio de pestaña',
+                          source_language=language, translation_languages=['es'] if language == 'en' else [],
+                          target_locale='es-AR', status='live')
+        registry.register(session)
+        file_tasks[session.id] = asyncio.current_task()
         await receive_capture(websocket, _gateway_for(session.id),
                               overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
-                                   segmentation=configured_segmentation())
+                              segmentation=configured_segmentation(),
+                              prebuffered=prebuffered)
     finally:
         reset_provider(token)
-        file_tasks.pop(session.id, None)
+        if session is not None:
+            file_tasks.pop(session.id, None)
 
 
 if __name__ == "__main__":

@@ -1,118 +1,140 @@
-/* Decilo — interfaz de subtítulos en vivo.
-   Superficie oscura a propósito: el contenido principal es video con texto
-   al lado, y un fondo claro compite con la imagen y cansa al leer seguido. */
+/* Decilo — subtítulos en vivo.
+   El video manda: ocupa todo el alto disponible, y los subtítulos con sus
+   controles viven en un dock fijo en el borde inferior. Paleta violeta
+   sobre fondo profundo; el estado se comunica solo con color (provisional
+   apagado, confirmado pleno) — nunca con carteles de "procesando". */
 :root {
   color-scheme: dark;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-synthesis: none;
-  --bg: #0f1311;
-  --surface: #161b18;
-  --surface-2: #1b221e;
-  --border: #29332d;
-  --text: #e9ede9;
-  --muted: #94a09a;
-  --accent: #56c07d;
-  --accent-ink: #0c1410;
-  --warn: #e8b87a;
-  --topbar: 62px;
+  --bg: #0a0a14;
+  --surface: #12121f;
+  --surface-2: #181829;
+  --border: #272739;
+  --text: #f5f5fa;
+  --muted: #9d9db8;
+  --provisional: #8b90b8;
+  --accent: #7c5cff;
+  --accent-2: #b44cff;
+  --gradient: linear-gradient(135deg, #6d5cff, #a94dff);
+  --warn: #f0b16e;
 }
 * { box-sizing: border-box; }
-/* Alto exacto de la ventana, no mínimo: así la columna del historial queda
-   acotada a la pantalla y scrollea por dentro en vez de estirar la página. */
-body { margin: 0; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+body {
+  margin: 0; height: 100dvh; overflow: hidden;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
+  background: radial-gradient(1200px 500px at 70% -10%, #191330 0%, var(--bg) 55%);
+  color: var(--text);
+}
+/* Filas explícitas: url-error se oculta cuando está vacío y sin esto los
+   demás ítems se corren de fila — el video caía en una fila `auto` y
+   quedaba diminuto mientras el dock se estiraba con la 1fr. */
+.topbar { grid-row: 1; }
+.url-error { grid-row: 2; }
+.theater { grid-row: 3; }
+.dock { grid-row: 4; }
 button, select, input { font: inherit; color: inherit; }
 button, select { cursor: pointer; }
 a { color: inherit; text-underline-offset: 4px; }
-:is(button, a, select, input, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+:is(button, a, select, input, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 12px; }
 [hidden] { display: none !important; }
 .sr-only, .skip-link:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.skip-link:focus { display: block; padding: 12px; background: var(--surface); }
+.skip-link:focus { display: block; padding: 12px; background: var(--surface); z-index: 10; }
 
-/* Barra superior: identidad y, sobre todo, el campo para pegar el link. */
-.topbar { height: var(--topbar); flex-shrink: 0; display: flex; align-items: center; gap: 22px; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.brand { font-size: 23px; font-weight: 800; letter-spacing: -1.1px; text-decoration: none; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.brand span { color: var(--accent); font-size: 20px; }
+/* ── Barra superior: marca + campo del link ─────────────────────────── */
+.topbar { display: flex; align-items: center; gap: 22px; padding: 12px 22px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 75%, transparent); backdrop-filter: blur(14px); }
+.brand { font-size: 22px; font-weight: 800; letter-spacing: -1px; text-decoration: none; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.brand span { background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 19px; }
 .event-name { font-size: 10px; font-weight: 700; letter-spacing: 1.6px; color: var(--muted); flex-shrink: 0; }
-.event-name span { color: #6d7a72; margin-left: 6px; }
-.url-bar { flex: 1; display: flex; gap: 8px; max-width: 640px; margin: 0 auto; }
-.url-bar input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 9px 13px; font-size: 13px; }
-.url-bar input::placeholder { color: #6f7b74; }
-.url-bar input:focus { border-color: var(--accent); }
-button.primary { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); border-radius: 9px; padding: 9px 16px; font-size: 13px; font-weight: 600; }
-button.primary:hover { background: #63cd8a; }
-.url-error { margin: 0; padding: 9px 24px; background: #3a2a18; color: var(--warn); font-size: 12px; }
+.event-name span { color: #6d6d8a; margin-left: 6px; }
+.url-bar { flex: 1; display: flex; gap: 8px; max-width: 620px; margin: 0 auto; }
+.url-bar input { flex: 1; min-width: 0; background: rgba(0,0,0,.35); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 13px; transition: border-color .15s; }
+.url-bar input::placeholder { color: #6c6c88; }
+.url-bar input:focus { border-color: var(--accent); outline: none; }
+button.primary {
+  background: var(--gradient); border: 0; color: #fff; border-radius: 12px;
+  padding: 10px 18px; font-size: 13px; font-weight: 650;
+  box-shadow: 0 4px 18px rgba(124, 92, 255, .35); transition: filter .15s, box-shadow .15s;
+}
+button.primary:hover:not(:disabled) { filter: brightness(1.12); box-shadow: 0 4px 24px rgba(124, 92, 255, .5); }
+.url-error { margin: 0; padding: 9px 22px; background: #33240f; color: var(--warn); font-size: 12px; }
 .url-error:empty { display: none; }
 
-/* Escenario a la izquierda, transcripción a la derecha. */
-/* `grid-template-rows: minmax(0, 1fr)` y no solo `min-height: 0`: una fila de
-   grid se dimensiona por su contenido, así que sin esto el historial largo
-   estira la fila y el panel crece en vez de scrollear por dentro. */
-.theater { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 372px; grid-template-rows: minmax(0, 1fr); gap: 18px; padding: 18px 24px 22px; }
-/* El escenario también se acota y scrollea por su cuenta si no entra: no
-   debe empujar al historial ni estirar la página. */
-.stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; overflow-y: auto; }
-.video-frame { position: relative; width: 100%; flex-shrink: 0; aspect-ratio: 16 / 9; max-height: 60dvh; background: #000; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+/* ── Escenario: video gigante + transcripción a la derecha ──────────── */
+.theater { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: minmax(0, 1fr); gap: 14px; padding: 14px 22px; }
+.stage { min-width: 0; min-height: 0; display: flex; }
+.video-frame { position: relative; flex: 1; min-height: 0; background: #000; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 18px 60px rgba(0,0,0,.5); }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-frame[data-loaded='true'] .video-empty { display: none; }
 .video-empty { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); font-size: 14px; }
 
-/* El último subtítulo, debajo del video: lo que se está diciendo ahora. */
-.live-caption { margin: 0; flex-shrink: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 22px; min-height: 76px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(16px, 1.45vw, 21px); line-height: 1.5; text-wrap: balance; }
-.live-caption[data-empty='true']::after { content: ''; display: block; width: 62px; height: 2px; background: var(--border); border-radius: 2px; }
-body[data-text-size='large'] .live-caption { font-size: clamp(20px, 2vw, 28px); }
-body[data-text-size='extra'] .live-caption { font-size: clamp(25px, 2.7vw, 37px); }
-
-.controls { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
-.field { display: grid; gap: 4px; font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
-select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; font-size: 13px; text-transform: none; letter-spacing: 0; }
-.controls button { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 14px; font-size: 13px; }
-/* La acción principal tiene que verse como tal: sin esto la regla de arriba
-   le saca el color y parece deshabilitada. */
-.controls button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.controls button.primary:hover:not(:disabled) { background: #63cd8a; }
-.controls button:hover:not(:disabled) { border-color: #3c4a42; }
-.controls button:disabled { opacity: .45; cursor: default; }
-.controls button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); }
-#focus-reading { margin-left: auto; }
-.hint { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--muted); }
-.hint em { font-style: normal; color: var(--text); border-bottom: 1px solid #3c4a42; }
-
-/* Transcripción como chat: todo lo dicho, en letra chica, a la derecha. */
-.chat { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.chat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-.chat-head h2 { margin: 0; font-size: 13px; font-weight: 650; letter-spacing: .2px; }
-.chat-status { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+/* ── Transcripción tipo chat, letra chica, lo último arriba ─────────── */
+.chat { display: flex; flex-direction: column; min-height: 0; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; backdrop-filter: blur(10px); }
+.chat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 13px 15px; border-bottom: 1px solid var(--border); }
+.chat-head h2 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.chat-status { margin: 5px 0 0; font-size: 11px; color: var(--muted); }
 .chat-status[data-kind='disconnected'], .chat-status[data-kind='incompatible'] { color: var(--warn); }
-.chat-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-color: #33403a transparent; }
+.chat-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 15px; display: flex; flex-direction: column; gap: 11px; scrollbar-color: #32324a transparent; }
 .chat-empty { margin: auto; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.6; }
-/* Lo más reciente arriba: se separa del resto para encontrarlo de un vistazo. */
-.turn.current { padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-.turn { display: grid; gap: 3px; }
-.turn-time { font-family: ui-monospace, monospace; font-size: 9.5px; color: #75837b; }
-.turn p { margin: 0; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
-.turn.provisional p { color: var(--muted); font-style: italic; }
-.turn.pending p { color: #6f7b74; font-size: 12px; font-style: italic; }
-.turn.current p { color: var(--accent); }
-.chat-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+.turn { display: grid; gap: 2px; }
+.turn-time { font-family: ui-monospace, monospace; font-size: 9px; color: #6d6d8c; }
+.turn p { margin: 0; font-size: 12.5px; line-height: 1.55; overflow-wrap: anywhere; }
+/* Provisional apagado, confirmado pleno: el único indicador de estado. */
+.turn.provisional p { color: var(--provisional); }
+.turn.final p { color: var(--text); }
+.turn.current { padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+.turn.current p { color: var(--accent-2); }
+.turn.current.provisional p { color: color-mix(in srgb, var(--accent-2) 55%, var(--provisional)); }
+.chat-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 15px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
 .chat-foot label { display: flex; align-items: center; gap: 6px; }
 input[type='checkbox'] { accent-color: var(--accent); }
-.notices { padding: 0 16px; max-height: 96px; overflow-y: auto; color: var(--warn); font-size: 11px; line-height: 1.5; }
+.notices { padding: 0 15px; max-height: 88px; overflow-y: auto; color: var(--warn); font-size: 11px; line-height: 1.5; }
 .notices:empty { display: none; }
 .notices p { margin: 8px 0; }
 
-/* Solo subtítulos: la charla ocupa la pantalla, sin nada alrededor. */
-.reading-focus .topbar, .reading-focus .chat, .reading-focus .hint { display: none; }
-.reading-focus .theater { grid-template-columns: 1fr; padding: 16px; }
-.reading-focus .video-frame { max-height: 64dvh; }
+/* ── Dock inferior: el subtítulo en vivo y todos los controles ──────── */
+.dock { border-top: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(18px); padding: 10px 22px 12px; display: grid; gap: 9px; }
+.live-caption { margin: 0; min-height: 58px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(17px, 1.6vw, 24px); font-weight: 550; line-height: 1.45; text-wrap: balance; }
+.live-caption[data-state='provisional'] { color: var(--provisional); font-weight: 450; }
+.live-caption[data-state='final'] { color: var(--text); }
+.live-caption[data-empty='true']::after { content: ''; display: block; width: 64px; height: 2px; background: var(--border); border-radius: 2px; }
+body[data-text-size='large'] .live-caption { font-size: clamp(22px, 2.2vw, 32px); }
+body[data-text-size='extra'] .live-caption { font-size: clamp(27px, 3vw, 42px); }
 
-@media (max-width: 1040px) {
-  /* Apilado: acá sí conviene que la página scrollee como una página normal. */
-  body { height: auto; min-height: 100dvh; overflow: visible; }
-  .theater { grid-template-columns: 1fr; padding: 14px 16px 18px; }
-  .stage { overflow: visible; }
-  .chat { height: 60dvh; }
-  .topbar { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 12px; }
-  .url-bar { order: 3; flex-basis: 100%; max-width: none; margin: 0; }
-  .video-frame { max-height: none; }
+.controls { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.controls .spacer { flex: 1; }
+.field { display: grid; gap: 4px; font-size: 9px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); font-weight: 650; }
+select {
+  appearance: none; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 9px 32px 9px 12px; font-size: 13px; text-transform: none; letter-spacing: 0; font-weight: 450;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239d9db8' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  transition: border-color .15s;
 }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+select:hover:not(:disabled) { border-color: #3a3a55; }
+select:disabled { opacity: .5; cursor: default; }
+.controls button { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 15px; font-size: 13px; transition: border-color .15s, background .15s; }
+.controls button.primary { background: var(--gradient); border: 0; font-weight: 650; box-shadow: 0 4px 18px rgba(124, 92, 255, .35); }
+.controls button:hover:not(:disabled):not(.primary) { border-color: #3a3a55; background: #1d1d30; }
+.controls button:disabled { opacity: .45; cursor: default; }
+.controls button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent-2); }
+.hint { margin: 0; font-size: 11px; line-height: 1.55; color: var(--muted); }
+.hint:empty { display: none; }
+.hint em { font-style: normal; color: var(--text); border-bottom: 1px solid #3a3a55; }
+
+/* ── Solo subtítulos: video y dock, nada más ────────────────────────── */
+.reading-focus .topbar, .reading-focus .chat, .reading-focus .url-error { display: none; }
+.reading-focus .theater { grid-template-columns: 1fr; }
+
+@media (max-width: 1000px) {
+  body { height: auto; min-height: 100dvh; overflow: visible; }
+  .theater { grid-template-columns: 1fr; grid-template-rows: none; }
+  .stage { min-height: 42dvh; }
+  .chat { height: 44dvh; }
+  .topbar { flex-wrap: wrap; gap: 10px; padding: 10px 14px; }
+  .url-bar { order: 3; flex-basis: 100%; max-width: none; margin: 0; }
+  .theater { padding: 12px 14px; }
+  .dock { position: sticky; bottom: 0; padding: 8px 14px 10px; }
+  .controls .spacer { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
