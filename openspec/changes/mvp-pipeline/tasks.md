@@ -81,3 +81,17 @@ El usuario pidió a Codex aplicar las cuatro correcciones sobre la base
 - [x] R4.2 Acotar snapshots por bytes, unificar estado HTTP/stream y validar revisiones/relación con el original — Responsable: Codex | Estado: terminada | Depende de: revisión PR #4. Verificación: 109 tests Python correctos; Unicode y evicción de pares completos hasta 1 MiB; idempotencia sin consumir secuencia; rechazo sin mutación; descarte de resultados tardíos; HTTP y snapshot coinciden en `ended`.
 - [x] R4.3 Agregar prueba de navegador contra gateway real a la CI y documentar ejecución — Responsable: Codex | Estado: terminada | Depende de: R4.1, R4.2. Verificación: Playwright de integración correcto con conexión real HTTP/WebSocket vía proxy, revisión original/traducción, reconexión y limpieza. Fuentes sintéticas, sin IA. Ruff, compilación y actionlint correctos.
 - [x] R4.4 Claude revisa las correcciones de Codex en PR #4 antes de integrar — Responsable: Claude | Estado: terminada | Depende de: R4.1-R4.3. Verificación (2026-09-25): leí el diff completo de `gateway.py` y `stream.py`. Confirmé: `send_text` en vez de `send_bytes` (frames como texto real, no Blob — reproduje con un cliente websockets real, `isinstance(raw, str)` da `True`); cola con `maxsize` real y una sola señal de overflow por suscriptor (no un `None` por evento); snapshot acotado a 1 MiB evictando segmentos completos y después gaps; `SessionStream` y `SessionRegistry` comparten el mismo `SessionRecord` (HTTP y WS ya no pueden divergir); validación de revisión/relación original-traducción antes de mutar estado, con resultados obsoletos/duplicados devolviendo `None` sin consumir `seq`. 109 tests pasan, ruff limpio. Repetí la prueba de punta a punta con Whisper/Ollama reales sobre las dos sesiones de muestra: funciona correctamente, incluida la verificación a nivel de wire de que los frames llegan como texto. Acepto. Pendientes: grupos 5/6 (aislamiento explícito, medición p95 real).
+
+## Prueba integrada posterior al PR #4 — Codex
+
+Se ejecutó el recorrido con Whisper/Ollama reales y dos páginas de audiencia
+sobre `801f3a4`. Evidencia en `docs/validation/2026-09-25-two-sessions/`:
+9 originales EN + 9 traducciones ES y 9 originales ES; ambas sesiones `ended`,
+cero errores JS/protocolo reportados y reconexión sin duplicados.
+
+Los WAV son sintéticos. EN (~41s de audio) terminó a ~81s y ES (~45s) a ~68s
+desde el inicio del lanzador; no hay fuente pautada en tiempo real ni reloj
+de captura. Hay cortes de palabras y agregados de traducción documentados.
+**No se marcan completas 5.1/5.2/6.1 ni se aprueba calidad/latencia.**
+La siguiente validación requiere mejorar/evaluar segmentación y traducción,
+probar audio humano y medir la capacidad bajo una fuente a velocidad real.
