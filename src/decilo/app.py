@@ -12,6 +12,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.responses import FileResponse
 
+from decilo.providers import load_config, provider
 from decilo.gateway import SessionGateway
 from decilo.models import Session, SessionCatalog
 from decilo.pipeline import run_file_session
@@ -72,6 +73,10 @@ async def _start_sample_sessions() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    load_config()
+    logging.getLogger("uvicorn.error").info(
+        "AI providers: STT=%s translation=%s", provider("stt"), provider("translation"),
+    )
     logging.getLogger("uvicorn.error").info(
         "Translation queue: %s", os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
     )

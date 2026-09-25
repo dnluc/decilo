@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import httpx
 
+from decilo.providers import provider
+
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "gemma3n:e2b"
 SYSTEM_PROMPT = (
@@ -21,6 +23,9 @@ SYSTEM_PROMPT = (
 
 
 async def translate(text: str, *, model: str = MODEL, timeout: float = 30.0) -> str:
+    if provider('translation') == 'gemini':
+        from decilo.gemini import translate as cloud_translate
+        return await cloud_translate(text, SYSTEM_PROMPT, timeout)
     payload = {
         "model": model,
         "messages": [
