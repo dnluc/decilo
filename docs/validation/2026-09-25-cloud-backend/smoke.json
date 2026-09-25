@@ -1,0 +1,84 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "source": "samples/en_tech_talk.wav, first 3 seconds",
+  "audio_seconds": 3,
+  "packet_ms": 100,
+  "automatic_retries": 0,
+  "events": [
+    {
+      "elapsed_seconds": 6.2063,
+      "event": {
+        "protocol_version": 1,
+        "session_id": "capture-440706279bc447b5aa7b05d8a72c82f8",
+        "stream_id": "89cf0debfef1",
+        "seq": 1,
+        "emitted_at": "2026-09-25T06:47:29.941486Z",
+        "type": "caption.upsert",
+        "data": {
+          "segment_id": "seg-1",
+          "segment_seq": 1,
+          "kind": "transcript",
+          "language": "en",
+          "revision": 1,
+          "source_revision": null,
+          "text": "Welcome to this talk about distributed systems",
+          "status": "final",
+          "start_ms": 0,
+          "end_ms": 3000,
+          "speaker_id": null,
+          "boundary_reason": "end_of_stream"
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 7.9353,
+      "event": {
+        "protocol_version": 1,
+        "session_id": "capture-440706279bc447b5aa7b05d8a72c82f8",
+        "stream_id": "89cf0debfef1",
+        "seq": 2,
+        "emitted_at": "2026-09-25T06:47:31.686618Z",
+        "type": "caption.upsert",
+        "data": {
+          "segment_id": "seg-1",
+          "segment_seq": 1,
+          "kind": "translation",
+          "language": "es",
+          "revision": 1,
+          "source_revision": 1,
+          "text": "Bienvenidos a esta charla sobre sistemas distribuidos.",
+          "status": "final",
+          "start_ms": 0,
+          "end_ms": 3000,
+          "speaker_id": null,
+          "boundary_reason": "end_of_stream"
+        }
+      }
+    },
+    {
+      "elapsed_seconds": 7.9357,
+      "event": {
+        "protocol_version": 1,
+        "session_id": "capture-440706279bc447b5aa7b05d8a72c82f8",
+        "stream_id": "89cf0debfef1",
+        "seq": 3,
+        "emitted_at": "2026-09-25T06:47:31.687145Z",
+        "type": "session.status",
+        "data": {
+          "session": {
+            "id": "capture-440706279bc447b5aa7b05d8a72c82f8",
+            "title": "Audio de pestaña",
+            "source_language": "en",
+            "translation_languages": [
+              "es"
+            ],
+            "target_locale": "es-AR",
+            "status": "ended"
+          }
+        }
+      }
+    }
+  ],
+  "session_id": "capture-440706279bc447b5aa7b05d8a72c82f8"
+}

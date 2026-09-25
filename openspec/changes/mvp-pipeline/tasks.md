@@ -198,3 +198,19 @@ Prueba real: listar modelos devolvió 200, pero generar con 2.5 Flash devolvió
 404; 3.8 Flash y flash-latest devolvieron 503. No se completó transcripción/
 traducción real ni se midió latencia. Default configurado 3.8 Flash según
 documentación vigente; local sigue siendo el proveedor por defecto.
+
+
+## Prueba real de nube habilitada — 2026-09-25
+
+PRs #15 y #17 ya integrados por Claude; frontend #16 también integrado.
+Por pedido del usuario se reinició el backend local en 8000 con Gemini para STT
+ y traducción, sin prewarm/autostart. Frontend de este worktree en 5173.
+Un único fragmento sintético de 3s, dos solicitudes sin reintentos, produjo
+original EN y traducción ES correctos en este caso. Llegaron respectivamente
+3.2063s y 4.9353s después del fin del audio; no es comparación sostenida.
+Playwright comprobó el texto en el frontend mediante snapshot, sin más inferencia.
+Evidencia: docs/validation/2026-09-25-cloud-backend/.
+Se mantiene activa la selección nube local a pedido del usuario; .env no se
+publica. Las sesiones no arrancan automáticamente para cuidar saldo prepago.
+Esta prueba sustituye el bloqueo de acceso anterior, no acredita calidad general
+ni capacidad de dos sesiones. No se hicieron reintentos ni benchmarks extra.
