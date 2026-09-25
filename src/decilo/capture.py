@@ -82,6 +82,14 @@ class CaptureBuffer:
             self._seqs[start] = self.seq
         return self._seqs[start]
 
+    def sentence_break(self, start, end_samples):
+        """La provisional oyó un final de oración: cerrar el segmento ahí."""
+        if self.segmenter is None or self.segmenter.start != start:
+            return  # el segmento ya cerró por pausa/tope mientras se transcribía
+        segment = self.segmenter.split_open(end_samples)
+        if segment is not None:
+            self.enqueue(segment)
+
     def enqueue(self, segment):
         # Cerrar ANTES de encolar: desde acá ninguna provisional del segmento
         # puede publicarse, así la revisión de la pasada final queda estable.
@@ -138,6 +146,7 @@ async def _receive_audio(websocket, gateway, submit, deadline, segmentation, pre
     buffer = CaptureBuffer(gateway, submit, segmentation, partials)
     if partials:
         partials.seq_for = buffer.seq_for
+        partials.on_sentence = buffer.sentence_break
     worker = asyncio.create_task(buffer.consume())
     partial_worker = asyncio.create_task(partials.worker()) if partials else None
     try:

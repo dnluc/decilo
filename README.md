@@ -211,6 +211,24 @@ Activo por defecto en la captura con segmentación por pausas.
 `DECILO_PARTIALS=0` lo apaga (útil en máquinas donde la CPU no acompaña:
 las provisionales compiten con la pasada final y con Ollama).
 
+Rendimiento local: las provisionales usan un Whisper chico dedicado
+(`base`, configurable con `DECILO_WHISPER_FAST`) — medido en esta máquina:
+0.55s por pasada contra 1.5s de `small` y 3.9s de `medium` —, el español
+pasó de `medium` a `small` para la pasada final (`DECILO_WHISPER_ES=medium`
+lo restaura) y los modelos usan la mitad de los núcleos para convivir con
+la traducción.
+
+### Corte por fin de oración (orador rápido)
+
+Si alguien habla sin pausas, el corte acústico no llega y las oraciones se
+apilaban en un segmento larguísimo. Ahora, cuando la transcripción
+provisional muestra que una oración terminó **y la siguiente ya empezó**,
+el segmento se corta en ese límite exacto (timestamp del segmento de
+Whisper en local; posición del texto acumulado en Gemini Live) sin esperar
+la pausa: la oración completa se confirma y su traducción sale ya. Nunca
+se corta por un punto al final del texto a medias — Whisper puntúa
+cualquier hipótesis y eso cortaría palabras al medio.
+
 ### Autodetección del idioma de entrada
 
 La captura acepta `language=auto` (opción por defecto en la UI). El backend

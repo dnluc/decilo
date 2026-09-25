@@ -19,11 +19,17 @@ import asyncio
 import base64
 import json
 import os
+import re
 
 from decilo.models import CaptionData, GapData
 from decilo.pipeline import translate_caption
 
 RATE = 16000
+# Un orador rápido puede no pausar nunca: los interim acumulan oraciones y
+# la final (que dispara la traducción) no llega. Si el texto ya muestra un
+# final de oración seguido de una nueva (mayúscula o apertura), la parte
+# completa se confirma ahí mismo y la cola sigue como segmento nuevo.
+SENTENCE_SPLIT = re.compile(r'[.!?…]["\')\]]*\s+(?=["(\[A-Z0-9ÁÉÍÓÚÑÜ¿¡])')
 LIVE_URL = ('wss://generativelanguage.googleapis.com/ws/'
             'google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent')
 # La Live API corta la sesión a los 10 minutos: reconectar antes, sin drama.
@@ -56,6 +62,13 @@ class GeminiLiveTranscriber:
         self.fed_samples = 0       # muestras enviadas en la conexión actual
         self.connected_at = 0.0
         self.gaps = 0
+        # Prefijo del texto acumulado de Gemini ya confirmado (por cortes de
+        # oración o por una final oficial): lo que siga se mide contra esto.
+        # Tras una final, el buffer de interims a veces continúa con el texto
+        # anterior y a veces arranca de cero; `committed_final` marca que un
+        # interim que no coincida es un arranque nuevo, no una reescritura.
+        self.committed = ''
+        self.committed_final = False
 
     async def connect(self):
         import websockets
@@ -120,10 +133,39 @@ class GeminiLiveTranscriber:
         content = msg.get('serverContent') or {}
         interim = content.get('interimInputTranscription')
         if interim is not None:
-            self._publish(interim.get('text', ''), final=False)
+            await self._interim(interim.get('text', ''))
         final = content.get('inputTranscription')
         if final is not None:
             await self._final(final.get('text', ''))
+
+    def _after_committed(self, text: str) -> str | None:
+        """Texto de la elocución sin el prefijo ya confirmado por cortes.
+
+        None si Gemini reescribió lo confirmado (modo SMART): ese texto ya no
+        se puede alinear y no debe volver a publicarse."""
+        if not self.committed:
+            return text
+        if text.startswith(self.committed):
+            return text[len(self.committed):]
+        return None
+
+    async def _interim(self, text: str):
+        effective = self._after_committed(text)
+        if effective is None:
+            if not self.committed_final:
+                return  # reescritura a mitad de elocución: no republicar
+            # La elocución anterior cerró y el buffer arrancó de cero.
+            self.committed = ''
+            self.committed_final = False
+            effective = text
+        boundaries = list(SENTENCE_SPLIT.finditer(effective))
+        if boundaries:
+            cut = boundaries[-1].end()
+            await self._finalize(effective[:cut])
+            self.committed += effective[:cut]
+            self.committed_final = False
+            effective = effective[cut:]
+        self._publish(effective, final=False)
 
     def _stream_ms(self) -> int:
         return self.base_ms + self.fed_samples * 1000 // RATE
@@ -151,29 +193,50 @@ class GeminiLiveTranscriber:
         self.last_text = text
         return caption
 
-    async def _final(self, text: str):
-        if not text.strip():
-            # Gemini retiró lo que creyó oír: las provisionales no pueden
-            # quedar como si alguien lo hubiera dicho.
-            if self.open_seq is not None:
-                self.gaps += 1
-                self.gateway.publish_nowait(self.stream.record_gap(GapData(
-                    gap_id=f'gap-live-{self.gaps}', start_ms=self.start_ms or 0,
-                    end_ms=self._stream_ms(), reason='processing_error',
-                    discard_captions=[{'segment_id': f'seg-{self.open_seq}',
-                                      'kind': 'transcript', 'language': self.language}],
-                )))
-        else:
-            caption = self._publish(text, final=True)
-            if caption is not None and self.stream.session.translation_languages:
-                if self.submit_translation is not None:
-                    await self.submit_translation(caption)
-                else:
-                    await translate_caption(self.stream, self.gateway, caption)
+    async def _finalize(self, text: str):
+        """Confirma el segmento abierto con este texto y dispara su traducción."""
+        caption = self._publish(text, final=True)
+        if caption is not None and self.stream.session.translation_languages:
+            if self.submit_translation is not None:
+                await self.submit_translation(caption)
+            else:
+                await translate_caption(self.stream, self.gateway, caption)
         self.open_seq = None
         self.revision = 0
         self.last_text = None
         self.start_ms = None
+
+    async def _final(self, text: str):
+        effective = self._after_committed(text)
+        if effective is None:
+            # SMART reescribió texto que ya confirmamos: lo mejor disponible
+            # para la cola es su última provisional.
+            self._confirm_open_segment()
+        elif not effective.strip():
+            if self.open_seq is not None:
+                if self.committed:
+                    # Hubo cortes: la cola provisional es real, se confirma.
+                    self._confirm_open_segment()
+                else:
+                    # Gemini retiró lo que creyó oír: las provisionales no
+                    # pueden quedar como si alguien lo hubiera dicho.
+                    self.gaps += 1
+                    self.gateway.publish_nowait(self.stream.record_gap(GapData(
+                        gap_id=f'gap-live-{self.gaps}', start_ms=self.start_ms or 0,
+                        end_ms=self._stream_ms(), reason='processing_error',
+                        discard_captions=[{'segment_id': f'seg-{self.open_seq}',
+                                          'kind': 'transcript', 'language': self.language}],
+                    )))
+            self.open_seq = None
+            self.revision = 0
+            self.last_text = None
+            self.start_ms = None
+        else:
+            await self._finalize(effective)
+        # La final oficial define el contenido del buffer: si el interim
+        # siguiente lo continúa, todo esto ya está publicado.
+        self.committed = text
+        self.committed_final = True
 
     def _confirm_open_segment(self):
         """Sin más audio no va a llegar la pasada final: la última provisional
@@ -190,6 +253,8 @@ class GeminiLiveTranscriber:
         self.open_seq = None
         self.revision = 0
         self.last_text = None
+        self.committed = ''
+        self.committed_final = False
 
     async def finish(self):
         """Fin de la captura: avisar a Gemini y esperar la final que falte."""

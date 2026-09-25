@@ -37,7 +37,7 @@ def fake_transcribe(monkeypatch):
 
     def transcribe_pcm(pcm, language, *, beam_size):
         calls.append((len(pcm) // 2, beam_size))
-        return f'hipotesis de {len(pcm) // 2} muestras'
+        return [(f'hipotesis de {len(pcm) // 2} muestras', len(pcm) / 2 / RATE)]
 
     monkeypatch.setattr(partials_module, 'transcribe_pcm', transcribe_pcm)
     return calls
@@ -98,7 +98,7 @@ async def test_latest_snapshot_wins_while_worker_is_busy(monkeypatch):
 
     def slow_transcribe(pcm, language, *, beam_size):
         sizes.append(len(pcm) // 2)
-        return 'texto'
+        return [('texto', len(pcm) / 2 / RATE)]
 
     monkeypatch.setattr(partials_module, 'transcribe_pcm', slow_transcribe)
     partial = PartialTranscriber(stream, gateway, seq_for=lambda start: 1, language='en')
@@ -125,7 +125,7 @@ async def test_stale_provisional_after_close_is_dropped(monkeypatch):
         import time
         while not unblock.is_set():
             time.sleep(0.01)
-        return 'texto viejo'
+        return [('texto viejo', 1.0)]
 
     monkeypatch.setattr(partials_module, 'transcribe_pcm', blocking_transcribe)
     partial = PartialTranscriber(stream, gateway, seq_for=lambda start: 1, language='en')
@@ -150,3 +150,50 @@ def test_voiceless_or_closed_segments_are_ignored(fake_transcribe):
     partial.close(0)
     partial.observe(0, voiced(2.0), True)   # ya cerrado
     assert partial._latest is None
+
+
+# Corte por texto: la provisional oyó el final de la oración.
+
+def test_ends_sentence_heuristics():
+    from decilo.partials import ends_sentence
+    assert ends_sentence('This sentence clearly ended.')
+    assert ends_sentence('¿Terminó la oración?')
+    assert not ends_sentence('short.')                    # muy corto
+    assert not ends_sentence('la versión es la 3.5')      # número, no punto final
+    assert not ends_sentence('and then we continue with')
+
+
+@pytest.mark.asyncio
+async def test_sentence_end_triggers_split_callback(monkeypatch):
+    stream, gateway = make_stream(), FakeGateway()
+    cuts = []
+
+    def transcribe_pcm(pcm, language, *, beam_size):
+        # La oración cerró a los 2.1s y la siguiente ya empezó.
+        return [('This sentence clearly ended right here.', 2.1), ('And now', 2.5)]
+
+    monkeypatch.setattr(partials_module, 'transcribe_pcm', transcribe_pcm)
+    partial = PartialTranscriber(stream, gateway, seq_for=lambda start: 1,
+                                 language='en', on_sentence=lambda s, e: cuts.append((s, e)))
+    partial.observe(0, voiced(2.5), True)
+    await run_worker_once(partial)
+    # Corta en el timestamp del límite, no al final de la instantánea.
+    assert cuts == [(0, int(RATE * 2.1))]
+
+
+@pytest.mark.asyncio
+async def test_trailing_period_alone_does_not_split(monkeypatch):
+    stream, gateway = make_stream(), FakeGateway()
+    cuts = []
+
+    def transcribe_pcm(pcm, language, *, beam_size):
+        # Un único segmento con puntito al final: puede ser fantasma de
+        # Whisper sobre audio a medias; NO debe cortar.
+        return [('This sentence clearly ended.', 2.4)]
+
+    monkeypatch.setattr(partials_module, 'transcribe_pcm', transcribe_pcm)
+    partial = PartialTranscriber(stream, gateway, seq_for=lambda start: 1,
+                                 language='en', on_sentence=lambda s, e: cuts.append((s, e)))
+    partial.observe(0, voiced(2.5), True)
+    await run_worker_once(partial)
+    assert cuts == []

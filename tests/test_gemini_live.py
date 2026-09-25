@@ -141,3 +141,95 @@ async def test_local_provider_never_touches_live(monkeypatch):
         assert await capture._start_live(FakeGateway(stream), None) is None
     finally:
         providers.reset_provider(token)
+
+
+# Corte por fin de oración: sin esperar la pausa del VAD.
+
+@pytest.mark.asyncio
+async def test_interim_with_sentence_boundary_splits_and_translates():
+    submitted = []
+
+    async def submit(caption):
+        submitted.append(caption)
+
+    live, gateway = make_live(translations=('es',), submit=submit)
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'First sentence is done. And then it'}}})
+
+    got = captions(gateway)
+    assert [(c.segment_id, c.status, c.text) for c in got] == [
+        ('seg-1', 'final', 'First sentence is done.'),
+        ('seg-2', 'provisional', 'And then it'),
+    ]
+    assert [c.text for c in submitted] == ['First sentence is done.']
+
+
+@pytest.mark.asyncio
+async def test_official_final_confirms_only_the_uncommitted_tail():
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'First sentence is done. And then it'}}})
+    await live.handle({'serverContent': {'inputTranscription':
+        {'text': 'First sentence is done. And then it continued.'}}})
+
+    got = captions(gateway)
+    assert got[-1].segment_id == 'seg-2'
+    assert got[-1].status == 'final'
+    assert got[-1].text == 'And then it continued.'
+    # La final oficial pasa a ser el prefijo confirmado del buffer.
+    assert live.committed == 'First sentence is done. And then it continued.'
+
+
+@pytest.mark.asyncio
+async def test_smart_rewrite_of_committed_prefix_confirms_last_tail():
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'First sentence is done. And then it'}}})
+    await live.handle({'serverContent': {'inputTranscription':
+        {'text': 'Something entirely rewritten.'}}})
+
+    got = captions(gateway)
+    assert got[-1].status == 'final'
+    assert got[-1].text == 'And then it'  # la última provisional, confirmada
+
+
+def test_decimals_and_lowercase_do_not_split():
+    from decilo.gemini_live import SENTENCE_SPLIT
+    assert not SENTENCE_SPLIT.search('the version 3.5 shipped today')
+    assert not SENTENCE_SPLIT.search('wait... let me think')
+    assert SENTENCE_SPLIT.search('It works. Now the next part')
+    assert SENTENCE_SPLIT.search('¿Funciona? Sí, claro')
+
+
+@pytest.mark.asyncio
+async def test_stale_interim_replaying_the_final_is_not_republished():
+    """Tras la final oficial, un interim con el mismo texto no duplica nada."""
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'inputTranscription':
+        {'text': 'First sentence is done. And then it continued.'}}})
+    before = len(captions(gateway))
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'First sentence is done. And then it continued.'}}})
+    assert len(captions(gateway)) == before
+
+
+@pytest.mark.asyncio
+async def test_interim_buffer_continuing_past_the_final_publishes_only_the_tail():
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'inputTranscription':
+        {'text': 'First sentence is done.'}}})
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'First sentence is done. Second part'}}})
+    got = captions(gateway)
+    assert (got[-1].segment_id, got[-1].status, got[-1].text) == ('seg-2', 'provisional', 'Second part')
+
+
+@pytest.mark.asyncio
+async def test_interim_buffer_restarting_after_the_final_is_a_new_utterance():
+    live, gateway = make_live(translations=())
+    await live.handle({'serverContent': {'inputTranscription':
+        {'text': 'First sentence is done.'}}})
+    await live.handle({'serverContent': {'interimInputTranscription':
+        {'text': 'Fresh start'}}})
+    got = captions(gateway)
+    assert (got[-1].segment_id, got[-1].status, got[-1].text) == ('seg-2', 'provisional', 'Fresh start')

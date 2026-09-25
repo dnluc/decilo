@@ -120,3 +120,31 @@ class PauseSegmenter:
         todavía no cerró. El PCM es una copia: el buffer sigue creciendo.
         """
         return self.start, bytes(self.audio), self.has_voice
+
+    def split_open(self, end_samples):
+        """Cierra el segmento abierto hasta la muestra absoluta dada.
+
+        Para cortes inferidos por texto: la transcripción provisional oyó un
+        final de oración, así que no hace falta esperar la pausa acústica ni
+        el tope de duración. El audio posterior al corte queda como inicio
+        del siguiente segmento; ninguna muestra se pierde."""
+        samples = end_samples - self.start
+        if samples < self.min_samples or samples * 2 > len(self.audio):
+            return None
+        segment = AudioSegment(bytes(self.audio[:samples * 2]), self.start,
+                               end_samples, 'pause', self.has_voice)
+        del self.audio[:samples * 2]
+        self.start = end_samples
+        # La cuenta de silencio final sigue valiendo (es el final del audio
+        # retenido); la voz del resto se recalcula sobre lo que quedó.
+        self.has_voice = self._voiced(bytes(self.audio))
+        return segment
+
+    def _voiced(self, pcm):
+        gate = (self.config.silence_rms * 32768) ** 2
+        for i in range(0, len(pcm), self.frame_samples * 2):
+            samples = struct.unpack(f'<{len(pcm[i:i + self.frame_samples * 2]) // 2}h',
+                                    pcm[i:i + self.frame_samples * 2])
+            if samples and sum(x * x for x in samples) > len(samples) * gate:
+                return True
+        return False

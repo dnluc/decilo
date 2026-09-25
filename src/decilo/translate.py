@@ -44,7 +44,10 @@ async def translate(text: str, *, model: str = MODEL, timeout: float = 30.0) -> 
         resp = await client.post(OLLAMA_URL, json=payload, timeout=timeout)
         resp.raise_for_status()
         data = resp.json()
-        return data["message"]["content"].strip()
+        text = data["message"]["content"].strip()
+        # Con entradas truncadas, Gemma a veces agrega el texto original u
+        # otra variante tras una línea en blanco: un subtítulo es un bloque.
+        return text.split("\n\n")[0].strip()
 
 
 @dataclass(frozen=True)

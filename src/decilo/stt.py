@@ -1,18 +1,22 @@
 """Transcripción con faster-whisper, un modelo por idioma de origen.
 
-Decisión de `arquitectura-base`/`mvp-pipeline` design.md: `small` para
-inglés (deja presupuesto de latencia a la traducción), `medium` para
-español (sin traducción que sumar, mejor con préstamos técnicos).
+`small` para ambos idiomas por defecto (`arquitectura-base` proponía
+`medium` para español, pero en CPU su latencia no sirve para subtítulos
+en vivo; `DECILO_WHISPER_ES=medium` lo restaura). Las transcripciones
+provisionales usan un modelo chico aparte (`base`): son un anticipo que
+la pasada final corrige, y con el modelo grande cada anticipo tardaba
+más que lo que anticipaba.
 """
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from threading import Lock
 
 from decilo.providers import provider
 
-MODEL_BY_LANGUAGE = {"en": "small", "es": "medium"}
+MODEL_BY_LANGUAGE = {"en": "small", "es": "small"}
 _models: dict[str, object] = {}
 _model_lock = Lock()
 _load_locks: dict[str, Lock] = {}
@@ -23,15 +27,26 @@ def WhisperModel(*args, **kwargs):
     return Model(*args, **kwargs)
 
 
-def _get_model(language: str):
-    size = MODEL_BY_LANGUAGE.get(language, "small")
+def _size_for(language: str, fast: bool) -> str:
+    if fast:
+        return os.environ.get("DECILO_WHISPER_FAST", "base")
+    if language == "es":
+        return os.environ.get("DECILO_WHISPER_ES", MODEL_BY_LANGUAGE["es"])
+    return MODEL_BY_LANGUAGE.get(language, "small")
+
+
+def _get_model(language: str, fast: bool = False):
+    size = _size_for(language, fast)
     # Two simultaneous sessions must not allocate the same cold model twice.
     with _model_lock:
         load_lock = _load_locks.setdefault(size, Lock())
     with load_lock:
         model = _models.get(size)
         if model is None:
-            model = WhisperModel(size, device="cpu", compute_type="int8")
+            # La mitad de los hilos: la otra mitad queda para la pasada final
+            # o la traducción, que corren a la vez que las provisionales.
+            model = WhisperModel(size, device="cpu", compute_type="int8",
+                                 cpu_threads=max(4, (os.cpu_count() or 8) // 2))
             _models[size] = model
         return model
 
@@ -51,12 +66,24 @@ def _get_model(language: str):
 NO_SPEECH_THRESHOLD = 0.6
 
 
-def transcribe(audio_path: Path, language: str, *, beam_size: int = 5) -> str:
-    """Bloqueante y CPU-bound: correr con `asyncio.to_thread`."""
+def transcribe(audio_path: Path, language: str, *, beam_size: int = 5,
+               fast: bool = False) -> str:
+    """Bloqueante y CPU-bound: correr con `asyncio.to_thread`.
+
+    `fast=True` usa el modelo chico de anticipos provisionales."""
+    return " ".join(text for text, _end in
+                    transcribe_segments(audio_path, language, beam_size=beam_size, fast=fast))
+
+
+def transcribe_segments(audio_path: Path, language: str, *, beam_size: int = 5,
+                        fast: bool = False) -> list[tuple[str, float]]:
+    """Como `transcribe`, pero conserva (texto, fin_en_segundos) por segmento
+    de Whisper: los cortes por fin de oración necesitan saber DÓNDE terminó."""
     if provider('stt') == 'gemini':
         from decilo.gemini import transcribe as cloud_transcribe
-        return cloud_transcribe(audio_path, language)
-    model = _get_model(language)
+        text = cloud_transcribe(audio_path, language)
+        return [(text, 0.0)] if text else []
+    model = _get_model(language, fast)
     segments, _info = model.transcribe(
         str(audio_path),
         language=language,
@@ -65,9 +92,8 @@ def transcribe(audio_path: Path, language: str, *, beam_size: int = 5) -> str:
         condition_on_previous_text=False,
         no_speech_threshold=NO_SPEECH_THRESHOLD,
     )
-    return " ".join(
-        s.text.strip() for s in segments if s.no_speech_prob < NO_SPEECH_THRESHOLD
-    )
+    return [(s.text.strip(), s.end) for s in segments
+            if s.no_speech_prob < NO_SPEECH_THRESHOLD]
 
 
 def detect_language(pcm: bytes) -> str:
