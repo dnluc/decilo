@@ -60,80 +60,85 @@ async def run_file_session(
     Sin esto, la latencia medida no tiene sentido (el pipeline puede
     adelantarse al propio audio).
     """
-    source_language = stream.session.source_language
-    translation_languages = stream.session.translation_languages
-    segment_seq = 0
     loop = asyncio.get_running_loop()
-    # Optional origin uses this event loop’s monotonic clock (never wall time).
     t_start = loop.time() if started_at is None else started_at
-
-    for chunk_path, start_ms, end_ms in _iter_chunks(audio_path, CHUNK_SECONDS):
-        segment_seq += 1
-        segment_id = f"seg-{segment_seq}"
+    for segment_seq, (chunk_path, start_ms, end_ms) in enumerate(
+        _iter_chunks(audio_path, CHUNK_SECONDS), start=1,
+    ):
         try:
             wait = t_start + end_ms / 1000 - loop.time()
             if wait > 0:
                 await asyncio.sleep(wait)
-            text = await asyncio.to_thread(transcribe, chunk_path, source_language)
-        except Exception as exc:
-            gateway.publish_nowait(
-                stream.record_error("inference_unavailable", f"STT: {exc}", retryable=True)
-            )
-            gateway.publish_nowait(
-                stream.record_gap(
-                    GapData(
-                        gap_id=f"gap-stt-{segment_seq}",
-                        start_ms=start_ms,
-                        end_ms=end_ms,
-                        reason="processing_error",
-                        discard_captions=[],
-                    )
-                )
-            )
-            continue
+            await process_chunk(stream, gateway, chunk_path, segment_seq, start_ms, end_ms)
         finally:
             chunk_path.unlink(missing_ok=True)
+    ended_session = stream.session.model_copy(update={"status": "ended"})
+    gateway.publish_nowait(stream.record_status(ended_session))
 
-        if not text.strip():
-            continue  # silencio: no se inventa un subtítulo vacío
 
-        transcript = CaptionData(
+async def process_chunk(stream, gateway, chunk_path, segment_seq, start_ms, end_ms):
+    """Consume y elimina un WAV; comparte inferencia entre archivo y captura."""
+    source_language = stream.session.source_language
+    translation_languages = stream.session.translation_languages
+    segment_id = f"seg-{segment_seq}"
+    try:
+        text = await asyncio.to_thread(transcribe, chunk_path, source_language)
+    except Exception as exc:
+        gateway.publish_nowait(
+            stream.record_error("inference_unavailable", f"STT: {exc}", retryable=True)
+        )
+        gateway.publish_nowait(
+            stream.record_gap(
+                GapData(
+                    gap_id=f"gap-stt-{segment_seq}",
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                    reason="processing_error",
+                    discard_captions=[],
+                )
+            )
+        )
+        return
+    finally:
+        chunk_path.unlink(missing_ok=True)
+
+    if not text.strip():
+        return  # silencio: no se inventa un subtítulo vacío
+
+    transcript = CaptionData(
+        segment_id=segment_id,
+        segment_seq=segment_seq,
+        kind="transcript",
+        language=source_language,
+        revision=1,
+        source_revision=None,
+        text=text.strip(),
+        status="final",
+        start_ms=start_ms,
+        end_ms=end_ms,
+    )
+    gateway.publish_nowait(stream.upsert_caption(transcript))
+
+    for target_language in translation_languages:
+        try:
+            translated_text = await translate(text.strip())
+        except Exception as exc:
+            gateway.publish_nowait(
+                stream.record_error("inference_unavailable", f"Traducción: {exc}", retryable=True)
+            )
+            continue
+        if not translated_text:
+            continue
+        translation = CaptionData(
             segment_id=segment_id,
             segment_seq=segment_seq,
-            kind="transcript",
-            language=source_language,
+            kind="translation",
+            language=target_language,
             revision=1,
-            source_revision=None,
-            text=text.strip(),
+            source_revision=1,
+            text=translated_text,
             status="final",
             start_ms=start_ms,
             end_ms=end_ms,
         )
-        gateway.publish_nowait(stream.upsert_caption(transcript))
-
-        for target_language in translation_languages:
-            try:
-                translated_text = await translate(text.strip())
-            except Exception as exc:
-                gateway.publish_nowait(
-                    stream.record_error("inference_unavailable", f"Traducción: {exc}", retryable=True)
-                )
-                continue
-            if not translated_text:
-                continue
-            translation = CaptionData(
-                segment_id=segment_id,
-                segment_seq=segment_seq,
-                kind="translation",
-                language=target_language,
-                revision=1,
-                source_revision=1,
-                text=translated_text,
-                status="final",
-                start_ms=start_ms,
-                end_ms=end_ms,
-            )
-            gateway.publish_nowait(stream.upsert_caption(translation))
-
-    ended_session = stream.session.model_copy(update={"status": "ended"})
-    gateway.publish_nowait(stream.record_status(ended_session))
+        gateway.publish_nowait(stream.upsert_caption(translation))

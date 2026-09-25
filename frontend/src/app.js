@@ -1,4 +1,5 @@
 import './style.css';
+import { setupCapture } from './capture.js';
 import { setupPlayback } from './playback.js';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
 import { CaptionConnection, loadSessions } from './connection.js';
@@ -167,6 +168,11 @@ $('refresh').onclick = refresh;
 $('demo-banner').hidden = !demo;
 $('demo-link').hidden = demo;
 setupReading();
+$('youtube-test').hidden = demo;
+if (!demo) setupCapture({ selectSession(session) {
+  sessions.push(session);
+  select(session);
+} });
 if (demo) demoModule = await import('./demo.js');
 await refresh();
 window.addEventListener('pagehide', () => {

@@ -98,3 +98,13 @@ input { accent-color: #3e734b; }
 #start-test { border: 1px solid #39754c; border-radius: .5rem; background: #39754c; color: white; padding: .65rem 1rem; font: inherit; cursor: pointer; }
 #start-test:disabled { opacity: .6; cursor: wait; }
 #start-test:focus-visible { outline: 3px solid #243e2b; outline-offset: 3px; }
+
+.youtube-test { padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #d8d6cb; border-radius: 1rem; background: #fffef9; }
+.youtube-test[hidden] { display: none; }
+.youtube-test iframe { display: block; width: 100%; max-width: 800px; aspect-ratio: 16 / 9; border: 0; margin-bottom: 1rem; }
+.youtube-test p, .youtube-test a { font-size: .9rem; line-height: 1.6; }
+.youtube-test button, .youtube-test select { font: inherit; padding: .5rem; margin: .25rem; border: 1px solid #8b9b8b; border-radius: .4rem; }
+
+.youtube-test h2 { font-size: 1.05rem; line-height: 1.4; }
+.youtube-test { padding: 1rem; }
+.youtube-test button { margin-left: 0; }
