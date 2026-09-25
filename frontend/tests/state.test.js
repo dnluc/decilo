@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyEvent, initialState, beginConnection, visibleCaptions, validateCatalog } from '../src/state.js';
-import { demoSessions, snapshot, envelope, caption, demoEvents } from '../src/demo.js';
-const session = demoSessions[0];
+import { sessions, snapshot, envelope, caption, revisionSequence } from './fixtures.js';
+const session = sessions[0];
 const start = () => applyEvent(initialState(session.id), snapshot(session));
 const send = (state, value) => applyEvent(state, envelope(session, 'caption.upsert', value, state.seq + 1));
 
 test('original revisions replace text, invalidate translation, and discard late results', () => {
-  const events = demoEvents(session);
+  const events = revisionSequence(session);
   let state = events.slice(0, 3).reduce(applyEvent, initialState(session.id));
   assert.equal(visibleCaptions(state, 'es')[0].caption.text, 'Antes de hacer el merge del PR,');
   state = applyEvent(state, events[3]);

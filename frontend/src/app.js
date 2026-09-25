@@ -1,67 +1,45 @@
 import './style.css';
-import { setupCapture } from './capture.js';
-import { setupPlayback } from './playback.js';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
-import { CaptionConnection, loadSessions } from './connection.js';
+import { CaptionConnection } from './connection.js';
 import { setupReading } from './reading.js';
+import { setupCapture } from './capture.js';
+import { setupVideo } from './video.js';
+import { createCaptionPacer } from './captions.js';
 
 const $ = id => document.getElementById(id);
-const demo = new URLSearchParams(location.search).get('demo') === '1';
-const statusLabels = { starting: 'Preparando la charla', live: 'En vivo', degraded: 'Con interrupciones', error: 'Sesión no disponible', ended: 'Charla finalizada' };
 const languageLabel = code => ({ es: 'Español', en: 'English', pt: 'Português' })[code] || code;
-let sessions = [];
 let selected = null;
 let state = null;
-let connection = { kind: 'connecting', message: 'Conectando…' };
-let catalogController;
-let demoTimers = [];
-let demoModule;
+let connection = { kind: 'idle', message: 'Esperando el audio de la charla.' };
 let announced = '';
+
+// La barra sostiene cada subtítulo un tiempo mínimo de lectura: el pipeline
+// puede entregar dos casi juntos y de otro modo alguno pasaría en milisegundos.
+const pacer = createCaptionPacer({
+  onShow(text) {
+    const live = $('live-caption');
+    live.textContent = text;
+    live.dataset.empty = text ? 'false' : 'true';
+  },
+});
+
 const client = new CaptionConnection({ onUpdate(next, nextConnection) {
   state = next;
   connection = nextConnection;
   if (state.session && state.session !== selected) {
     selected = state.session;
-    sessions = sessions.map(s => s.id === selected.id ? selected : s);
-    renderSessions();
     updateLanguages();
   }
   render();
 } });
-function highlightAudio(ms) {
-  for (const row of document.querySelectorAll('.caption')) {
-    const active = Number(row.dataset.start) <= ms && ms < Number(row.dataset.end);
-    row.classList.toggle('audio-current', active);
-    if (active) row.setAttribute('aria-current', 'true');
-    else row.removeAttribute('aria-current');
-  }
-}
-const playback = setupPlayback({ currentSession: () => selected, highlight: highlightAudio,
-  selectRun(run) {
-    sessions.push(run);
-    select(run);
-  },
-});
+
 function node(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
   if (text !== undefined) element.textContent = text;
   return element;
 }
-function renderSessions() {
-  const focusedIndex = [...$('sessions').children].indexOf(document.activeElement);
-  $('sessions').replaceChildren(...sessions.map((session, index) => {
-    const button = node('button', `session-card${selected?.id === session.id ? ' selected' : ''}`);
-    button.type = 'button';
-    button.setAttribute('aria-pressed', String(selected?.id === session.id));
-    button.append(node('span', 'session-number', String(index + 1).padStart(2, '0')),
-      node('strong', '', session.title), node('span', 'session-meta',
-        `${statusLabels[session.status]} · ${languageLabel(session.source_language)}`));
-    button.onclick = () => select(session);
-    return button;
-  }));
-  if (focusedIndex >= 0) $('sessions').children[focusedIndex]?.focus({ preventScroll: true });
-}
+
 function updateLanguages() {
   const languages = [selected.source_language, ...selected.translation_languages];
   const previous = $('language').value;
@@ -73,121 +51,96 @@ function updateLanguages() {
   $('language').value = languages.includes(previous) ? previous : languages.includes('es') ? 'es' : languages[0];
   $('language').disabled = false;
 }
-function select(session) {
-  demoTimers.forEach(clearTimeout);
-  demoTimers = [];
+
+// Una sesión nueva empieza de cero: nada de la anterior debe quedar visible.
+function useSession(session) {
   client.stop();
+  pacer.reset();
   selected = session;
-  playback.choose(session, demo);
-  $('focus-reading').disabled = false;
   state = initialState(session.id);
   announced = '';
   $('live-announcement').textContent = '';
+  $('focus-reading').disabled = false;
   updateLanguages();
-  renderSessions();
-  if (demo) {
-    connection = { kind: 'demo', message: 'Muestra · subtítulos simulados' };
-    demoModule.demoEvents(session).forEach((event, index) => {
-      demoTimers.push(setTimeout(() => {
-        state = applyEvent(state, event);
-        render();
-      }, index * 950));
-    });
-    render();
-  } else client.select(session.id);
+  client.select(session.id);
+  render();
 }
+
 function timestamp(ms) {
   return `${Math.floor(ms / 60000).toString().padStart(2, '0')}:${Math.floor(ms / 1000 % 60).toString().padStart(2, '0')}`;
 }
+
+const gapReason = {
+  overload: 'se omitió audio por sobrecarga.',
+  source_disconnect: 'se perdió la fuente de audio.',
+  processing_error: 'no se pudo procesar parte del audio.',
+};
+
 function render() {
-  if (!selected) return;
-  $('session-title').textContent = selected.title;
-  $('session-status').textContent = `${demo ? 'MUESTRA · ' : ''}${statusLabels[state.session?.status || selected.status]}`;
+  if (!state) return;
   $('connection').textContent = connection.message;
   $('connection').dataset.kind = connection.kind;
+
   const notices = [];
   if (state.restarted) notices.push('La transmisión se reinició. Parte del historial anterior puede no estar disponible.');
   if (state.historyTruncated) notices.push('Mostramos el historial reciente; el comienzo de la charla ya no está disponible.');
   if (state.error) notices.push(state.error.message);
-  for (const gap of state.gaps) notices.push(`Interrupción ${gap.start_ms === null ? 'en la charla' : `${timestamp(gap.start_ms)}–${timestamp(gap.end_ms)}`}: ${
-    { overload: 'se omitió audio por sobrecarga.', source_disconnect: 'se perdió la fuente de audio.', processing_error: 'no se pudo procesar parte del audio.' }[gap.reason]}`);
+  for (const gap of state.gaps) {
+    notices.push(`Interrupción ${gap.start_ms === null ? 'en la charla' : `${timestamp(gap.start_ms)}–${timestamp(gap.end_ms)}`}: ${gapReason[gap.reason]}`);
+  }
   $('notices').replaceChildren(...notices.map(text => node('p', '', text)));
+
   const language = $('language').value;
   const rows = visibleCaptions(state, language);
-  const transcript = $('transcript');
-  const scrollTop = transcript.scrollTop;
-  transcript.lang = language;
+  const log = $('transcript');
+  const scrollTop = log.scrollTop;
+  log.lang = language;
+
   if (!rows.length) {
-    const empty = node('div', 'empty');
-    empty.append(node('span', '', '“'), node('p', '', state.session?.status === 'ended' ? 'Esta charla terminó.' : 'Esperando las primeras palabras…'),
-      node('small', '', state.awaitingSnapshot ? 'Recuperando los subtítulos de esta sesión.' : 'Los subtítulos aparecerán cuando haya voz.'));
-    transcript.replaceChildren(empty);
-  } else transcript.replaceChildren(...rows.map(({ segmentId, original, caption }) => {
-    const article = node('article', `caption ${caption?.status || 'pending'}`);
-    article.dataset.segment = segmentId;
-    article.dataset.start = original.start_ms;
-    article.dataset.end = original.end_ms;
-    const meta = node('div', 'caption-meta', timestamp(original.start_ms));
-    if (caption?.speaker_id) meta.append(node('span', '', `Voz ${caption.speaker_id}`));
-    meta.append(node('span', '', !caption ? 'Traducción pendiente' : caption.status === 'provisional' ? 'En curso' : 'Confirmado'));
-    article.append(meta, node('p', '', caption?.text || 'Esperando traducción…'));
-    return article;
-  }));
-  highlightAudio(playback.time());
-  transcript.scrollTop = $('follow').checked ? transcript.scrollHeight : scrollTop;
+    log.replaceChildren(node('p', 'chat-empty', 'Todo lo que se diga va a quedar acá, de principio a fin.'));
+  } else {
+    log.replaceChildren(...rows.map(({ segmentId, original, caption }, index) => {
+      const turn = node('div', `turn ${caption?.status || 'pending'}${index === rows.length - 1 ? ' current' : ''}`);
+      turn.dataset.segment = segmentId;
+      turn.append(node('span', 'turn-time', timestamp(original.start_ms)),
+        node('p', '', caption?.text || 'Traduciendo…'));
+      return turn;
+    }));
+  }
+  log.scrollTop = $('follow').checked ? log.scrollHeight : scrollTop;
+  $('chat-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'intervención' : 'intervenciones'}` : '';
+
+  // El último subtítulo va a la barra a través del marcador de ritmo, que
+  // decide cuándo mostrarlo; acá no se escribe la barra directamente.
+  const last = rows.at(-1);
+  if (last?.caption) pacer.push(`${last.segmentId}:${last.caption.language}`, last.caption.text);
+
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
-  // Barra bajo el video: lo último dicho, para leerlo sin despegar la vista
-  // del video ni depender del scroll del historial. Se prefiere el texto en
-  // curso sobre el confirmado: mientras se habla, eso es lo que corresponde.
-  // Barra bajo el video: solo subtítulos listos. Nada de textos de estado —
-  // mientras no haya texto confirmado queda en blanco, y lo que se fue
-  // diciendo se acumula en el historial de abajo.
-  const current = rows.at(-1)?.caption;
-  const live = $('live-caption');
-  live.textContent = current?.text || '';
-  live.dataset.empty = current?.text ? 'false' : 'true';
-  live.lang = language;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';
   if (signature && signature !== announced) {
     $('live-announcement').textContent = latest.text;
     announced = signature;
   }
 }
-async function refresh() {
-  catalogController?.abort();
-  const controller = new AbortController();
-  catalogController = controller;
-  $('refresh').disabled = true;
-  $('catalog-message').textContent = 'Buscando sesiones…';
-  const timeout = setTimeout(() => controller.abort(), 10000);
+
+// `?session=<id>` reengancha una sesión ya existente: si se recarga la página
+// en medio de una charla, el historial se recupera sin volver a capturar.
+async function attachRequestedSession() {
+  const id = new URLSearchParams(location.search).get('session');
+  if (!id) return;
   try {
-    sessions = demo ? demoModule.demoSessions : await loadSessions({ signal: controller.signal });
-    if (catalogController !== controller) return;
-    $('catalog-message').textContent = sessions.length ? `${sessions.length} sesiones disponibles` : 'Todavía no hay sesiones. Volvé a actualizar en un momento.';
-    // Do not select silently or replace an active stream on a catalog refresh.
-    renderSessions();
+    const response = await fetch(`/api/v1/sessions/${encodeURIComponent(id)}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('no disponible');
+    useSession(await response.json());
   } catch {
-    if (catalogController === controller) $('catalog-message').textContent = 'No pudimos cargar las sesiones. Usá Actualizar para reintentar.';
-  } finally {
-    clearTimeout(timeout);
-    if (catalogController === controller) $('refresh').disabled = false;
+    $('connection').textContent = 'No encontramos esa charla. Compartí el audio para empezar una nueva.';
   }
 }
+
 $('language').onchange = render;
 $('follow').onchange = () => { if ($('follow').checked) render(); };
-$('refresh').onclick = refresh;
-$('demo-banner').hidden = !demo;
-$('demo-link').hidden = demo;
 setupReading();
-$('youtube-test').hidden = demo;
-if (!demo) setupCapture({ selectSession(session) {
-  sessions.push(session);
-  select(session);
-} });
-if (demo) demoModule = await import('./demo.js');
-await refresh();
-window.addEventListener('pagehide', () => {
-  client.stop();
-  catalogController?.abort();
-  demoTimers.forEach(clearTimeout);
-});
+setupVideo();
+setupCapture({ selectSession: useSession });
+window.addEventListener('pagehide', () => client.stop());
+await attachRequestedSession();
