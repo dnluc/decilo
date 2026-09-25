@@ -4,6 +4,7 @@ Revisión integral al commit de código `e4b9f90` (PRs #21 y #22), 25/09/2026.
 
 | Necesidad | Documento |
 | --- | --- |
+| Video, logo, carátulas y evidencia de demo | [Presentación de 1:55](DEMO.md) |
 | Instalar y probar, español/inglés | [README raíz](../README.md) |
 | Componentes, Mermaid, contratos, recursos y configuración | [Arquitectura](ARQUITECTURA.md) |
 | Captura, UI, pruebas y build | [Frontend](../frontend/README.md) |

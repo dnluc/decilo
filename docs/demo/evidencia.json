@@ -1,0 +1,148 @@
+{
+  "code_commit": "370d9ba",
+  "scope": "Pruebas cortas con audio de YouTube y captura real de pestaña; no benchmark sostenido de calidad/latencia.",
+  "primary_parallel_cases": [
+    "dos-nube-a",
+    "dos-nube-b"
+  ],
+  "voice": "es-AR-ElenaNeural; subtítulos ingleses editoriales, no generados por Decilo",
+  "cases": [
+    {
+      "case": "en-local",
+      "source": "https://www.youtube.com/watch?v=GVadbxHks_A",
+      "provider": "local",
+      "language": "en",
+      "session_id": "capture-712e11985b594e218f057652b5230665",
+      "original_final_segments": 11,
+      "translated_final_segments": 11,
+      "events": {
+        "events": 132,
+        "upserts": 112,
+        "gaps": 18,
+        "errors": 0
+      },
+      "gaps_by_reason": {
+        "overload": 18
+      },
+      "audio_packets_sent": 1043,
+      "max_visible_history": 6,
+      "play_started_utc": "2026-09-25T09:52:30.739000+00:00"
+    },
+    {
+      "case": "en-nube",
+      "source": "https://www.youtube.com/watch?v=d1TZv_CjSTY",
+      "provider": "gemini",
+      "language": "en",
+      "session_id": "capture-ff6ca703d19340fbb4c30c126fad8195",
+      "original_final_segments": 15,
+      "translated_final_segments": 14,
+      "events": {
+        "events": 118,
+        "upserts": 116,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1029,
+      "max_visible_history": 14,
+      "play_started_utc": "2026-09-25T09:52:30.739000+00:00"
+    },
+    {
+      "case": "es-local",
+      "source": "https://www.youtube.com/watch?v=Emv8SiDtPkI",
+      "provider": "local",
+      "language": "es",
+      "session_id": "capture-82ac9dc1640849dea23c81a42481e520",
+      "original_final_segments": 20,
+      "translated_final_segments": 0,
+      "events": {
+        "events": 98,
+        "upserts": 96,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1040,
+      "max_visible_history": 19,
+      "play_started_utc": "2026-09-25T09:58:15.099000+00:00"
+    },
+    {
+      "case": "es-nube",
+      "source": "https://www.youtube.com/watch?v=Emv8SiDtPkI",
+      "provider": "gemini",
+      "language": "es",
+      "session_id": "capture-1d34a3b87e164826aed25493f8b03224",
+      "original_final_segments": 13,
+      "translated_final_segments": 0,
+      "events": {
+        "events": 121,
+        "upserts": 119,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1028,
+      "max_visible_history": 13,
+      "play_started_utc": "2026-09-25T09:58:15.100000+00:00"
+    },
+    {
+      "case": "dos-nube-a",
+      "source": "https://www.youtube.com/watch?v=GVadbxHks_A",
+      "provider": "gemini",
+      "language": "en",
+      "session_id": "capture-1c24a4ec90ba424db00df4bfb4bfee3f",
+      "original_final_segments": 23,
+      "translated_final_segments": 23,
+      "events": {
+        "events": 263,
+        "upserts": 261,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1015,
+      "max_visible_history": 23,
+      "play_started_utc": "2026-09-25T10:00:11.025000+00:00"
+    },
+    {
+      "case": "dos-nube-b",
+      "source": "https://www.youtube.com/watch?v=d1TZv_CjSTY",
+      "provider": "gemini",
+      "language": "en",
+      "session_id": "capture-37d7a3edd6ec4096a8bacc18c7dcc753",
+      "original_final_segments": 15,
+      "translated_final_segments": 13,
+      "events": {
+        "events": 153,
+        "upserts": 151,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1015,
+      "max_visible_history": 13,
+      "play_started_utc": "2026-09-25T10:00:11.025000+00:00"
+    },
+    {
+      "case": "en-human-local",
+      "source": "https://www.youtube.com/watch?v=7rteJoZSSzo",
+      "provider": "local",
+      "language": "en",
+      "session_id": "capture-af0e367f1c4e48428bf439755aac839c",
+      "original_final_segments": 12,
+      "translated_final_segments": 12,
+      "events": {
+        "events": 112,
+        "upserts": 104,
+        "gaps": 6,
+        "errors": 0
+      },
+      "gaps_by_reason": {
+        "overload": 6
+      },
+      "audio_packets_sent": 709,
+      "max_visible_history": 6,
+      "play_started_utc": "2026-09-25T10:02:00.530000+00:00"
+    }
+  ]
+}

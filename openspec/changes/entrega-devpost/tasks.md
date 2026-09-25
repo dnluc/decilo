@@ -31,3 +31,29 @@ el formulario externo, no se verificó su estado actual y no se pulsó Submit.
 Los registros 1.4/2.3 conservan su fecha y contenido histórico. Tarea 1.6 sigue
 pendiente de material y entrega; no se acredita benchmark nuevo ni revisión de
 las bases con esta edición de Markdown.
+
+## Producción de video e imágenes — Codex, 25/09/2026
+
+Usuario autorizó grabar los cuatro enlaces y confirmó narración argentina con
+subtítulos en inglés. Luego confirmó que apagó los otros procesos para permitir
+pruebas. Base de la grabación: `370d9ba` (PR #24), frontend compilado y backend
+del worktree Codex; no se modifica código ni credenciales. En NixOS se agregaron
+bibliotecas C++/zlib al entorno del proceso de grabación.
+
+- [x] 3.1 Revisar requisitos públicos y preparar guion cronometrado — Codex.
+  Overview Devpost revisado; fuentes y límite 1–2 min en `docs/DEMO.md`.
+- [x] 3.2 Crear logo, carátulas, diagrama de presentación, voz ES-AR y SRT EN — Codex.
+  Se conserva la identidad de la UI. Inglés editorial, no capacidad ES→EN de Decilo.
+- [x] 3.3 Grabar capturas reales con historial y fuentes cerca de su mitad — Codex.
+  Siete casos completados, incluida simultaneidad de dos fuentes EN en nube
+  sin gaps/errores registrados. También se conservan sobrecargas locales
+  (18 gaps en prueba mixta, 6 en Human-Centric), sin declararlas resueltas.
+- [x] 3.4 Exportar y verificar el video — Codex. 115 s exactos, Full HD 30 fps,
+  H.264/AAC; voz y audio original, siete fotogramas revisados. Logo/capturas
+  y evidencia en `docs/demo/`; archivo MP4 y paquete en `~/Videos/decilo-demo/`.
+- [ ] 3.5 Subir video a YouTube, actualizar formulario y enviar proyecto —
+  Pendiente. Tener un video local no completa la entrega en Devpost.
+
+No se simularon subtítulos ni se aceleró la toma de simultaneidad. La demora
+local y el cierre residual sin traducción de algunos segmentos Live siguen
+como límites; estas corridas no completan el benchmark sostenido de OpenSpec.

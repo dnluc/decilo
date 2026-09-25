@@ -1,0 +1,96 @@
+1
+00:00:00,150 --> 00:00:00,701
+Decilo.
+
+2
+00:00:00,701 --> 00:00:05,112
+Live captions so no idea gets left out.
+
+3
+00:00:06,150 --> 00:00:10,388
+At a conference, language should never leave
+anyone out.
+
+4
+00:00:10,388 --> 00:00:15,096
+Decilo transcribes English and Spanish, and
+translates English into Spanish.
+
+5
+00:00:16,150 --> 00:00:20,499
+Paste a link, choose the language and share
+the tab audio.
+
+6
+00:00:20,499 --> 00:00:26,033
+Whisper transcribes on your machine; when
+the audio is in English, Gemma translates it
+
+7
+00:00:26,033 --> 00:00:26,824
+into Spanish.
+
+8
+00:00:31,150 --> 00:00:33,617
+For cloud processing, choose Gemini.
+
+9
+00:00:33,617 --> 00:00:39,045
+Audio is transcribed live, and translation
+appears incrementally while the history
+
+10
+00:00:39,045 --> 00:00:41,512
+keeps track of the talk.
+
+11
+00:00:46,150 --> 00:00:51,587
+Two different talks are being translated at
+the same time in the cloud.
+
+12
+00:00:51,587 --> 00:00:54,932
+Each session keeps its own audio and
+captions.
+
+13
+00:00:54,932 --> 00:00:58,696
+More viewers can follow a session without
+duplicating inference.
+
+14
+00:01:10,150 --> 00:01:15,458
+We also tested a Spanish talk, both locally
+and in the cloud.
+
+15
+00:01:15,458 --> 00:01:18,112
+Here, we show the original transcription.
+
+16
+00:01:23,150 --> 00:01:27,029
+The browser sends audio to the Python
+backend.
+
+17
+00:01:27,029 --> 00:01:32,364
+It selects the local engine or Gemini,
+coordinates sessions and distributes
+
+18
+00:01:32,364 --> 00:01:33,818
+captions over WebSocket.
+
+19
+00:01:33,818 --> 00:01:36,728
+Processing is separate from the audience.
+
+20
+00:01:45,150 --> 00:01:49,111
+Decilo is open source under the Apache 2.0
+license.
+
+21
+00:01:49,111 --> 00:01:52,632
+The code and setup instructions are on
+GitHub.
