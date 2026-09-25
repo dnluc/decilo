@@ -44,3 +44,17 @@ async def test_cancel_during_wait_removes_chunk(monkeypatch, tmp_path):
         await task
     transcribe.assert_not_called()
     assert not chunk.exists()
+
+
+@pytest.mark.asyncio
+async def test_late_chunk_does_not_wait_again(monkeypatch, tmp_path):
+    chunk, stream, gateway = setup_worker(monkeypatch, tmp_path, 1000)
+    from unittest.mock import AsyncMock
+    sleep = AsyncMock()
+    monkeypatch.setattr(pipeline.asyncio, "sleep", sleep)
+    monkeypatch.setattr(pipeline, "transcribe", lambda *args: "Hola")
+    await pipeline.run_file_session(
+        stream, gateway, chunk, started_at=asyncio.get_running_loop().time() - 2,
+    )
+    sleep.assert_not_awaited()
+    assert stream.session.status == "ended"

@@ -102,3 +102,19 @@ Por pedido del usuario, Codex asume implementación y medición pendientes del
 backend; Claude realiza la revisión cruzada. Se conserva la autoría histórica
 de las tareas terminadas. Próximo objetivo: inicio a pedido y audio a ritmo
 real para la demo audible, mediante un contrato compartido en OpenSpec.
+
+## Continuación del handoff PR #5 — Codex, 2026-09-25
+
+El usuario indicó que Claude dejó de trabajar y pidió continuar desde su PR.
+Se conserva el pacing propuesto y se corrige la limpieza al cancelar durante
+la espera. Se reemplaza el medidor basado en hora de conexión por uno con
+origen monotónico compartido con cada worker; mide hasta publicación del
+backend, no hasta navegador. 112 tests Python y Ruff correctos.
+
+Corrida real y limitaciones en `docs/validation/2026-09-25-paced/`: nueve
+segmentos por salida, p95 34.44s EN, 37.92s traducción ES y 31.20s original ES.
+Había otro servidor de Claude activo; no es comparación aislada. Grupos 5/6
+siguen pendientes. No se afirma cumplimiento de latencia ni revisión cruzada
+de las correcciones nuevas de Codex. La propuesta `audio-playback` publicada
+por Claude es la base de continuación del reproductor; aún necesita definir
+inicio a pedido del worker para la demo con audio y generación concurrentes.
