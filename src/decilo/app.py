@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -70,6 +71,9 @@ async def _start_sample_sessions() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logging.getLogger("uvicorn.error").info(
+        "Translation queue: %s", os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
+    )
     await _start_sample_sessions()
     try:
         yield
@@ -170,7 +174,8 @@ async def start_session(session_id: str):
 
     async def run():
         try:
-            await run_file_session(gateway.stream, gateway, path)
+            await run_file_session(gateway.stream, gateway, path,
+                                   overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1")
         except Exception:
             gateway.publish_nowait(gateway.stream.record_error(
                 "inference_unavailable", "No se pudo procesar el audio de esta prueba.", retryable=False,
@@ -205,7 +210,8 @@ async def capture_audio(websocket: WebSocket, language: str = 'en'):
     file_tasks[session.id] = task
     try:
         await websocket.accept()
-        await receive_capture(websocket, _gateway_for(session.id))
+        await receive_capture(websocket, _gateway_for(session.id),
+                              overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1")
     finally:
         file_tasks.pop(session.id, None)
 

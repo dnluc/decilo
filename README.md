@@ -165,3 +165,10 @@ Para acotar también los frames en la capa WebSocket del servidor, agregá a
 uvicorn `--ws-max-size 160004 --ws-max-queue 4`. El formato se valida además en
 la aplicación. Este ingreso es experimental y requiere revisión; no tiene
 autenticación para desplegarlo públicamente.
+
+Para probar la cola experimental también en captura de pestaña, iniciá el
+backend con `DECILO_TRANSLATION_QUEUE=1` además de las variables anteriores.
+El log de arranque muestra `Translation queue: True`. No requiere cambios del
+frontend. Al detener, se espera a las traducciones pendientes antes de finalizar,
+con un presupuesto total de 90s para drenar audio y texto. Sigue siendo un
+experimento: benefició al inglés en el corpus corto, pero no mejoró español.

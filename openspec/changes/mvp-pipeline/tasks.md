@@ -163,3 +163,13 @@ Los checks de cada head estaban correctos antes de integrar. Esta autorización
 no se registra como revisión cruzada de Claude ni como aprobación de calidad
 o latencia. La cola de traducción sigue experimental y opt-in para archivos.
 El PR #7 ya estaba cerrado sin merge; no se reabrió ni se duplicó su propuesta.
+
+## Activación para pruebas del frontend — Codex
+
+El usuario pidió encender el experimento mientras prueba desde el frontend de
+Claude. Se agrega DECILO_TRANSLATION_QUEUE=1 en el backend: activa la cola en
+archivos y captura de pestaña. Default desactivado si falta la variable.
+La captura drena audio y traducciones con un único presupuesto de 90s después
+de Stop, antes de ended/cierre. La autorización de pruebas no acredita calidad
+ni mejoras de rendimiento en captura real. El frontend mantiene sus contratos.
+Backend local de Codex en puerto 8000, consumido por Vite de Claude (5173).
