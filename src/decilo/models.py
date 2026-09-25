@@ -20,6 +20,11 @@ CaptionStatus = Literal["provisional", "final"]
 BoundaryReason = Literal["pause", "semantic", "deadline", "end_of_stream"]
 GapReason = Literal["overload", "source_disconnect", "processing_error"]
 
+# JSON numbers are consumed by JavaScript: keep counters and timestamps exact.
+MAX_SAFE_INTEGER = 2**53 - 1
+NonNegativeInt = Annotated[int, Field(strict=True, ge=0, le=MAX_SAFE_INTEGER)]
+PositiveInt = Annotated[int, Field(strict=True, ge=1, le=MAX_SAFE_INTEGER)]
+
 
 class Session(BaseModel):
     id: str = Field(min_length=1)
@@ -30,6 +35,8 @@ class Session(BaseModel):
     status: SessionStatus
 
     def model_post_init(self, __context: object) -> None:
+        if len(set(self.translation_languages)) != len(self.translation_languages):
+            raise ValueError("translation_languages no debe contener idiomas repetidos")
         if self.source_language in self.translation_languages:
             raise ValueError("translation_languages no debe incluir el idioma original")
 
@@ -40,19 +47,21 @@ class SessionCatalog(BaseModel):
 
 class CaptionData(BaseModel):
     segment_id: str = Field(min_length=1)
-    segment_seq: int = Field(ge=1)
+    segment_seq: PositiveInt
     kind: CaptionKind
     language: Language
-    revision: int = Field(ge=1)
-    source_revision: int | None = Field(default=None, ge=1)
+    revision: PositiveInt
+    source_revision: PositiveInt | None = None
     text: str = Field(min_length=1, max_length=8192)
     status: CaptionStatus
-    start_ms: int = Field(ge=0)
-    end_ms: int = Field(ge=0)
+    start_ms: NonNegativeInt
+    end_ms: NonNegativeInt
     speaker_id: str | None = None
     boundary_reason: BoundaryReason | None = None
 
     def model_post_init(self, __context: object) -> None:
+        if len(self.text.encode("utf-8")) > 8192:
+            raise ValueError("text no puede superar 8192 bytes UTF-8")
         if self.end_ms < self.start_ms:
             raise ValueError("end_ms no puede ser menor que start_ms")
         if self.kind == "translation" and self.source_revision is None:
@@ -69,10 +78,16 @@ class DiscardedCaption(BaseModel):
 
 class GapData(BaseModel):
     gap_id: str = Field(min_length=1)
-    start_ms: int | None = Field(default=None, ge=0)
-    end_ms: int | None = Field(default=None, ge=0)
+    start_ms: NonNegativeInt | None = None
+    end_ms: NonNegativeInt | None = None
     reason: GapReason
     discard_captions: list[DiscardedCaption] = Field(default_factory=list)
+
+    def model_post_init(self, __context: object) -> None:
+        if (self.start_ms is None) != (self.end_ms is None):
+            raise ValueError("start_ms y end_ms deben ser ambos nulos o ambos enteros")
+        if self.start_ms is not None and self.end_ms < self.start_ms:
+            raise ValueError("end_ms no puede ser menor que start_ms")
 
 
 class SnapshotData(BaseModel):
@@ -96,7 +111,7 @@ class _EnvelopeBase(BaseModel):
     protocol_version: Literal[1] = 1
     session_id: str = Field(min_length=1)
     stream_id: str = Field(min_length=1)
-    seq: int = Field(ge=0)
+    seq: NonNegativeInt
     emitted_at: datetime
 
 
