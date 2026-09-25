@@ -55,3 +55,28 @@ resuelve eso.
   una garantía del contrato.
 - [Riesgo] Servir el WAV sin comprimir es pesado para conexiones lentas →
   aceptado para el MVP/demo; no bloquea el objetivo del hackathon.
+
+## Continuación por Codex: generación audible a pedido
+
+Claude dejó de trabajar; el usuario pidió a Codex continuar frontend y backend.
+La reproducción del historial es distinta de una prueba de generación en vivo.
+Para esta última, con `DECILO_DEMO_SESSIONS=1 DECILO_DEMO_AUTOSTART=0`, las
+muestras se registran en `starting` sin ejecutar modelos.
+
+`POST /api/v1/sessions/{id}/start` inicia una muestra preparada, idempotente
+mientras siga live/degraded. Una sesión terminal devuelve 409. El navegador
+lo solicita tras `playing`, cuando el audio realmente comenzó. El origen
+monotónico del worker es la recepción de esa solicitud: hay un desfase de
+red y scheduling respecto al navegador, por lo que esta UI no mide p95.
+Los subtítulos se muestran al llegar; no se retrasa el audio para ocultar lag.
+
+`POST /api/v1/sessions/{id}/runs` crea una nueva sesión `starting` con el mismo
+WAV y un ID nuevo. No borra ni reinicia sesiones existentes. Máximo 20 sesiones
+con audio retenidas por proceso, 2 workers de archivo activos; exceso devuelve
+429. Solo se sirven archivos registrados por el servidor (sin paths del usuario).
+GET audio soporta Range y 404. Las rutas de control requieren el modo demo
+explícito; son para ejecución local, sin servicio público de administración.
+
+Pausar, buscar o cambiar de sesión pausa únicamente la reproducción local;
+el worker continúa. La UI lo indica. Una nueva prueba pide otra sesión; no
+mezcla subtítulos previos. Al cerrar el servidor se cancelan sus tareas.

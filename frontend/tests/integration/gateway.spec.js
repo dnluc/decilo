@@ -40,3 +40,29 @@ test('real gateway delivers revisions, shares HTTP status, restores snapshots an
   await expect.poll(async () => Object.values(await (await request.get(`${origin}/api/_test/subscribers`)).json()).every(n => n === 0)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('audible playback creates a fresh run and starts on playing', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: /Building reliable systems/ }).first().click();
+  await expect(page.locator('#playback')).toBeVisible();
+  await page.locator('#language').selectOption('en');
+  const runResponse = page.waitForResponse(r => r.url().endsWith('/runs') && r.request().method() === 'POST');
+  const startResponse = page.waitForResponse(r => r.url().endsWith('/start') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Iniciar prueba', exact: true }).click();
+  const first = await (await runResponse).json();
+  expect((await startResponse).ok()).toBe(true);
+  await expect.poll(() => page.locator('audio').evaluate(a => !a.paused && a.currentTime > .1)).toBe(true);
+  await expect(page.locator('.caption')).toContainText('Playback integration test');
+  await expect(page.locator('.caption')).toHaveClass(/audio-current/);
+  const secondResponse = page.waitForResponse(r => r.url().endsWith('/runs') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Iniciar prueba', exact: true }).click();
+  const second = await (await secondResponse).json();
+  expect(second.id).not.toBe(first.id);
+  await expect(page.locator('.caption')).toHaveCount(1);
+  await page.getByRole('button', { name: /Integración es/ }).click();
+  await expect(page.locator('#playback')).toBeHidden();
+  expect(await page.locator('audio').evaluate(a => a.paused)).toBe(true);
+  expect(errors).toEqual([]);
+});

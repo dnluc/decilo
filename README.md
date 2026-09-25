@@ -99,3 +99,37 @@ Each session runs as an independent process/worker consuming audio and calling t
 ### License
 
 [Apache 2.0](./LICENSE)
+
+### Prueba audible en el navegador
+
+Con Whisper y Ollama configurados, iniciá el backend sin procesar los WAV
+hasta que pulses Play:
+
+```sh
+DECILO_DEMO_SESSIONS=1 DECILO_DEMO_AUTOSTART=0 uv run uvicorn decilo.app:app --host 127.0.0.1 --port 8000
+```
+
+En otra terminal:
+
+```sh
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+
+Abrí la URL de Vite, elegí una charla y pulsá **Iniciar prueba**. Se crea una
+sesión nueva, comienza el audio y se solicita la transcripción/traducción real.
+Si el navegador bloquea la reproducción automática, pulsá Play en el audio.
+Los WAV incluidos son sintéticos. El audio no se retrasa para ocultar la demora
+de inferencia; los subtítulos se muestran al llegar. El borde verde indica el
+intervalo correspondiente al tiempo de reproducción, si su texto ya existe.
+
+Pausar o buscar mueve solo el audio local; el procesamiento continúa. Los
+controles del audio también permiten escuchar el historial de una sesión
+terminada. **Iniciar prueba** vuelve a generar texto en otra sesión, sin
+reutilizar subtítulos anteriores. Máximo dos workers simultáneos y veinte
+sesiones con audio por proceso; reiniciar el servidor limpia las pruebas.
+
+Este modo está pensado para uso local. El inicio de inferencia se solicita
+cuando el navegador empieza a reproducir, con un desfase de red/scheduling;
+no constituye una medición exacta de latencia hasta pantalla. La inferencia
+actual puede quedar muy por detrás del audio en CPU.
