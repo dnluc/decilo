@@ -118,3 +118,22 @@ siguen pendientes. No se afirma cumplimiento de latencia ni revisión cruzada
 de las correcciones nuevas de Codex. La propuesta `audio-playback` publicada
 por Claude es la base de continuación del reproductor; aún necesita definir
 inicio a pedido del worker para la demo con audio y generación concurrentes.
+
+## Perfil de rendimiento por etapas — Codex
+
+Trabajo solicitado tras devolver el frontend a Claude. Instrumentación optativa
+interna en el worker, sin modificar contratos de audiencia. El benchmark permite
+una/dos sesiones, warmup explícito y comparar beam_size 5/1; reporta backlog,
+ASR y traducción por segmento, incluidos errores. Se agrega diagnóstico WER
+contra referencias sintéticas. Caché de modelos protegido frente a doble carga
+concurrente del mismo modelo. Evidencia en docs/validation/2026-09-25-stage-profile/.
+No se marcan completas las tareas de medición larga, calidad o aislamiento.
+
+Resultados publicados: dos sesiones precalentadas elevan ASR ES p50 de 3.62s
+a 8.30s y traducción EN→ES de 2.82s a 4.00s. Beam1 no mejora de forma convincente;
+se conserva beam5. El worker de archivos ahora descarta bloques con atraso
+mayor a 10s, con gap y contabilidad de audio omitido (benchmark --keep-all para
+comparación). Corrida con pérdidas: p95 17.57s traducción, 18.14s ES; no cumple
+objetivo. 127 tests correctos, Ruff/OpenSpec válidos. Sin cambios frontend ni
+contrato de eventos. Pendiente revisión cruzada; no declarar benchmark largo
+ni calidad aprobados.
