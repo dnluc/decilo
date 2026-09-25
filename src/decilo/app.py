@@ -14,6 +14,8 @@ from fastapi.responses import FileResponse
 
 from decilo.providers import load_config, provider
 from decilo.gateway import SessionGateway
+from decilo.ollama_runtime import ollama_lifespan
+from decilo.translate import prepare_ollama
 from decilo.models import Session, SessionCatalog
 from decilo.pipeline import run_file_session
 from decilo.segmentation import configured_segmentation
@@ -45,7 +47,7 @@ def _start_background(coro) -> asyncio.Task:
     return task
 
 
-async def _start_sample_sessions() -> None:
+async def _start_sample_sessions(*, preparing=False) -> None:
     """Arranca las dos sesiones de prueba definidas en samples/ (ver README).
 
     Requiere DECILO_DEMO_SESSIONS=1: correr modelos reales (Whisper/Ollama)
@@ -67,8 +69,34 @@ async def _start_sample_sessions() -> None:
         )
         registry.register(session)
         audio_sources[session_id] = audio_path
-        if os.environ.get("DECILO_DEMO_AUTOSTART", "1") == "1":
+        if not preparing and os.environ.get("DECILO_DEMO_AUTOSTART", "1") == "1":
             await start_session(session_id)
+
+
+async def _prepare_models(app):
+    from decilo.stt import _get_model
+    began = asyncio.get_running_loop().time()
+    try:
+        async with asyncio.timeout(90):
+            # Sequential preparation avoids multiplying peak CPU/RAM usage.
+            for language in ('en', 'es'):
+                await asyncio.to_thread(_get_model, language)
+            metrics = await prepare_ollama()
+        app.state.inference_readiness = 'ready'
+        logging.getLogger('uvicorn.error').info('Model preparation: %.2fs; Ollama: %s',
+            asyncio.get_running_loop().time() - began, metrics)
+    except Exception:
+        app.state.inference_readiness = 'error'
+        logging.getLogger('uvicorn.error').error('No se pudieron preparar los modelos')
+        return
+    if os.environ.get('DECILO_DEMO_AUTOSTART', '1') == '1':
+        for session_id in ('konex-sala-1-charla-1', 'konex-sala-2-charla-1'):
+            if session_id in audio_sources and registry.get(session_id).session.status == 'starting':
+                await start_session(session_id)
+
+
+def _models_ready():
+    return getattr(app.state, 'inference_readiness', 'disabled') in {'disabled', 'ready'}
 
 
 @asynccontextmanager
@@ -81,14 +109,19 @@ async def lifespan(app: FastAPI):
         "Translation queue: %s", os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
     )
     logging.getLogger("uvicorn.error").info("Segmentation: %s", configured_segmentation())
-    await _start_sample_sessions()
-    try:
-        yield
-    finally:
-        tasks = list(_background_tasks)
-        for task in tasks:
-            task.cancel()
-        await asyncio.gather(*tasks, return_exceptions=True)
+    preparing = os.environ.get('DECILO_PREWARM') == '1'
+    app.state.inference_readiness = 'starting' if preparing else 'disabled'
+    async with ollama_lifespan():
+        try:
+            await _start_sample_sessions(preparing=preparing)
+            if preparing:
+                _start_background(_prepare_models(app))
+            yield
+        finally:
+            tasks = list(_background_tasks)
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 
 app = FastAPI(title="Decilo", lifespan=lifespan)
@@ -97,6 +130,13 @@ app = FastAPI(title="Decilo", lifespan=lifespan)
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get('/health/ready')
+async def inference_ready():
+    if not _models_ready():
+        raise HTTPException(503, 'Modelos en preparación o preparación fallida; revisar logs.')
+    return {'status': getattr(app.state, 'inference_readiness', 'disabled')}
 
 
 @app.get("/api/v1/sessions", response_model=SessionCatalog)
@@ -168,6 +208,8 @@ async def create_run(session_id: str):
 @app.post("/api/v1/sessions/{session_id}/start", response_model=Session)
 async def start_session(session_id: str):
     _require_demo()
+    if not _models_ready():
+        raise HTTPException(503, 'Los modelos todavía no están listos.')
     path = _audio_source(session_id)
     record = registry.get(session_id)
     if session_id in file_tasks and not file_tasks[session_id].done():
@@ -206,6 +248,9 @@ async def capture_audio(websocket: WebSocket, language: str = 'en'):
 
     if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es'}:
         await websocket.close(code=4403)
+        return
+    if not _models_ready():
+        await websocket.close(code=1013)
         return
     if sum(not task.done() for task in file_tasks.values()) >= 2 or len(registry.list_sessions()) >= 20:
         await websocket.close(code=4429)
