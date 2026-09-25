@@ -3,84 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f3ec">
-  <meta name="description" content="Seguí las charlas de tu evento con subtítulos en tu idioma.">
-  <title>Decilo — Seguí la conversación</title>
+  <meta name="theme-color" content="#0f1311">
+  <meta name="description" content="Subtítulos y traducción en vivo para cualquier charla de YouTube.">
+  <title>Decilo — Subtítulos en vivo</title>
 </head>
 <body>
-  <a class="skip-link" href="#transcript">Ir a los subtítulos</a>
-  <header class="header">
+  <a class="skip-link" href="#live-caption">Ir a los subtítulos</a>
+  <header class="topbar">
     <a class="brand" href="/" aria-label="Decilo, inicio">decilo<span aria-hidden="true">✳</span></a>
+    <form id="video-form" class="url-bar" role="search">
+      <label class="sr-only" for="video-url">Link del video de YouTube</label>
+      <input id="video-url" type="text" inputmode="url" autocomplete="off" spellcheck="false"
+        placeholder="Pegá el link de YouTube de la charla">
+      <button type="submit" class="primary">Cargar</button>
+    </form>
     <span class="event-name">NERDEARLA <span>2026</span></span>
   </header>
-  <main>
-    <div id="demo-banner" class="demo-banner" hidden>Muestra de la interfaz · Texto simulado, sin audio ni traducción en vivo. <a href="/">Ir a sesiones reales</a></div>
-    <section class="intro" aria-labelledby="intro-title">
-      <p class="eyebrow">QUE NINGUNA IDEA SE PIERDA</p>
-      <h1 id="intro-title">Seguí la conversación<span>.</span></h1>
-      <p>Elegí una charla. Leela en tu idioma.</p>
-    </section>
-    <aside class="sessions-panel" aria-labelledby="sessions-heading">
-      <div class="panel-heading"><h2 id="sessions-heading">Las charlas</h2><button id="refresh" class="text-button" type="button">Actualizar</button></div>
-      <p id="catalog-message" role="status">Buscando sesiones…</p>
-      <div id="sessions" class="session-list"></div>
-    </aside>
-    <section id="youtube-test" class="watch" aria-labelledby="youtube-heading">
-      <div class="watch-head">
-        <div>
-          <p class="eyebrow">PROBALO CON UNA CHARLA REAL</p>
-          <h2 id="youtube-heading">API Gateway — Vlad Tomashpolskyi · Nerdearla</h2>
-        </div>
-        <label class="language-label">Idioma del audio<select id="capture-language"><option value="en">English</option><option value="es">Español</option></select></label>
+  <p id="video-error" class="url-error" role="alert"></p>
+
+  <main class="theater">
+    <section class="stage" aria-label="Video y subtítulos">
+      <div id="video-frame" class="video-frame">
+        <iframe title="Video de la charla" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <p class="video-empty">Pegá arriba el link de una charla de YouTube para empezar.</p>
       </div>
-      <div class="stage">
-        <div class="video-frame">
-          <iframe title="Video de YouTube para probar Decilo" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          <button id="youtube-load" class="video-cover" type="button"><span class="play" aria-hidden="true">▶</span>Cargar video</button>
-        </div>
-        <p id="live-caption" class="live-caption" data-empty="true"></p>
-      </div>
-      <div class="watch-controls">
+      <p id="live-caption" class="live-caption" data-empty="true" tabindex="0"></p>
+      <div class="controls">
+        <label class="field"><span>Idioma del audio</span>
+          <select id="capture-language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
         <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
-        <button id="capture-stop" type="button" disabled>Detener captura</button>
-        <p id="capture-message" role="status">Solo se envía el audio que autorices. No usamos el micrófono.</p>
-      </div>
-      <p class="watch-help"><span>1.</span> Cargá el video. <span>2.</span> Compartí <em>esta</em> pestaña con audio. <span>3.</span> Dale Play. <a href="https://www.youtube.com/watch?v=IW0unWVDnrI" target="_blank" rel="noopener noreferrer">Si no carga, abrilo en YouTube ↗</a></p>
-    </section>
-    <div class="workspace">
-      <section class="reading-panel" aria-labelledby="session-title">
-        <div class="reading-header">
-          <div><p id="session-status" class="eyebrow">TU ESPACIO PARA LEER</p><h2 id="session-title">Elegí una charla para empezar</h2><p class="panel-subtitle">Historial de todo lo que se dijo, de principio a fin.</p></div>
-          <label class="language-label">Leer en<select id="language" disabled aria-label="Idioma de los subtítulos"></select></label>
-        </div>
-        <div class="reading-preferences" aria-label="Opciones de lectura">
-          <label for="text-size">Tamaño del texto</label>
+        <button id="capture-stop" type="button" disabled>Detener</button>
+        <label class="field"><span>Tamaño del texto</span>
           <select id="text-size">
             <option value="normal">Normal</option>
             <option value="large">Grande</option>
             <option value="extra">Muy grande</option>
           </select>
-          <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
+        </label>
+        <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
+      </div>
+      <p id="capture-message" class="hint" role="status">Cargá el video, compartí <em>esta</em> pestaña con el audio activado y dale Play. Solo se envía el audio que autorices; nunca el micrófono.</p>
+    </section>
+
+    <aside class="chat" aria-labelledby="chat-title">
+      <div class="chat-head">
+        <div>
+          <h2 id="chat-title">Transcripción</h2>
+          <p id="connection" class="chat-status" role="status">Esperando el audio de la charla.</p>
         </div>
-        <div id="playback" class="playback" hidden>
-          <button id="start-test" type="button">Iniciar prueba</button>
-          <audio id="session-audio" controls preload="metadata" aria-label="Audio original de la charla"></audio>
-          <p id="playback-message" role="status"></p>
-        </div>
-        <div class="reading-tools">
-          <p id="connection" role="status">Los subtítulos aparecerán acá.</p>
-          <label><input id="follow" type="checkbox" checked> Seguir lo último</label>
-        </div>
-        <div id="notices" class="notices" role="status"></div>
-        <div id="transcript" class="transcript" tabindex="0" aria-label="Subtítulos de la charla">
-          <div class="empty"><span aria-hidden="true">“</span><p>Un lugar para todas las voces.</p><small>Seleccioná una sesión de la lista.</small></div>
-        </div>
-        <p id="live-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
-        <footer class="reading-footer"><span><i aria-hidden="true"></i> El texto en curso puede cambiar.</span><span>Hecho para escuchar con los ojos.</span></footer>
-      </section>
-    </div>
-    <footer class="page-footer"><span>Abierto por naturaleza. Accesible por diseño.</span><a href="?demo=1" id="demo-link">Ver una muestra ↗</a></footer>
+        <label class="field"><span>Leer en</span>
+          <select id="language" disabled aria-label="Idioma de los subtítulos"></select>
+        </label>
+      </div>
+      <div id="notices" class="notices" role="status"></div>
+      <div id="transcript" class="chat-log" tabindex="0" aria-label="Transcripción completa de la charla">
+        <p class="chat-empty">Todo lo que se diga va a quedar acá, de principio a fin.</p>
+      </div>
+      <div class="chat-foot">
+        <label><input id="follow" type="checkbox" checked> Seguir lo último</label>
+        <span id="chat-count"></span>
+      </div>
+    </aside>
   </main>
+  <p id="live-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
   <script type="module" src="/src/app.js"></script>
 </body>
 </html>
