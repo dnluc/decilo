@@ -12,7 +12,7 @@ import asyncio
 import tempfile
 import wave
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator
 
 from decilo.gateway import SessionGateway
 from decilo.models import CaptionData, GapData
@@ -51,6 +51,8 @@ def _iter_chunks(audio_path: Path, chunk_seconds: float) -> Iterator[tuple[Path,
 async def run_file_session(
     stream: SessionStream, gateway: SessionGateway, audio_path: Path,
     *, started_at: float | None = None,
+    observe: Callable[[dict], None] | None = None,
+    max_backlog_seconds: float | None = 10.0,
 ) -> None:
     """Recorre un archivo de audio a velocidad real, publicando eventos en `gateway`.
 
@@ -69,21 +71,53 @@ async def run_file_session(
             wait = t_start + end_ms / 1000 - loop.time()
             if wait > 0:
                 await asyncio.sleep(wait)
-            await process_chunk(stream, gateway, chunk_path, segment_seq, start_ms, end_ms)
+            backlog = loop.time() - (t_start + end_ms / 1000)
+            if max_backlog_seconds is not None and backlog > max_backlog_seconds:
+                gateway.publish_nowait(stream.record_gap(GapData(
+                    gap_id=f"gap-overload-{segment_seq}", start_ms=start_ms, end_ms=end_ms,
+                    reason="overload", discard_captions=[],
+                )))
+                if observe is not None:
+                    observe({"session_id": stream.session.id, "segment_seq": segment_seq,
+                             "stage": "discard", "seconds": backlog, "outcome": "overload",
+                             "audio_seconds": (end_ms - start_ms) / 1000})
+                continue
+            await process_chunk(
+                stream, gateway, chunk_path, segment_seq, start_ms, end_ms,
+                available_at=t_start + end_ms / 1000, observe=observe,
+            )
         finally:
             chunk_path.unlink(missing_ok=True)
     ended_session = stream.session.model_copy(update={"status": "ended"})
     gateway.publish_nowait(stream.record_status(ended_session))
 
 
-async def process_chunk(stream, gateway, chunk_path, segment_seq, start_ms, end_ms):
+async def process_chunk(
+    stream, gateway, chunk_path, segment_seq, start_ms, end_ms, *,
+    available_at: float | None = None, observe: Callable[[dict], None] | None = None,
+):
     """Consume y elimina un WAV; comparte inferencia entre archivo y captura."""
+    loop = asyncio.get_running_loop()
+    started = loop.time()
+
+    def report(stage, began, outcome="ok"):
+        if observe is not None:
+            observe({"session_id": stream.session.id, "segment_seq": segment_seq,
+                     "stage": stage, "seconds": loop.time() - began, "outcome": outcome,
+                     "audio_seconds": (end_ms - start_ms) / 1000})
+
+    if available_at is not None and observe is not None:
+        observe({"session_id": stream.session.id, "segment_seq": segment_seq,
+                 "stage": "backlog", "seconds": max(0, started - available_at), "outcome": "ok",
+                 "audio_seconds": (end_ms - start_ms) / 1000})
     source_language = stream.session.source_language
     translation_languages = stream.session.translation_languages
     segment_id = f"seg-{segment_seq}"
     try:
         text = await asyncio.to_thread(transcribe, chunk_path, source_language)
+        report("asr", started)
     except Exception as exc:
+        report("asr", started, "error")
         gateway.publish_nowait(
             stream.record_error("inference_unavailable", f"STT: {exc}", retryable=True)
         )
@@ -120,9 +154,12 @@ async def process_chunk(stream, gateway, chunk_path, segment_seq, start_ms, end_
     gateway.publish_nowait(stream.upsert_caption(transcript))
 
     for target_language in translation_languages:
+        translation_started = loop.time()
         try:
             translated_text = await translate(text.strip())
+            report("translation", translation_started)
         except Exception as exc:
+            report("translation", translation_started, "error")
             gateway.publish_nowait(
                 stream.record_error("inference_unavailable", f"Traducción: {exc}", retryable=True)
             )

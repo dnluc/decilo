@@ -1,0 +1,1084 @@
+{
+  "measurement": "audio end to backend publication",
+  "warmup": true,
+  "beam_size": 5,
+  "max_backlog_seconds": 10.0,
+  "source": "synthetic WAV",
+  "languages": [
+    "en",
+    "es"
+  ],
+  "sessions": {
+    "en": {
+      "summary": {
+        "transcript/en": {
+          "n": 7,
+          "p50": 9.578592035000838,
+          "p95": 12.636204980000912,
+          "max": 12.636204980000912
+        },
+        "translation/es": {
+          "n": 7,
+          "p50": 14.661395488999915,
+          "p95": 17.574368359999426,
+          "max": 17.574368359999426
+        }
+      },
+      "transcript_wer": {
+        "errors": 21,
+        "reference_words": 95,
+        "wer": 0.22105263157894736
+      },
+      "observations": [
+        {
+          "elapsed_seconds": 7.887798488000044,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 1,
+            "emitted_at": "2026-09-25T04:53:37.845006Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-1",
+              "segment_seq": 1,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "Welcome to this talk about Distributed Systems. Today we'll discuss how Kubern...",
+              "status": "final",
+              "start_ms": 0,
+              "end_ms": 5000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 10.38885929800017,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 2,
+            "emitted_at": "2026-09-25T04:53:40.346087Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-1",
+              "segment_seq": 1,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "Bienvenidos a esta charla sobre Sistemas Distribuidos. Hoy vamos a analizar cómo Kubernetes...",
+              "status": "final",
+              "start_ms": 0,
+              "end_ms": 5000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 13.275741651999851,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 3,
+            "emitted_at": "2026-09-25T04:53:43.232957Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-2",
+              "segment_seq": 2,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "These orchestrates container that scale when you deploy a micro service",
+              "status": "final",
+              "start_ms": 5000,
+              "end_ms": 10000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 18.65027927399933,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 4,
+            "emitted_at": "2026-09-25T04:53:48.607489Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-2",
+              "segment_seq": 2,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "Estos orchestrators permiten escalar los contenedores cuando desplegas un microservicio.",
+              "status": "final",
+              "start_ms": 5000,
+              "end_ms": 10000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 21.43563106700094,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 5,
+            "emitted_at": "2026-09-25T04:53:51.392854Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-3",
+              "segment_seq": 3,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "Troll plane schedules pods across worker nodes, before merging the pull request.",
+              "status": "final",
+              "start_ms": 10000,
+              "end_ms": 15000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 27.286409854999874,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 6,
+            "emitted_at": "2026-09-25T04:53:57.243632Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-3",
+              "segment_seq": 3,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "El plan de despliegue de los pods se ejecuta en los nodos de trabajo antes de fusionar la solicitud de extracción.",
+              "status": "final",
+              "start_ms": 10000,
+              "end_ms": 15000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 30.04970408200097,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 7,
+            "emitted_at": "2026-09-25T04:54:00.006914Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-4",
+              "segment_seq": 4,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "We need another code review. Continuous integration runs unit tests.",
+              "status": "final",
+              "start_ms": 15000,
+              "end_ms": 20000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 34.71863978700094,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 8,
+            "emitted_at": "2026-09-25T04:54:04.675864Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-4",
+              "segment_seq": 4,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "Necesitamos otra revisión de código. La integración continua ejecuta pruebas unitarias.",
+              "status": "final",
+              "start_ms": 15000,
+              "end_ms": 20000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 37.49461634799991,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 9,
+            "emitted_at": "2026-09-25T04:54:07.451838Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-5",
+              "segment_seq": 5,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "and static analysis on every commit. If the pipeline fails, developers get...",
+              "status": "final",
+              "start_ms": 20000,
+              "end_ms": 25000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 41.67370939700049,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 10,
+            "emitted_at": "2026-09-25T04:54:11.630932Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-5",
+              "segment_seq": 5,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "Y análisis estático en cada commit. Si la pipeline falla, los desarrolladores reciben...",
+              "status": "final",
+              "start_ms": 20000,
+              "end_ms": 25000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 41.674552385000425,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 11,
+            "emitted_at": "2026-09-25T04:54:11.631773Z",
+            "type": "session.gap",
+            "data": {
+              "gap_id": "gap-overload-6",
+              "start_ms": 25000,
+              "end_ms": 30000,
+              "reason": "overload",
+              "discard_captions": []
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 44.57859203500084,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 12,
+            "emitted_at": "2026-09-25T04:54:14.535813Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-7",
+              "segment_seq": 7,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "latency, and error rates in production. Auto-scaling adjusts the number of replicas.",
+              "status": "final",
+              "start_ms": 30000,
+              "end_ms": 35000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 49.661395488999915,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 13,
+            "emitted_at": "2026-09-25T04:54:19.618601Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-7",
+              "segment_seq": 7,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "La latencia y las tasas de error en producción. El auto-escalado ajusta el número de réplicas.",
+              "status": "final",
+              "start_ms": 30000,
+              "end_ms": 35000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 52.63620498000091,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 14,
+            "emitted_at": "2026-09-25T04:54:22.593420Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-8",
+              "segment_seq": 8,
+              "kind": "transcript",
+              "language": "en",
+              "revision": 1,
+              "source_revision": null,
+              "text": "based on CPU usage. Thank you for listening, and feel free to ask questions.",
+              "status": "final",
+              "start_ms": 35000,
+              "end_ms": 40000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 57.574368359999426,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 15,
+            "emitted_at": "2026-09-25T04:54:27.531587Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-8",
+              "segment_seq": 8,
+              "kind": "translation",
+              "language": "es",
+              "revision": 1,
+              "source_revision": 1,
+              "text": "Basándonos en el uso de la CPU. Gracias por su atención, y no duden en hacer preguntas.",
+              "status": "final",
+              "start_ms": 35000,
+              "end_ms": 40000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 57.575213301000986,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 16,
+            "emitted_at": "2026-09-25T04:54:27.532436Z",
+            "type": "session.gap",
+            "data": {
+              "gap_id": "gap-overload-9",
+              "start_ms": 40000,
+              "end_ms": 40877,
+              "reason": "overload",
+              "discard_captions": []
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 57.577320768999925,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-en",
+            "stream_id": "c676d52c98f5",
+            "seq": 17,
+            "emitted_at": "2026-09-25T04:54:27.534484Z",
+            "type": "session.status",
+            "data": {
+              "session": {
+                "id": "measure-en",
+                "title": "Medición en",
+                "source_language": "en",
+                "translation_languages": [
+                  "es"
+                ],
+                "target_locale": "es-AR",
+                "status": "ended"
+              }
+            }
+          }
+        }
+      ],
+      "stages": [
+        {
+          "session_id": "measure-en",
+          "segment_seq": 1,
+          "stage": "backlog",
+          "seconds": 0.005092928000522079,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 1,
+          "stage": "asr",
+          "seconds": 2.8825299620002625,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 1,
+          "stage": "translation",
+          "seconds": 2.5008966300010798,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 2,
+          "stage": "backlog",
+          "seconds": 0.38937203100067563,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 2,
+          "stage": "asr",
+          "seconds": 2.886214750998988,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 2,
+          "stage": "translation",
+          "seconds": 5.374375825998868,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 3,
+          "stage": "backlog",
+          "seconds": 3.6510324589999072,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 3,
+          "stage": "asr",
+          "seconds": 2.7844721090004896,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 3,
+          "stage": "translation",
+          "seconds": 5.85065141099949,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 4,
+          "stage": "backlog",
+          "seconds": 7.287144705000173,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 4,
+          "stage": "asr",
+          "seconds": 2.762378416999127,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 4,
+          "stage": "translation",
+          "seconds": 4.668795456998851,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 5,
+          "stage": "backlog",
+          "seconds": 9.719283608999831,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 5,
+          "stage": "asr",
+          "seconds": 2.7751958210010343,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 5,
+          "stage": "translation",
+          "seconds": 4.178960114999427,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 6,
+          "stage": "discard",
+          "seconds": 11.674488546999783,
+          "outcome": "overload",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 7,
+          "stage": "backlog",
+          "seconds": 6.676647311000124,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 7,
+          "stage": "asr",
+          "seconds": 2.9018244769995363,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 7,
+          "stage": "translation",
+          "seconds": 5.082630812999923,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 8,
+          "stage": "backlog",
+          "seconds": 9.662502156999835,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 8,
+          "stage": "asr",
+          "seconds": 2.973559481999473,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 8,
+          "stage": "translation",
+          "seconds": 4.938012782999067,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-en",
+          "segment_seq": 9,
+          "stage": "discard",
+          "seconds": 16.69815449700036,
+          "outcome": "overload",
+          "audio_seconds": 0.877
+        }
+      ],
+      "stage_summary": {
+        "backlog": {
+          "n": 7,
+          "p50": 6.676647311000124,
+          "max": 9.719283608999831,
+          "total": 37.39107520000107
+        },
+        "asr": {
+          "n": 7,
+          "p50": 2.8825299620002625,
+          "max": 2.973559481999473,
+          "total": 19.96617501899891
+        },
+        "translation": {
+          "n": 7,
+          "p50": 4.938012782999067,
+          "max": 5.85065141099949,
+          "total": 32.594323034996705
+        },
+        "discard": {
+          "n": 2,
+          "p50": 14.186321522000071,
+          "max": 16.69815449700036,
+          "total": 28.372643044000142
+        }
+      },
+      "omitted_audio_seconds": 5.877
+    },
+    "es": {
+      "summary": {
+        "transcript/es": {
+          "n": 7,
+          "p50": 14.296486634000757,
+          "p95": 18.14468411100097,
+          "max": 18.14468411100097
+        }
+      },
+      "transcript_wer": {
+        "errors": 36,
+        "reference_words": 107,
+        "wer": 0.3364485981308411
+      },
+      "observations": [
+        {
+          "elapsed_seconds": 11.838442084001144,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 1,
+            "emitted_at": "2026-09-25T04:53:41.796303Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-1",
+              "segment_seq": 1,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "Bienvenidos a esta charla sobre sistemas distribuidos, hoy vamos a hablarle con",
+              "status": "final",
+              "start_ms": 0,
+              "end_ms": 5000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 18.91738182700101,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 2,
+            "emitted_at": "2026-09-25T04:53:48.875244Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-2",
+              "segment_seq": 2,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "como Kubernetes, orquesta, contenedores a gran escala, cuando se despliega un micros.",
+              "status": "final",
+              "start_ms": 5000,
+              "end_ms": 10000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 26.252443621000566,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 3,
+            "emitted_at": "2026-09-25T04:53:56.210316Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-3",
+              "segment_seq": 3,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "servicio, el plano de control asigna a los pods entre los nomos del cluster.",
+              "status": "final",
+              "start_ms": 10000,
+              "end_ms": 15000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 34.29648663400076,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 4,
+            "emitted_at": "2026-09-25T04:54:04.254351Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-4",
+              "segment_seq": 4,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "Antes de emergir el pull request, necesitamos otra revisión de código.",
+              "status": "final",
+              "start_ms": 15000,
+              "end_ms": 20000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 43.14468411100097,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 5,
+            "emitted_at": "2026-09-25T04:54:13.102541Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-5",
+              "segment_seq": 5,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "integración continua con repruebas unitarias y análisis estático en Kavakommi.",
+              "status": "final",
+              "start_ms": 20000,
+              "end_ms": 25000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 43.145461666999836,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 6,
+            "emitted_at": "2026-09-25T04:54:13.103335Z",
+            "type": "session.gap",
+            "data": {
+              "gap_id": "gap-overload-6",
+              "start_ms": 25000,
+              "end_ms": 30000,
+              "reason": "overload",
+              "discard_captions": []
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 52.72547578200101,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 7,
+            "emitted_at": "2026-09-25T04:54:22.683337Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-7",
+              "segment_seq": 7,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "Slack. También usamos Prometheus y Grafana para monitorear la latencia y la tasa.",
+              "status": "final",
+              "start_ms": 30000,
+              "end_ms": 35000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 52.72622065900032,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 8,
+            "emitted_at": "2026-09-25T04:54:22.684091Z",
+            "type": "session.gap",
+            "data": {
+              "gap_id": "gap-overload-8",
+              "start_ms": 35000,
+              "end_ms": 40000,
+              "reason": "overload",
+              "discard_captions": []
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 59.696476000000985,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 9,
+            "emitted_at": "2026-09-25T04:54:29.654338Z",
+            "type": "caption.upsert",
+            "data": {
+              "segment_id": "seg-9",
+              "segment_seq": 9,
+              "kind": "transcript",
+              "language": "es",
+              "revision": 1,
+              "source_revision": null,
+              "text": "el uso de CPU. Gracias por escuchar, y no duden en hacer preguntas.",
+              "status": "final",
+              "start_ms": 40000,
+              "end_ms": 45000,
+              "speaker_id": null,
+              "boundary_reason": null
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 59.6970819470007,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 10,
+            "emitted_at": "2026-09-25T04:54:29.654958Z",
+            "type": "session.gap",
+            "data": {
+              "gap_id": "gap-overload-10",
+              "start_ms": 45000,
+              "end_ms": 45165,
+              "reason": "overload",
+              "discard_captions": []
+            }
+          }
+        },
+        {
+          "elapsed_seconds": 59.69908808200125,
+          "event": {
+            "protocol_version": 1,
+            "session_id": "measure-es",
+            "stream_id": "4f44f2523d52",
+            "seq": 11,
+            "emitted_at": "2026-09-25T04:54:29.656907Z",
+            "type": "session.status",
+            "data": {
+              "session": {
+                "id": "measure-es",
+                "title": "Medición es",
+                "source_language": "es",
+                "translation_languages": [],
+                "target_locale": "es-AR",
+                "status": "ended"
+              }
+            }
+          }
+        }
+      ],
+      "stages": [
+        {
+          "session_id": "measure-es",
+          "segment_seq": 1,
+          "stage": "backlog",
+          "seconds": 0.0045638960000360385,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 1,
+          "stage": "asr",
+          "seconds": 6.833718313000645,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 2,
+          "stage": "backlog",
+          "seconds": 1.8390870410003117,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 2,
+          "stage": "asr",
+          "seconds": 7.078123609000613,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 3,
+          "stage": "backlog",
+          "seconds": 3.9180888420014526,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 3,
+          "stage": "asr",
+          "seconds": 7.334240124999269,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 4,
+          "stage": "backlog",
+          "seconds": 6.252908443000706,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 4,
+          "stage": "asr",
+          "seconds": 8.043425198000477,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 5,
+          "stage": "backlog",
+          "seconds": 9.297218956000506,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 5,
+          "stage": "asr",
+          "seconds": 8.84727832399949,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 6,
+          "stage": "discard",
+          "seconds": 13.145410387000084,
+          "outcome": "overload",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 7,
+          "stage": "backlog",
+          "seconds": 8.147492668000268,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 7,
+          "stage": "asr",
+          "seconds": 9.577826808001191,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 8,
+          "stage": "discard",
+          "seconds": 12.726164231000439,
+          "outcome": "overload",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 9,
+          "stage": "backlog",
+          "seconds": 7.728259767000054,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 9,
+          "stage": "asr",
+          "seconds": 6.968050585001038,
+          "outcome": "ok",
+          "audio_seconds": 5.0
+        },
+        {
+          "session_id": "measure-es",
+          "segment_seq": 10,
+          "stage": "discard",
+          "seconds": 14.532039260000602,
+          "outcome": "overload",
+          "audio_seconds": 0.165
+        }
+      ],
+      "stage_summary": {
+        "backlog": {
+          "n": 7,
+          "p50": 6.252908443000706,
+          "max": 9.297218956000506,
+          "total": 37.187619613003335
+        },
+        "asr": {
+          "n": 7,
+          "p50": 7.334240124999269,
+          "max": 9.577826808001191,
+          "total": 54.68266296200272
+        },
+        "discard": {
+          "n": 3,
+          "p50": 13.145410387000084,
+          "max": 14.532039260000602,
+          "total": 40.403613878001124
+        }
+      },
+      "omitted_audio_seconds": 10.165
+    }
+  }
+}
