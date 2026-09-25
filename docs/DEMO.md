@@ -5,6 +5,9 @@ Pedido: video de **como máximo dos minutos**, logo, carátulas, arquitectura,
 capturas reales y demostración de varias sesiones. Idioma confirmado por el
 usuario: **voz argentina y subtítulos en inglés**.
 
+**Video publicado:** [ver demo en YouTube](https://youtu.be/mrHqqAIPJkQ), canal @dnluc,
+visibilidad no listado. Versión con música y narración v2.
+
 ## Montaje final: 1 minuto 55 segundos
 
 | Tiempo | Imagen / acción | Qué demuestra |
@@ -124,8 +127,8 @@ montaje local.
 Video local final: `~/Videos/decilo-demo/Decilo-demo-1m55-con-musica.mp4`. Duración medida
 con ffprobe: **115,000 s**, 1920×1080, 30 fps, H.264 + AAC, tamaño verificado en el manifiesto local.
 La galería y el paquete de entrega están en esa misma carpeta. El MP4 no se
-versiona en Git; subirlo a YouTube y completar Devpost sigue siendo un paso
-pendiente. Este documento no afirma que el proyecto haya sido enviado.
+versiona en Git. La versión v2 ya está publicada en YouTube como no listado;
+completar Devpost sigue pendiente. Publicar el video no envía el proyecto.
 
 | Prueba real | Originales finales | Traducciones finales | Gaps | Errores publicados |
 | --- | ---: | ---: | ---: | ---: |
@@ -177,3 +180,18 @@ Partitura programada, WAV y créditos quedan dentro del paquete local, en
 
 No se volvieron a ejecutar modelos de Decilo ni se modificaron las tomas de
 simultaneidad. Esta revisión cambia el audio editorial y sus subtítulos.
+
+## Publicación en YouTube — 25/09/2026
+
+Usuario autorizó subir la versión con música a su cuenta. Publicación completada
+mediante YouTube Studio en el canal **Diego Lucchelli (@dnluc)**, como **oculto /
+no listado**: https://youtu.be/mrHqqAIPJkQ. Se cargaron la carátula inicial como
+miniatura, descripción ES/EN, capítulos, créditos de las charlas, idioma español
+latinoamericano y categoría Ciencia y tecnología. Se declaró uso de IA para la
+narración sintética; no es contenido creado para niños ni promoción pagada.
+
+Verificación: Studio confirmó «Se ha publicado el vídeo» y la recarga de sus
+detalles mostró «Oculto». Una consulta independiente sin cookies ni sesión
+recuperó título, canal, disponibilidad `unlisted` y duración de 115 s. Las
+comprobaciones de YouTube no encontraron problemas al publicar. El formulario
+de Devpost no se modificó durante esta subida.

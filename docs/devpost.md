@@ -127,10 +127,12 @@ Gemma 3n (`gemma3n:e2b`), Gemini Live, Gemini REST y WebSocket. Traducción actu
 
 - Repositorio indicado por el README: https://github.com/dnluc/decilo
 - Licencia del repositorio: Apache-2.0.
-- Video demo: campo pendiente en la última comprobación del formulario. No se
-  volvió a consultar Devpost para esta actualización documental.
+- Video demo v2 publicado (25/09/2026), no listado: https://youtu.be/mrHqqAIPJkQ
+  Voz argentina, música original, subtítulos EN y dos sesiones en nube. Falta
+  incorporar el enlace al formulario: no se modificó Devpost durante la subida.
 - Sitio público: no se encontró una URL de despliegue en el checkout.
-- Imágenes: pendientes de elegir según los campos del formulario.
+- Imágenes y logo disponibles en [material de demo](DEMO.md); falta cargarlos
+  en la galería del formulario.
 - Equipo existente en Devpost conservado sin cambios. País: Argentina,
   confirmado por el usuario.
 

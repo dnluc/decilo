@@ -51,8 +51,12 @@ bibliotecas C++/zlib al entorno del proceso de grabación.
 - [x] 3.4 Exportar y verificar el video — Codex. 115 s exactos, Full HD 30 fps,
   H.264/AAC; voz y audio original, siete fotogramas revisados. Logo/capturas
   y evidencia en `docs/demo/`; archivo MP4 y paquete en `~/Videos/decilo-demo/`.
-- [ ] 3.5 Subir video a YouTube, actualizar formulario y enviar proyecto —
-  Pendiente. Tener un video local no completa la entrega en Devpost.
+- [x] 3.5 Subir video a YouTube — Responsable: Codex | Estado: terminada.
+  Versión v2 publicada como no listado: https://youtu.be/mrHqqAIPJkQ.
+  Canal @dnluc; confirmación en Studio, recarga de detalles y consulta sin sesión
+  verifican disponibilidad `unlisted` y 115 s. Miniatura y créditos cargados.
+- [ ] 3.7 Actualizar formulario y enviar proyecto — Pendiente; continúa 1.6.
+  Publicar en YouTube no completa la entrega en Devpost.
 
 No se simularon subtítulos ni se aceleró la toma de simultaneidad. La demora
 local y el cierre residual sin traducción de algunos segmentos Live siguen
