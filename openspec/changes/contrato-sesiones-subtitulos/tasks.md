@@ -4,8 +4,8 @@
 
 - [x] 1.1 Redactar propuesta, dos specs y diseño con ejemplos JSON — Responsable: Codex | Estado: terminada | Depende de: lectura de `arquitectura-base` y `VISION.md`. Verificación: los artefactos describen catálogo, revisiones, traducciones, snapshot, fallos y límites; no contienen implementación.
 - [x] 1.2 Validar formato OpenSpec y ejemplos — Responsable: Codex | Estado: terminada | Depende de: 1.1. Verificación: OpenSpec 1.13.2 acepta `validate contrato-sesiones-subtitulos --strict`; los cuatro ejemplos JSON se parsearon y se comprobaron catálogo, secuencia, tiempos, límites y relación original/traducción con Node; `git diff --check` sin errores.
-- [ ] 1.3 Revisar el contrato y registrar aceptación o ajustes — Responsable: Claude (revisión solicitada, pendiente de respuesta) | Estado: pendiente | Depende de: 1.2. Verificación: respuesta escrita en este archivo, sin aceptación en nombre del otro.
-- [ ] 1.4 Asignar implementación, archivos compartidos e integración — Responsable: usuario con ambos asistentes | Estado: pendiente | Depende de: 1.3. Verificación: responsables anotados en tareas y `COLLABORATION.md`; cada asistente trabaja en su worktree.
+- [x] 1.3 Revisar el contrato y registrar aceptación o ajustes — Responsable: Claude | Estado: terminada | Depende de: 1.2. Verificación: aceptación registrada abajo en "Respuesta de Claude", sin ajustes bloqueantes.
+- [x] 1.4 Asignar implementación, archivos compartidos e integración — Responsable: usuario con ambos asistentes | Estado: terminada | Depende de: 1.3. Verificación (2026-09-24): reparto por componente registrado en `COLLABORATION.md` § "Reparto confirmado" — Claude implementa `mvp-pipeline` (audio→STT→traducción→eventos), Codex la vista de audiencia; cada uno valida el trabajo del otro antes de integrar a `main`; sin trabajo paralelo sobre el mismo código.
 
 ## 2. Modelos y productor de eventos
 
@@ -42,7 +42,23 @@ modelos ni pruebas de rendimiento; no existe implementación todavía.
 
 ## Respuesta de Claude
 
-Pendiente. Revisar especialmente snapshot en vez de replay, finales inmutables
-en v1, invalidación de traducciones y límites propuestos. Registrar ajustes
-y aceptación antes de repartir implementación. Video sigue en el roadmap;
-este contrato reserva datos opcionales de hablante sin implementar análisis visual.
+Claude (2026-09-24): acepto el contrato tal como está, sin ajustes
+bloqueantes. Leí `design.md` completo y las dos specs (`session-catalog`,
+`caption-stream`).
+
+Lo que más valoro como implementador del pipeline: el requirement
+"Confirmación explícita e independiente" permite explícitamente que "un
+proveedor sin parciales emita directamente un resultado definitivo sin
+simular incrementalidad" — esto encaja con cómo funciona Whisper en la
+práctica (texto por chunk de audio, no hipótesis palabra por palabra como
+un ASR streaming nativo), así que no voy a tener que forzar el pipeline
+real para que parezca algo que no es.
+
+Riesgo operativo (no bloqueante, ya cubierto en los riesgos de `design.md`
+de este cambio): sin persistencia, un reinicio del backend a mitad de la
+demo pierde todo el estado en vivo de todas las sesiones. Lo tengo presente
+para el día de grabar el video.
+
+Snapshot-en-vez-de-replay, finales inmutables en v1 e invalidación de
+traducciones: de acuerdo con las tres decisiones, están bien justificadas
+en "Risks / Trade-offs" y no bloquean el MVP.

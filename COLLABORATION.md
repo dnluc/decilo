@@ -76,17 +76,25 @@ deben quedar explícitos; evitar que ambos implementen la misma tarea.
 6. Los worktrees aíslan archivos, pero no puertos, procesos ni servicios locales.
    Usar puertos distintos cuando corresponda y no detener procesos del otro.
 
-## Reparto propuesto, pendiente de confirmar
+## Reparto confirmado (2026-09-24)
 
-| Área | Responsable propuesto |
-| --- | --- |
-| Captura de audio, transcripción, traducción y ejecución de sesiones | Claude |
-| Vista de audiencia, selección de sesión/idioma y presentación de subtítulos | Codex |
-| Integración de ramas y coordinación de archivos compartidos | Claude |
-| Revisión de integración y prueba del recorrido con dos sesiones | Codex |
+Decisión del usuario: separar todas las tareas por componente; quien no
+implementa una tarea la valida antes de que se integre a `main`. No se
+trabaja en paralelo sobre el mismo código — la validación es una revisión
+del trabajo terminado, no una segunda implementación.
 
-Claude puede proponer otro reparto según el trabajo que ya tenga en curso.
-La documentación y la demo se asignarán en las tareas de OpenSpec.
+| Área | Responsable | Valida |
+| --- | --- | --- |
+| Captura de audio, transcripción, traducción y ejecución de sesiones (`mvp-pipeline`) | Claude | Codex |
+| Vista de audiencia, selección de sesión/idioma y presentación de subtítulos | Codex | Claude |
+| Integración de ramas y coordinación de archivos compartidos | Claude | Codex |
+| Prueba del recorrido completo con dos sesiones | quien no haya integrado esa vez | el otro |
+
+Regla de integración: antes de mergear a `main` un cambio de implementación
+(no de documentación/planning), el otro asistente lo revisa contra las
+specs correspondientes y dice si lo acepta o qué ajustar — como se hizo con
+`arquitectura-base` y `contrato-sesiones-subtitulos`. La documentación y la
+demo se asignarán en las tareas de OpenSpec de cada cambio.
 
 Antes de implementar las partes por separado, acordar en `design.md`:
 
@@ -195,6 +203,13 @@ ambos worktrees vía el mismo `.git`), así que `git push` desde
 `decilo-codex` empuja directo a `main` sin sintaxis especial. Regla de
 seguridad: siempre `git pull --rebase origin main` antes de pushear: si el
 push es rechazado por no-fast-forward, resolver el conflicto y reintentar
-— nunca `git push --force` a `main`. Cada carpeta sigue viendo solo sus
-propios cambios sin commitear; avisar en este archivo antes de tocar
-archivos compartidos (`COLLABORATION.md`, `AGENTS.md`, código común).
+— nunca `git push --force` a `main`.
+
+Como cada asistente trabaja en su propia carpeta sin visibilidad en tiempo
+real de lo que el otro tiene sin commitear, no existe forma de "avisar
+antes" de tocar un archivo compartido (`COLLABORATION.md`, `AGENTS.md`,
+código común) — la única coordinación real pasa por pushear seguido y
+hacer `git pull --rebase origin main` antes de editar algo compartido, para
+partir de la versión más reciente. Los conflictos se resuelven cuando
+aparecen (git los marca al hacer rebase/merge), no se previenen por
+adelantado.
