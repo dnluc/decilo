@@ -109,3 +109,30 @@ def test_file_boundaries_match_capture_and_do_not_create_silent_wav(tmp_path):
         for generated, *_ in chunks:
             if generated:
                 generated.unlink()
+
+
+def test_split_open_closes_at_position_and_keeps_remainder():
+    from decilo.segmentation import PauseConfig, PauseSegmenter
+    import struct as _struct
+    config = PauseConfig(min_seconds=1, pause_seconds=.4, max_seconds=6)
+    seg = PauseSegmenter(config)
+    voiced = _struct.pack('<%dh' % (16000 * 3), *([12000] * (16000 * 3)))
+    assert list(seg.feed(voiced)) == []
+
+    segment = seg.split_open(16000 * 2)
+    assert segment is not None
+    assert (segment.start, segment.end, segment.reason) == (0, 32000, 'pause')
+    assert len(segment.pcm) == 32000 * 2
+    # El resto sigue abierto desde el corte, sin perder muestras.
+    start, pcm, has_voice = seg.open_snapshot()
+    assert start == 32000 and len(pcm) == 16000 * 2 and has_voice
+
+
+def test_split_open_refuses_tiny_or_out_of_range_cuts():
+    from decilo.segmentation import PauseConfig, PauseSegmenter
+    import struct as _struct
+    seg = PauseSegmenter(PauseConfig(min_seconds=1, pause_seconds=.4, max_seconds=6))
+    voiced = _struct.pack('<%dh' % 16000, *([12000] * 16000))
+    list(seg.feed(voiced))
+    assert seg.split_open(8000) is None          # menos que el mínimo
+    assert seg.split_open(16000 * 5) is None     # más allá del audio recibido

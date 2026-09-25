@@ -44,9 +44,10 @@ def test_silence_is_filtered_instead_of_hallucinated(monkeypatch):
     captured = {}
 
     class FakeSegment:
-        def __init__(self, text, no_speech_prob):
+        def __init__(self, text, no_speech_prob, end=1.0):
             self.text = text
             self.no_speech_prob = no_speech_prob
+            self.end = end
 
     def fake_transcribe(path, **kwargs):
         captured.update(kwargs)
