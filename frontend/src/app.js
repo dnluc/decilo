@@ -136,6 +136,19 @@ function render() {
   highlightAudio(playback.time());
   transcript.scrollTop = $('follow').checked ? transcript.scrollHeight : scrollTop;
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
+  // Barra bajo el video: lo último dicho, para leerlo sin despegar la vista
+  // del video ni depender del scroll del historial. Se prefiere el texto en
+  // curso sobre el confirmado: mientras se habla, eso es lo que corresponde.
+  const lastRow = rows.at(-1);
+  const current = lastRow?.caption;
+  const live = $('live-caption');
+  // Si el segmento llegó pero su traducción todavía no, decirlo: dejar el
+  // texto de bienvenida haría creer que no se está escuchando nada.
+  const waiting = lastRow && !current;
+  live.textContent = current?.text
+    || (waiting ? 'Traduciendo…' : 'Acá vas a leer lo que se dice, mientras se dice.');
+  live.dataset.empty = current?.text ? 'false' : 'true';
+  live.lang = language;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';
   if (signature && signature !== announced) {
     $('live-announcement').textContent = latest.text;

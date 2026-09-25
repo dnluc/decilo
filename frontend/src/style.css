@@ -12,9 +12,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
 .event-name { font-size: 12px; font-weight: 750; letter-spacing: 1.8px; }
 .event-name span { color: #61685b; margin-left: 8px; }
 main { max-width: 1440px; margin: auto; padding: 0 5%; }
-.intro { padding: 44px 0 35px; }
+/* Compacto: en esta página el contenido principal es el video con sus
+   subtítulos, y tienen que entrar juntos en pantalla sin scrollear. */
+.intro { padding: 26px 0 20px; }
 .eyebrow { font-size: 10px; letter-spacing: 1.8px; font-weight: 750; margin: 0 0 14px; }
-h1 { font-size: clamp(32px, 4vw, 53px); letter-spacing: -2px; font-weight: 600; margin: 0 0 12px; line-height: 1.12; }
+h1 { font-size: clamp(30px, 3.2vw, 42px); letter-spacing: -1.6px; font-weight: 600; margin: 0 0 10px; line-height: 1.12; }
 h1 span { color: #26714c; }
 .intro > p:last-child { color: #62695f; margin: 0; font-size: 16px; }
 .workspace { display: grid; grid-template-columns: 285px minmax(0, 1fr); gap: 28px; align-items: start; }
@@ -99,12 +101,36 @@ input { accent-color: #3e734b; }
 #start-test:disabled { opacity: .6; cursor: wait; }
 #start-test:focus-visible { outline: 3px solid #243e2b; outline-offset: 3px; }
 
-.youtube-test { padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #d8d6cb; border-radius: 1rem; background: #fffef9; }
-.youtube-test[hidden] { display: none; }
-.youtube-test iframe { display: block; width: 100%; max-width: 800px; aspect-ratio: 16 / 9; border: 0; margin-bottom: 1rem; }
-.youtube-test p, .youtube-test a { font-size: .9rem; line-height: 1.6; }
-.youtube-test button, .youtube-test select { font: inherit; padding: .5rem; margin: .25rem; border: 1px solid #8b9b8b; border-radius: .4rem; }
-
-.youtube-test h2 { font-size: 1.05rem; line-height: 1.4; }
-.youtube-test { padding: 1rem; }
-.youtube-test button { margin-left: 0; }
+/* Ver una charla con subtítulos: el video manda, y el texto va pegado abajo
+   para leerlo sin despegar la vista del video. */
+.watch { border: 1px solid #d6dacd; border-radius: 16px; background: #fffef9; padding: 22px 26px 18px; margin-bottom: 28px; box-shadow: 0 6px 22px #27312105; }
+.watch-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 16px; }
+.watch-head .eyebrow { color: #3b6847; margin-bottom: 7px; font-size: 9px; }
+.watch-head h2 { font-size: 19px; font-weight: 550; line-height: 1.4; }
+.stage { max-width: 1120px; margin: 0 auto; }
+/* Cap por altura para que el video y sus subtítulos entren juntos en pantalla:
+   de nada sirve un video enorme si hay que scrollear para leer. */
+.video-frame { position: relative; width: min(100%, calc(48dvh * 16 / 9)); aspect-ratio: 16 / 9; margin: 0 auto; background: #12170f; border-radius: 12px 12px 0 0; overflow: hidden; }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-cover { position: absolute; inset: 0; width: 100%; border: 0; background: #1b2418; color: #f3f6ee; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 15px; }
+.video-cover:hover { background: #22301e; }
+.video-cover .play { width: 62px; height: 62px; border-radius: 50%; background: #41714c; display: grid; place-items: center; font-size: 22px; padding-left: 4px; }
+.live-caption { margin: 0 auto; width: min(100%, calc(48dvh * 16 / 9)); background: #1b2418; color: #f7f9f3; border-radius: 0 0 12px 12px; padding: 20px 26px; min-height: 92px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(19px, 2vw, 27px); line-height: 1.45; letter-spacing: -.2px; text-wrap: balance; }
+.live-caption[data-empty='true'] { color: #9fb096; font-size: 14px; }
+.watch-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0 0; }
+.watch-controls button { padding: 10px 14px; border: 1px solid #c8d1bc; border-radius: 8px; background: #f5f6ee; color: #303a29; font-size: 13px; }
+.watch-controls button.primary { background: #41714c; border-color: #41714c; color: #fbfdf7; }
+.watch-controls button.primary:hover { background: #386342; }
+.watch-controls button:disabled { opacity: .5; cursor: default; }
+#capture-message { margin: 0; font-size: 11px; color: #62695f; line-height: 1.5; flex: 1; min-width: 220px; }
+.watch-help { margin: 12px 0 0; font-size: 11px; color: #67705e; line-height: 1.7; }
+.watch-help span { font-family: ui-monospace, monospace; color: #3b6847; margin-left: 6px; }
+.watch-help span:first-child { margin-left: 0; }
+.watch-help em { font-style: normal; border-bottom: 1px solid #a0b88a; }
+.watch-help a { margin-left: 10px; }
+@media (max-width: 780px) {
+  .watch { padding: 16px 18px; border-radius: 12px; }
+  .watch-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .video-frame, .live-caption { width: 100%; }
+  .live-caption { padding: 16px; min-height: 76px; }
+}

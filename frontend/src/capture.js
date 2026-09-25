@@ -1,7 +1,9 @@
 export function setupCapture({ selectSession }) {
   document.getElementById('youtube-load').onclick = event => {
     document.querySelector('#youtube-test iframe').src = 'https://www.youtube-nocookie.com/embed/IW0unWVDnrI';
-    event.target.hidden = true;
+    // `currentTarget` y no `target`: el botón tiene contenido y un click puede
+    // originarse en un hijo, que es lo que se ocultaría con `target`.
+    event.currentTarget.hidden = true;
   };
   const start = document.getElementById('capture-start');
   const stop = document.getElementById('capture-stop');

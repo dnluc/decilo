@@ -20,19 +20,30 @@
       <h1 id="intro-title">Seguí la conversación<span>.</span></h1>
       <p>Elegí una charla. Leela en tu idioma.</p>
     </section>
+    <section id="youtube-test" class="watch" aria-labelledby="youtube-heading">
+      <div class="watch-head">
+        <div>
+          <p class="eyebrow">PROBALO CON UNA CHARLA REAL</p>
+          <h2 id="youtube-heading">API Gateway — Vlad Tomashpolskyi · Nerdearla</h2>
+        </div>
+        <label class="language-label">Idioma del audio<select id="capture-language"><option value="en">English</option><option value="es">Español</option></select></label>
+      </div>
+      <div class="stage">
+        <div class="video-frame">
+          <iframe title="Video de YouTube para probar Decilo" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <button id="youtube-load" class="video-cover" type="button"><span class="play" aria-hidden="true">▶</span>Cargar video</button>
+        </div>
+        <p id="live-caption" class="live-caption" data-empty="true">Acá vas a leer lo que se dice, mientras se dice.</p>
+      </div>
+      <div class="watch-controls">
+        <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
+        <button id="capture-stop" type="button" disabled>Detener captura</button>
+        <p id="capture-message" role="status">Solo se envía el audio que autorices. No usamos el micrófono.</p>
+      </div>
+      <p class="watch-help"><span>1.</span> Cargá el video. <span>2.</span> Compartí <em>esta</em> pestaña con audio. <span>3.</span> Dale Play. <a href="https://www.youtube.com/watch?v=IW0unWVDnrI" target="_blank" rel="noopener noreferrer">Si no carga, abrilo en YouTube ↗</a></p>
+    </section>
     <div class="workspace">
       <aside class="sessions-panel" aria-labelledby="sessions-heading">
-    <section id="youtube-test" class="youtube-test" aria-labelledby="youtube-heading">
-      <h2 id="youtube-heading">API Gateway — Vlad Tomashpolskyi · Nerdearla</h2>
-      <button id="youtube-load" type="button">Cargar video</button>
-      <iframe title="Video de YouTube para probar Decilo" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      <p>1. Compartí esta pestaña con audio. 2. Dale Play al video. 3. Leé los subtítulos abajo.</p>
-      <label>Idioma del audio <select id="capture-language"><option value="en">English</option><option value="es">Español</option></select></label>
-      <button id="capture-start" type="button">Compartir audio de pestaña</button>
-      <button id="capture-stop" type="button" disabled>Detener captura</button>
-      <p id="capture-message" role="status">Solo se envía el audio que autorices. No usamos el micrófono.</p>
-      <a href="https://www.youtube.com/watch?v=IW0unWVDnrI" target="_blank" rel="noopener noreferrer">Si el video no carga, abrilo en YouTube y compartí esa pestaña.</a>
-    </section>
         <div class="panel-heading"><h2 id="sessions-heading">Las charlas</h2><button id="refresh" class="text-button" type="button">Actualizar</button></div>
         <p id="catalog-message" role="status">Buscando sesiones…</p>
         <div id="sessions" class="session-list"></div>
