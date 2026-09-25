@@ -239,3 +239,57 @@ test('al reconectar, el snapshot reemplaza el estado sin duplicar', async ({ pag
   await expect(page.locator('.turn')).toHaveCount(1);
   await expect(page.locator('#transcript')).toContainText('Ya dicho.');
 });
+
+// Selector de procesamiento local / nube.
+
+test('la elección de procesamiento viaja en la sesión de captura', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'local', cloud_available: true } }));
+  const urls = [];
+  page.on('websocket', ws => urls.push(ws.url()));
+  // La captura necesita permiso humano: se simula el stream para llegar a
+  // abrir el WebSocket, que es lo que se quiere verificar.
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getDisplayMedia = async () => {
+      const ctx = new AudioContext();
+      const destination = ctx.createMediaStreamDestination();
+      const oscillator = ctx.createOscillator();
+      oscillator.connect(destination);
+      oscillator.start();
+      return destination.stream;
+    };
+  });
+  await page.goto('/');
+  await page.selectOption('#provider', 'gemini');
+  await page.getByRole('button', { name: 'Compartir audio de pestaña', exact: true }).click();
+  await expect.poll(() => urls.filter(u => u.includes('/capture?')).length).toBeGreaterThan(0);
+  expect(urls.find(u => u.includes('/capture?'))).toContain('provider=gemini');
+});
+
+test('sin credenciales en el servidor, la nube no se ofrece como disponible', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'local', cloud_available: false } }));
+  await page.goto('/');
+  // `toBeDisabled` no cubre <option>; se verifica la propiedad real.
+  await expect(page.locator('#provider option[value="gemini"]')).toHaveJSProperty('disabled', true);
+  await expect(page.locator('#provider')).toHaveValue('local');
+  await expect(page.locator('#provider-note')).toContainText('GEMINI_API_KEY');
+});
+
+test('la elección se recuerda entre visitas', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'local', cloud_available: true } }));
+  await page.goto('/');
+  await page.selectOption('#provider', 'gemini');
+  await page.reload();
+  await expect(page.locator('#provider')).toHaveValue('gemini');
+});
+
+test('cada opción explica qué implica, incluido dónde va el audio', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'local', cloud_available: true } }));
+  await page.goto('/');
+  await expect(page.locator('#provider-note')).toContainText('no sale de acá');
+  await page.selectOption('#provider', 'gemini');
+  await expect(page.locator('#provider-note')).toContainText('se envía a Google');
+});
