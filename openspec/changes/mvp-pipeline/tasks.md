@@ -178,8 +178,8 @@ Backend local de Codex en puerto 8000, consumido por Vite de Claude (5173).
 
 - [x] P1 Segmentador incremental PCM16 por energía/pausas, mínimo/máximo y motivos de corte; conservar muestras y tiempos — Responsable: Codex. Tests de invariancia por transporte, máximo exacto, silencio y parámetros inválidos.
 - [x] P2 Integrar archivos y captura con presupuesto de audio pendiente, gaps, flush al detener y boundary_reason existente — Responsable: Codex. 143 tests Python y 4 pruebas de integración con navegador correctos. Rama: `codex/pause-segmentation`, basada en PR #11. Segmentador por pausas activado por defecto en app; modo fixed reproducible.
-- [ ] P3 Claude adapta tamaño de paquetes para aprovechar la detección temprana — Responsable: Claude. Actual transporte de 5s limita la aparición temprana; contrato ya acepta bloques menores.
-- [ ] P4 Validar calidad y demora sobre charla humana y detector semántico con texto parcial — Responsable: Codex. No se afirma mejora sin medición.
+- ~~P3 Adaptar tamaño de paquetes~~ — Movida a `backend-latencia-incremental` tarea 4.1; responsable Claude.
+- ~~P4 Calidad, demora y detector semántico~~ — Movida a `backend-latencia-incremental` tareas 1.2, 3.2 y 5.1–5.2; responsable Codex.
 - [ ] P5 Revisión cruzada — Responsable: Claude.
 
 Evidencia de límites sobre ambos WAV sin inferencia en
