@@ -137,3 +137,19 @@ comparación). Corrida con pérdidas: p95 17.57s traducción, 18.14s ES; no cump
 objetivo. 127 tests correctos, Ruff/OpenSpec válidos. Sin cambios frontend ni
 contrato de eventos. Pendiente revisión cruzada; no declarar benchmark largo
 ni calidad aprobados.
+
+## Experimento de cola en memoria — Codex
+
+Autorizado por el usuario: separar ASR y traducción, sin cambiar frontend ni
+contratos. Cola de dos textos pendientes + una traducción activa por sesión;
+backpressure si se llena, drenaje antes de ended y cancelación del consumidor
+si falla/cancela el productor. Opt-in por parámetro interno/flag del benchmark;
+no cambia el default ni la captura de pestaña mientras se evalúa. Comparación
+sin descartes (--keep-all) y con warmup, mismos WAV/modelos. Evidencia en
+`docs/validation/2026-09-25-translation-queue/`.
+
+Resultado: sin pérdidas en ninguna corrida, máximo EN→ES de 33.51s a 19.60s
+(~42% menos); mediana de 11.93s a 10.86s. ES no mejora (p50 18.83s→21.30s,
+p95 27.73s→28.40s). 130 tests pasan; Ruff/OpenSpec correctos. Se conserva la
+cola como experimento opt-in para archivos, no se activa automáticamente en
+captura ni se declara cumplido el objetivo. Pendiente revisión de Claude.
