@@ -11,9 +11,19 @@
 - [x] 2.3 Tests de revisiones tardías, stop, timeout, snapshot y aislamiento de sesiones — Responsable: Codex | Estado: terminada (etapa B: originales finales) | Depende de: 2.2
 
 ## 3. Reconocimiento y segmentación
-- [ ] 3.1 Buffer de audio nuevo/contexto, límites, alineación y ASR incremental con pruebas de conservación — Responsable: Codex | Estado: pendiente | Depende de: 1.3
-- [ ] 3.2 Detector textual con presupuesto, confirmación y deadline provisional; evaluar negaciones/cifras/nombres — Responsable: Codex | Estado: pendiente | Depende de: 3.1
-- [ ] 3.3 Scheduler justo con una revisión pendiente por unidad abierta y FIFO de unidades cerradas; source_revision — Responsable: Codex | Estado: pendiente | Depende de: 2.3, 3.2
+
+Reasignado a Claude por el usuario el 2026-09-24 («tomalo vos todo esto
+completo»), junto con el pedido de transcribir palabra por palabra y corregir
+al cerrar la frase, sin mostrar nunca «traduciendo» ni estados de espera. El
+«no tocar backend» del handoff queda superado por esa instrucción.
+
+- [x] 3.1 ASR incremental del segmento abierto — Responsable: Claude | Estado: terminada (enfoque re-transcripción, sin ventana deslizante) | Verificación: `src/decilo/partials.py` re-transcribe el audio acumulado del segmento abierto (beam 1, anticipo barato) y publica revisiones provisionales del MISMO segmento que la pasada final (beam completo) corrige y confirma. No hay deduplicación de ventanas porque no hay ventanas solapadas: cada provisional es el segmento entero hasta ese punto. 5 tests en `tests/test_partials.py` + smoke con modelos reales: provisional «how Kubernetes markets» (rev=1) corregida por la final «how Kubernetes orchestrates containers at scale» (rev=2). Si la pasada final da texto vacío (VAD), las provisionales huérfanas se retiran con un gap `discard_captions`.
+- [ ] 3.2 Detector textual con presupuesto — Responsable: Claude | Estado: pendiente (el corte sigue siendo por pausa/deadline de `segmentation.py`; agregar señal textual solo si la medición de 5.1 muestra que el corte acústico no alcanza) | Depende de: 5.1
+- [x] 3.3 Scheduler: una revisión pendiente por unidad abierta — Responsable: Claude | Estado: terminada | Verificación: `PartialTranscriber` mantiene UNA transcripción provisional en vuelo y solo la instantánea más nueva pendiente (`test_latest_snapshot_wins_while_worker_is_busy`); una provisional que termina después del cierre se descarta sin publicarse (`test_stale_provisional_after_close_is_dropped`); la revisión de la pasada final se reserva al cerrar, antes de encolar, para que nunca choque con una provisional tardía. Kill switch: `DECILO_PARTIALS=0`.
+
+### Alcance agregado por el usuario (2026-09-24)
+- [x] A.1 Autodetección del idioma de entrada (`language=auto`) — Responsable: Claude | Estado: terminada. La sesión necesita idioma (contrato v1) y el idioma necesita audio: fase `detecting` que recibe paquetes antes de crear la sesión y los conserva completos, junta ≥2.5s con voz (tope 12s, cierre 4408 si no llega voz), detecta con argmax restringido a en/es sobre `all_language_probs` y recién entonces crea la sesión y envía `ready`. Verificación: 4 tests en `tests/test_language_detection.py` + smoke real (sample en español → sesión `es`).
+- [x] A.2 Estado provisional/confirmado solo por color en la UI (sin «Traduciendo…» ni carteles de espera), rediseño con dock inferior — Responsable: Claude | Estado: terminada. Verificación: `frontend/tests/browser/ui.spec.js` (24 pruebas, incluye que el body no contenga «Traduciendo»), 3 de integración con backend real.
 
 ## 4. Frontend (handoff a Claude)
 - [x] 4.1 Paquetes objetivo 100ms y flush antes de stop, offsets y backpressure; sin duplicar reproducción — Responsable: Claude | Estado: terminada | Depende de: ninguna. Verificación: `frontend/tests/browser/worklet.spec.js` (3 pruebas, contexto offline a 16kHz contra el worklet real) comprueba paquetes de 4+3200 bytes, offsets contiguos sin huecos ni solapamiento, muestras intactas (no silencio) y flush del fragmento parcial al `stop` cubriendo el audio de punta a punta. El formato (offset uint32 LE + PCM16 LE) no cambió; el audio capturado se sigue enrutando a una ganancia en 0, así que no se reproduce de nuevo.

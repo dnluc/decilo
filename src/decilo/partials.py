@@ -1,0 +1,117 @@
+"""Transcripción provisional del segmento abierto: el texto aparece mientras
+se habla y la pasada final lo corrige al cerrar la frase.
+
+Cada vez que el segmento abierto crece lo suficiente, se re-transcribe una
+copia de su audio y se publica como revisión provisional del MISMO segmento
+que después confirmará la pasada final. El contrato ya soporta esto: las
+revisiones reemplazan texto, el final es inmutable.
+
+Presupuesto: hay a lo sumo UNA transcripción provisional en vuelo, y si el
+audio creció mientras corría, solo se conserva la instantánea más nueva (la
+del medio quedó vieja antes de nacer). Las provisionales usan beam_size=1:
+son un anticipo barato; la calidad la pone la pasada final con beam completo.
+"""
+
+from __future__ import annotations
+
+import asyncio
+
+from decilo.models import CaptionData
+from decilo.stt import transcribe
+
+RATE = 16000
+# No transcribir aperturas minúsculas (nada útil que mostrar) ni re-transcribir
+# por cada paquete de 100ms: el costo en CPU no acompañaría.
+MIN_OPEN_SECONDS = 0.8
+MIN_GROWTH_SECONDS = 0.5
+
+
+class PartialTranscriber:
+    def __init__(self, stream, gateway, seq_for, language):
+        self.stream = stream
+        self.gateway = gateway
+        self.seq_for = seq_for  # el buffer asigna la identidad del segmento
+        self.language = language
+        self._latest: tuple[int, bytes] | None = None
+        self._wake = asyncio.Event()
+        self._snapshotted: dict[int, int] = {}  # start -> muestras ya instantaneadas
+        self._revisions: dict[int, int] = {}    # start -> última revisión publicada
+        self._closed: set[int] = set()
+
+    def observe(self, start: int, pcm: bytes, has_voice: bool) -> None:
+        """Llamado en cada paquete con el estado del segmento abierto."""
+        if not has_voice or start in self._closed:
+            return
+        samples = len(pcm) // 2
+        if samples < RATE * MIN_OPEN_SECONDS:
+            return
+        if samples - self._snapshotted.get(start, 0) < RATE * MIN_GROWTH_SECONDS:
+            return
+        self._snapshotted[start] = samples
+        self._latest = (start, pcm)  # la más nueva reemplaza a la pendiente
+        self._wake.set()
+
+    def close(self, start: int) -> int:
+        """El segmento cerró: ninguna provisional posterior debe publicarse.
+
+        Devuelve la revisión que corresponde a la pasada final (una más que
+        la última provisional publicada).
+        """
+        self._closed.add(start)
+        if self._latest is not None and self._latest[0] == start:
+            self._latest = None
+        self._snapshotted.pop(start, None)
+        return self._revisions.pop(start, 0) + 1
+
+    async def worker(self) -> None:
+        while True:
+            await self._wake.wait()
+            self._wake.clear()
+            while self._latest is not None:
+                start, pcm = self._latest
+                self._latest = None
+                try:
+                    text = await asyncio.to_thread(
+                        transcribe_pcm, pcm, self.language, beam_size=1,
+                    )
+                except Exception:
+                    continue  # la pasada final va a cubrir este audio igual
+                # Sin await entre el chequeo y la publicación: si el segmento
+                # cerró mientras se transcribía, este texto ya es viejo y la
+                # revisión final podría chocar con su número.
+                if start in self._closed or not text.strip():
+                    continue
+                revision = self._revisions.get(start, 0) + 1
+                self._revisions[start] = revision
+                seq = self.seq_for(start)
+                self.gateway.publish_nowait(self.stream.upsert_caption(CaptionData(
+                    segment_id=f"seg-{seq}",
+                    segment_seq=seq,
+                    kind="transcript",
+                    language=self.language,
+                    revision=revision,
+                    source_revision=None,
+                    text=text.strip(),
+                    status="provisional",
+                    start_ms=start * 1000 // RATE,
+                    end_ms=(start + len(pcm) // 2) * 1000 // RATE,
+                )))
+
+
+def transcribe_pcm(pcm: bytes, language: str, *, beam_size: int) -> str:
+    """PCM crudo → texto, vía un WAV temporal (lo que espera faster-whisper)."""
+    import tempfile
+    import wave
+    from pathlib import Path
+
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as file:
+        path = Path(file.name)
+    try:
+        with wave.open(str(path), "wb") as wav:
+            wav.setnchannels(1)
+            wav.setsampwidth(2)
+            wav.setframerate(RATE)
+            wav.writeframes(pcm)
+        return transcribe(path, language, beam_size=beam_size)
+    finally:
+        path.unlink(missing_ok=True)

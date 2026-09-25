@@ -112,3 +112,11 @@ class PauseSegmenter:
         if self.audio:
             result.append(self._emit(reason))
         return result
+
+    def open_snapshot(self):
+        """Estado del segmento abierto, para transcripción provisional.
+
+        Devuelve (inicio_en_muestras, pcm, tiene_voz) del audio acumulado que
+        todavía no cerró. El PCM es una copia: el buffer sigue creciendo.
+        """
+        return self.start, bytes(self.audio), self.has_voice

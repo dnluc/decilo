@@ -132,7 +132,7 @@ async def run_file_session(
 async def process_chunk(
     stream, gateway, chunk_path, segment_seq, start_ms, end_ms, *,
     available_at: float | None = None, observe: Callable[[dict], None] | None = None,
-    submit_translation=None, boundary_reason=None,
+    submit_translation=None, boundary_reason=None, revision=1,
 ):
     """Consume y elimina un WAV; comparte inferencia entre archivo y captura."""
     loop = asyncio.get_running_loop()
@@ -174,14 +174,26 @@ async def process_chunk(
         chunk_path.unlink(missing_ok=True)
 
     if not text.strip():
-        return  # silencio: no se inventa un subtítulo vacío
+        # Silencio: no se inventa un subtítulo vacío. Pero si hubo revisiones
+        # provisionales de este segmento, no pueden quedar huérfanas como si
+        # alguien las hubiera dicho: se retiran con un gap explícito.
+        if revision > 1:
+            gateway.publish_nowait(stream.record_gap(GapData(
+                gap_id=f"gap-empty-{segment_seq}", start_ms=start_ms, end_ms=end_ms,
+                reason="processing_error",
+                discard_captions=[{"segment_id": segment_id, "kind": "transcript",
+                                   "language": source_language}],
+            )))
+        return
 
     transcript = CaptionData(
         segment_id=segment_id,
         segment_seq=segment_seq,
         kind="transcript",
         language=source_language,
-        revision=1,
+        # Por encima de las revisiones provisionales ya publicadas: esta es
+        # la pasada final que las corrige y confirma.
+        revision=revision,
         source_revision=None,
         text=text.strip(),
         status="final",
