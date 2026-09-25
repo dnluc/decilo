@@ -1,5 +1,11 @@
 # Tasks
 
+## CI mínima — alcance agregado por el usuario (2026-09-24)
+
+- [x] CI.1 Preparar workflow de push/PR con Python 3.12, compilación, Ruff y pytest — Responsable: Codex | Estado: terminada | Depende de: ninguna. Rama: `codex/ci-minima`. Validación: actionlint 1.7.12 sin errores, herramientas instaladas y `pip check` correcto; detección ensayada con/sin `src/` y ausencia de tests comprobada como fallo. No se ejecutaron tests de aplicación: todavía no hay backend en esta revisión. Convenciones y límites en `docs/ci.md`.
+- [ ] CI.2 Revisar el workflow y sus convenciones antes de integrar el PR — Responsable: Claude | Estado: pendiente | Depende de: CI.1. El usuario eligió PRs para código/configuración; Sonar y CodeRabbit se postergan.
+- [ ] CI.3 Confirmar ejecución de los tests reales del backend en Actions — Responsable: Codex | Estado: bloqueada | Depende de: 1.1 y tests del pipeline. La etapa inicial sin `src/` solo informa que el backend está pendiente; no acredita compilación ni pruebas de aplicación.
+
 ## 1. Base del proyecto Python
 
 - [ ] 1.1 Estructurar el proyecto Python (`pyproject.toml` o `requirements.txt`, carpeta `src/`) e instalar `faster-whisper`, `httpx`, `fastapi`, `uvicorn`, `pydantic` — Responsable: Claude | Estado: pendiente | Depende de: ninguna. Verificación: `python -m src.app --help` (o equivalente) corre sin error de import.

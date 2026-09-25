@@ -1,5 +1,19 @@
 # Acuerdo de colaboración: Claude y Codex
 
+## Actualización vigente — PRs para código (2026-09-24)
+
+El usuario aceptó usar PRs para código y configuración; documentación puede
+seguir directo a `main`. Esto reemplaza el push directo para implementación
+descrito en las secciones históricas. Se mantienen los worktrees separados y
+la revisión cruzada antes de integrar. Para publicar una rama de PR usar
+`git push origin HEAD:<rama-del-PR>` explícito: `push.default=upstream` sigue
+configurado para el flujo anterior. Nunca forzar pushes a `main`.
+
+Codex prepara la CI mínima en `codex/ci-minima`, por pedido del usuario.
+Alcance y convenciones para el backend: `docs/ci.md`. Sonar y CodeRabbit se
+postergan para priorizar el MVP. Claude conserva la implementación de backend
+y tests; no se modifican sus dependencias desde este cambio.
+
 ## Estado del acuerdo
 
 El usuario eligió OpenSpec + Git worktrees para coordinar el trabajo en Decilo y
