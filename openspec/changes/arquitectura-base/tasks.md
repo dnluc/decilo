@@ -60,3 +60,21 @@ Pendientes del contrato posterior: protocolo de revisión/confirmación,
 límite de espera semántica, correcciones excepcionales y métricas de latencia
 percibida. El reparto de implementación sigue sin asignar; esta actualización
 no inicia el contrato en nombre de Claude ni marca su aceptación de la visión.
+
+## Documento de arquitectura de la implementación — Codex, 2026-09-25
+
+Pedido explícito del usuario: documento Markdown detallado con diagramas Mermaid.
+Base inspeccionada `8a61dad`, incluyendo el PR #20. Se agrega
+`docs/ARQUITECTURA.md` y un enlace desde README, conservando diseños históricos.
+Documenta despliegue, módulos, ingreso PCM, segmentación, ASR provisional,
+autodetección, proveedores, traducción, contratos, colas, UI, operación y CI.
+Distingue implementación de visión y explicita límites: detección local incluso
+en nube, capacidad nominal sin reserva durante detección, estado en RAM y falta
+de evaluación sostenida. No cambia código, servidores ni configuración de demo,
+ni ejecuta inferencia. El documento no completa ni archiva las tareas pendientes
+de aceptación de calidad/latencia de este cambio.
+
+Validación documental: 17 diagramas renderizados a SVG con Mermaid CLI 11,
+todos los enlaces relativos del documento resuelven a archivos existentes,
+`openspec validate arquitectura-base --strict` correcto y `git diff --check`
+sin errores. No se repitieron tests de aplicación porque solo cambió documentación.

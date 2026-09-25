@@ -4,6 +4,9 @@
 
 Proyecto construido para la [Nerdearla Vibeathon 2026](https://nerdearla.com).
 
+📐 [Arquitectura detallada y diagramas Mermaid](docs/ARQUITECTURA.md): componentes,
+flujos de audio/subtítulos, proveedores, contratos, configuración y límites de la implementación actual.
+
 ---
 
 ## Español
