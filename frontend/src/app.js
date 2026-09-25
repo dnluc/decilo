@@ -2,6 +2,7 @@ import './style.css';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
 import { CaptionConnection, loadSessions } from './connection.js';
 import { setupReading } from './reading.js';
+import { setupPlayer } from './player.js';
 
 const $ = id => document.getElementById(id);
 const demo = new URLSearchParams(location.search).get('demo') === '1';
@@ -26,6 +27,17 @@ const client = new CaptionConnection({ onUpdate(next, nextConnection) {
   }
   render();
 } });
+// El resaltado se aplica sin volver a dibujar la transcripción: `timeupdate`
+// dispara varias veces por segundo y un render completo pelearía con el scroll.
+const player = setupPlayer({ onTime: highlightPlaying });
+function highlightPlaying() {
+  const ms = player.currentMs();
+  for (const article of $('transcript').children) {
+    const { start, end } = article.dataset;
+    if (start === undefined) continue;
+    article.classList.toggle('now-playing', ms !== null && ms >= Number(start) && ms < Number(end));
+  }
+}
 function node(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -68,6 +80,9 @@ function select(session) {
   $('live-announcement').textContent = '';
   updateLanguages();
   renderSessions();
+  // La muestra no tiene audio real: mostrar un reproductor vacío haría creer
+  // que se puede escuchar algo que no existe.
+  player.load(demo ? null : session.id);
   if (demo) {
     connection = { kind: 'demo', message: 'Muestra · subtítulos simulados' };
     demoModule.demoEvents(session).forEach((event, index) => {
@@ -108,12 +123,17 @@ function render() {
   } else transcript.replaceChildren(...rows.map(({ segmentId, original, caption }) => {
     const article = node('article', `caption ${caption?.status || 'pending'}`);
     article.dataset.segment = segmentId;
+    // Tiempos del original: una traducción conserva los de su original, y el
+    // audio que se reproduce es siempre el de la fuente.
+    article.dataset.start = String(original.start_ms);
+    article.dataset.end = String(original.end_ms);
     const meta = node('div', 'caption-meta', timestamp(original.start_ms));
     if (caption?.speaker_id) meta.append(node('span', '', `Voz ${caption.speaker_id}`));
     meta.append(node('span', '', !caption ? 'Traducción pendiente' : caption.status === 'provisional' ? 'En curso' : 'Confirmado'));
     article.append(meta, node('p', '', caption?.text || 'Esperando traducción…'));
     return article;
   }));
+  highlightPlaying(); // el render reemplaza los nodos y con ellos el resaltado
   transcript.scrollTop = $('follow').checked ? transcript.scrollHeight : scrollTop;
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';

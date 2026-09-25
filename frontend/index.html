@@ -41,6 +41,10 @@
           </select>
           <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
         </div>
+        <div class="audio-player" id="audio-player" hidden>
+          <audio id="audio" controls preload="metadata" aria-label="Audio original de la charla"></audio>
+          <p class="audio-note" id="audio-note">Escuchá el audio original mientras leés.</p>
+        </div>
         <div class="reading-tools">
           <p id="connection" role="status">Los subtítulos aparecerán acá.</p>
           <label><input id="follow" type="checkbox" checked> Seguir lo último</label>
