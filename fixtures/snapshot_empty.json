@@ -1,0 +1,23 @@
+{
+  "protocol_version": 1,
+  "session_id": "konex-sala-1-charla-1",
+  "stream_id": "run-1",
+  "seq": 0,
+  "emitted_at": "2026-09-25T01:00:00Z",
+  "type": "session.snapshot",
+  "data": {
+    "session": {
+      "id": "konex-sala-1-charla-1",
+      "title": "Building reliable systems",
+      "source_language": "en",
+      "translation_languages": [
+        "es"
+      ],
+      "target_locale": "es-AR",
+      "status": "live"
+    },
+    "captions": [],
+    "gaps": [],
+    "history_truncated": false
+  }
+}

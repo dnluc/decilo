@@ -1,0 +1,22 @@
+{
+  "protocol_version": 1,
+  "session_id": "konex-sala-1-charla-1",
+  "stream_id": "run-1",
+  "seq": 2,
+  "emitted_at": "2026-09-25T01:00:00Z",
+  "type": "caption.upsert",
+  "data": {
+    "segment_id": "seg-1",
+    "segment_seq": 1,
+    "kind": "transcript",
+    "language": "en",
+    "revision": 2,
+    "source_revision": null,
+    "text": "We need another code review.",
+    "status": "final",
+    "start_ms": 0,
+    "end_ms": 950,
+    "speaker_id": null,
+    "boundary_reason": "pause"
+  }
+}

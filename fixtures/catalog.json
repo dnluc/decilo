@@ -1,0 +1,22 @@
+{
+  "sessions": [
+    {
+      "id": "konex-sala-1-charla-1",
+      "title": "Building reliable systems",
+      "source_language": "en",
+      "translation_languages": [
+        "es"
+      ],
+      "target_locale": "es-AR",
+      "status": "live"
+    },
+    {
+      "id": "konex-sala-2-charla-1",
+      "title": "Arquitectura de microservicios",
+      "source_language": "es",
+      "translation_languages": [],
+      "target_locale": null,
+      "status": "live"
+    }
+  ]
+}
