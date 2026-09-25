@@ -1,6 +1,7 @@
 """Worker de sesión: audio (archivo) → STT → traducción → eventos.
 
-v1 usa chunks de duración fija (no VAD) y publica cada chunk directamente
+Soporta ventanas fijas de referencia y cortes acústicos por pausa con máximo.
+Publica cada segmento directamente
 como `final` — el contrato de `caption-stream` contempla explícitamente
 que "un proveedor sin parciales puede emitir un resultado definitivo sin
 simular incrementalidad".
@@ -18,6 +19,7 @@ from typing import Callable, Iterator
 from decilo.gateway import SessionGateway
 from decilo.models import CaptionData, GapData
 from decilo.stream import SessionStream
+from decilo.segmentation import PauseConfig, PauseSegmenter
 from decilo.stt import transcribe
 from decilo.translate import translate
 
@@ -49,12 +51,39 @@ def _iter_chunks(audio_path: Path, chunk_seconds: float) -> Iterator[tuple[Path,
             offset += count
 
 
+def _iter_pause_chunks(audio_path: Path, config: PauseConfig):
+    with wave.open(str(audio_path), 'rb') as src:
+        if src.getnchannels() != 1 or src.getsampwidth() != 2:
+            raise ValueError('La segmentación por pausas requiere WAV PCM16 mono')
+        rate = src.getframerate()
+        segmenter = PauseSegmenter(config, rate)
+
+        def save(segment):
+            if not segment.has_voice:
+                return None, segment.start * 1000 // rate, segment.end * 1000 // rate, segment.reason
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as file:
+                path = Path(file.name)
+            with wave.open(str(path), 'wb') as out:
+                out.setnchannels(1)
+                out.setsampwidth(2)
+                out.setframerate(rate)
+                out.writeframes(segment.pcm)
+            return path, segment.start * 1000 // rate, segment.end * 1000 // rate, segment.reason
+
+        while pcm := src.readframes(max(1, rate // 50)):
+            for segment in segmenter.feed(pcm):
+                yield save(segment)
+        for segment in segmenter.flush():
+            yield save(segment)
+
+
 async def run_file_session(
     stream: SessionStream, gateway: SessionGateway, audio_path: Path,
     *, started_at: float | None = None,
     observe: Callable[[dict], None] | None = None,
     max_backlog_seconds: float | None = 10.0,
     overlap_translation: bool = False,
+    segmentation: PauseConfig | None = None,
 ) -> None:
     """Recorre un archivo de audio a velocidad real, publicando eventos en `gateway`.
 
@@ -67,13 +96,15 @@ async def run_file_session(
     loop = asyncio.get_running_loop()
     t_start = loop.time() if started_at is None else started_at
     async with translation_queue(stream, gateway, observe, overlap_translation) as submit:
-        for segment_seq, (chunk_path, start_ms, end_ms) in enumerate(
-            _iter_chunks(audio_path, CHUNK_SECONDS), start=1,
-        ):
+        chunks = (_iter_pause_chunks(audio_path, segmentation) if segmentation else
+                  ((path, start, end, None) for path, start, end in _iter_chunks(audio_path, CHUNK_SECONDS)))
+        for segment_seq, (chunk_path, start_ms, end_ms, boundary_reason) in enumerate(chunks, start=1):
             try:
                 wait = t_start + end_ms / 1000 - loop.time()
                 if wait > 0:
                     await asyncio.sleep(wait)
+                if chunk_path is None:
+                    continue  # Pautar también silencios sin invocar ASR.
                 backlog = loop.time() - (t_start + end_ms / 1000)
                 if max_backlog_seconds is not None and backlog > max_backlog_seconds:
                     gateway.publish_nowait(stream.record_gap(GapData(
@@ -88,10 +119,11 @@ async def run_file_session(
                 await process_chunk(
                     stream, gateway, chunk_path, segment_seq, start_ms, end_ms,
                     available_at=t_start + end_ms / 1000, observe=observe,
-                    submit_translation=submit,
+                    submit_translation=submit, boundary_reason=boundary_reason,
                 )
             finally:
-                chunk_path.unlink(missing_ok=True)
+                if chunk_path is not None:
+                    chunk_path.unlink(missing_ok=True)
     ended_session = stream.session.model_copy(update={"status": "ended"})
     gateway.publish_nowait(stream.record_status(ended_session))
 
@@ -99,7 +131,7 @@ async def run_file_session(
 async def process_chunk(
     stream, gateway, chunk_path, segment_seq, start_ms, end_ms, *,
     available_at: float | None = None, observe: Callable[[dict], None] | None = None,
-    submit_translation=None,
+    submit_translation=None, boundary_reason=None,
 ):
     """Consume y elimina un WAV; comparte inferencia entre archivo y captura."""
     loop = asyncio.get_running_loop()
@@ -153,7 +185,7 @@ async def process_chunk(
         text=text.strip(),
         status="final",
         start_ms=start_ms,
-        end_ms=end_ms,
+        end_ms=end_ms, boundary_reason=boundary_reason,
     )
     gateway.publish_nowait(stream.upsert_caption(transcript))
 
@@ -195,7 +227,7 @@ async def translate_caption(stream, gateway, transcript, observe=None):
             text=translated_text,
             status="final",
             start_ms=transcript.start_ms,
-            end_ms=transcript.end_ms,
+            end_ms=transcript.end_ms, boundary_reason=transcript.boundary_reason,
         )
         gateway.publish_nowait(stream.upsert_caption(translation))
 

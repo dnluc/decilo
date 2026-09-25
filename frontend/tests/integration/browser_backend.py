@@ -51,7 +51,7 @@ application.run_file_session = playback_worker
 import decilo.capture as capture_module
 
 
-async def fake_capture_chunk(stream, gateway, path, seq, start, end):
+async def fake_capture_chunk(stream, gateway, path, seq, start, end, **kwargs):
     gateway.publish_nowait(stream.upsert_caption(CaptionData(
         segment_id=f'captured-{seq}', segment_seq=seq, kind='transcript', language='en',
         revision=1, source_revision=None, text='Captured audio test', status='final',

@@ -184,3 +184,36 @@ Por pedido del usuario, se corrigen los hallazgos de `review-codex-pr4.md`:
   de revisión/retiro se liberan al evictar el segmento.
 - Playwright prueba UI + gateway real sin modelos en puertos aislados. Esta
   prueba ahora corre en CI; el benchmark de audio de grupos 5/6 sigue pendiente.
+
+## Segmentación acústica por pausas — 2026-09-25
+
+Primera etapa solicitada por el usuario hacia unidades de sentido. No se
+presenta como detector semántico: RMS de PCM16 mono en ventanas de 20ms,
+umbral normalizado 0.01, mínimo 1s, pausa 400ms y máximo 6s. Configurable por
+entorno; se valida mínimo >=0.5s y máximo <=15s. Se conserva modo fixed como
+referencia. `PauseSegmenter` mantiene estado entre paquetes y limita su buffer;
+no corta por fronteras de transporte ni une audio separado por un gap.
+
+Se usa en archivos y captura. `boundary_reason` ya existente informa pause,
+deadline o end_of_stream; nunca semantic. La misma razón se propaga a la
+traducción. Los segmentos sin voz según esta heurística no invocan ASR; el
+archivo respeta igualmente su tiempo de audio. Habla débil/ruido pueden engañar
+el umbral: no es un VAD neuronal ni valida comprensión de frase.
+
+Captura mantiene presupuesto de dos segmentos máximos en audio pendiente
+(12s con defaults), además del activo y el buffer de segmentación. También
+limita el número de entradas según mínimo/máximo. Así un paquete de 5s con
+varias frases cortas no provoca pérdidas solo por superar dos entradas.
+Al superar el presupuesto descarta el pendiente más antiguo y publica gap.
+Al recibir discontinuidad vacía el fragmento previo antes de marcar el gap;
+al detener procesa el último fragmento parcial antes de drenar traducciones.
+
+Default en app: DECILO_SEGMENTATION=pause; fixed vuelve al modo anterior.
+DECILO_MIN_SEGMENT_SECONDS=1, DECILO_PAUSE_SECONDS=.4,
+DECILO_MAX_SEGMENT_SECONDS=6, DECILO_SILENCE_RMS=.01.
+
+Handoff a Claude: el worklet actual envía 80000 muestras cada 5s. El backend
+acepta paquetes menores sin cambiar el protocolo; emitir cada 100–200ms hará
+visibles las pausas antes. Este cambio no toca frontend ni promete menor
+latencia con el transporte actual. La detección semántica con texto parcial,
+contexto entre fragmentos forzados y validación de calidad quedan pendientes.

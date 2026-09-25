@@ -18,6 +18,7 @@ from pathlib import Path
 from decilo.gateway import SessionGateway
 from decilo.models import Session
 from decilo.pipeline import run_file_session
+from decilo.segmentation import PauseConfig
 from decilo.stream import SessionStream
 
 SAMPLES = Path(__file__).resolve().parents[1] / "samples"
@@ -52,7 +53,7 @@ class MeasuringGateway(SessionGateway):
         super().publish_nowait(event)
 
 
-async def measure(language, keep_all, overlap):
+async def measure(language, keep_all, overlap, segmentation):
     stream = SessionStream(Session(
         id=f"measure-{language}", title=f"Medición {language}",
         source_language=language, translation_languages=["es"] if language == "en" else [],
@@ -64,11 +65,12 @@ async def measure(language, keep_all, overlap):
     await asyncio.wait_for(run_file_session(
         stream, gateway, SAMPLES / f"{language}_tech_talk.wav", started_at=started_at, observe=stages.append,
         max_backlog_seconds=None if keep_all else 10.0, overlap_translation=overlap,
+        segmentation=PauseConfig() if segmentation == "pause" else None,
     ), timeout=300)
     return gateway.observations, stages
 
 
-async def main(output, languages, warmup, beam_size, keep_all, overlap):
+async def main(output, languages, warmup, beam_size, keep_all, overlap, segmentation):
     from decilo import pipeline, stt
     pipeline.transcribe = partial(stt.transcribe, beam_size=beam_size)
     if warmup:
@@ -85,9 +87,9 @@ async def main(output, languages, warmup, beam_size, keep_all, overlap):
             finally:
                 path.unlink(missing_ok=True)
                 chunks.close()
-    measured = await asyncio.gather(*(measure(language, keep_all, overlap) for language in languages))
+    measured = await asyncio.gather(*(measure(language, keep_all, overlap, segmentation) for language in languages))
     recordings = [item[0] for item in measured]
-    report = {"measurement": "audio end to backend publication", "warmup": warmup, "overlap_translation": overlap, "beam_size": beam_size, "max_backlog_seconds": None if keep_all else 10.0,
+    report = {"measurement": "audio end to backend publication", "warmup": warmup, "overlap_translation": overlap, "segmentation": segmentation, "beam_size": beam_size, "max_backlog_seconds": None if keep_all else 10.0,
               "source": "synthetic WAV", "languages": languages, "sessions": {}}
     for language, (observations, stages) in zip(languages, measured, strict=True):
         groups = {}
@@ -135,6 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("--keep-all", action="store_true", help="diagnóstico sin descarte por atraso")
     parser.add_argument("--beam-size", type=int, choices=(1, 5), default=5)
     parser.add_argument("--overlap-translation", action="store_true")
+    parser.add_argument("--segmentation", choices=("fixed", "pause"), default="fixed")
     args = parser.parse_args()
     languages = ["en", "es"] if args.sessions == "both" else [args.sessions]
-    asyncio.run(main(args.output, languages, args.warmup, args.beam_size, args.keep_all, args.overlap_translation))
+    asyncio.run(main(args.output, languages, args.warmup, args.beam_size, args.keep_all, args.overlap_translation, args.segmentation))

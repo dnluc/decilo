@@ -36,13 +36,14 @@ def test_overload_discards_oldest_and_reports_gap():
 def test_capture_end_to_end_and_disconnect(monkeypatch):
     monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
     monkeypatch.setenv('DECILO_DEMO_AUTOSTART', '0')
+    monkeypatch.setenv('DECILO_SEGMENTATION', 'fixed')
     monkeypatch.setattr(app, 'registry', SessionRegistry())
     monkeypatch.setattr(app, 'gateways', {})
     monkeypatch.setattr(app, 'file_tasks', {})
     monkeypatch.setattr(app, 'audio_sources', {})
     received = []
 
-    async def fake_process(stream, gateway, path, seq, start, end):
+    async def fake_process(stream, gateway, path, seq, start, end, **kwargs):
         received.append((path.read_bytes(), seq, start, end))
 
     monkeypatch.setattr(capture, 'process_chunk', fake_process)

@@ -172,3 +172,23 @@ El log de arranque muestra `Translation queue: True`. No requiere cambios del
 frontend. Al detener, se espera a las traducciones pendientes antes de finalizar,
 con un presupuesto total de 90s para drenar audio y texto. Sigue siendo un
 experimento: benefició al inglés en el corpus corto, pero no mejoró español.
+
+### Cortes por pausas (primera etapa hacia unidades de sentido)
+
+El backend usa `DECILO_SEGMENTATION=pause` por defecto: busca una pausa de
+400ms después de al menos 1s y fuerza corte a los 6s si el hablante continúa.
+No entiende todavía si terminó una idea: es un detector acústico por energía.
+Conserva timestamps y distingue `pause`, `deadline` y `end_of_stream` en el campo
+`boundary_reason` existente. Silencios detectados no se envían a Whisper.
+
+Configuración opcional: `DECILO_MIN_SEGMENT_SECONDS`, `DECILO_PAUSE_SECONDS`,
+`DECILO_MAX_SEGMENT_SECONDS`, `DECILO_SILENCE_RMS` (defaults 1, .4, 6 y .01).
+Voz débil puede confundirse con silencio; ajustar el umbral requiere evaluar el
+audio real. `DECILO_SEGMENTATION=fixed` permite volver a los cortes anteriores.
+El benchmark compara con `--segmentation fixed` y `--segmentation pause`.
+
+La captura aún depende de cuándo recibe audio: si el frontend envía paquetes
+cada 5s, no se puede emitir antes de recibirlos. Se admiten paquetes menores
+sin cambiar la API. En modo pause, el presupuesto de audio pendiente es dos
+veces la duración máxima de segmento (12s por defecto), con número de entradas
+acotado; una sobrecarga se sigue notificando con gaps.
