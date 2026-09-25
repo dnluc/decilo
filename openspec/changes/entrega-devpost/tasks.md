@@ -100,3 +100,29 @@ Copia de textos guardados: `docs/devpost.md`. Evidencia local de verificación:
 `~/Videos/decilo-demo/devpost-verificacion.json`. La preparación estaba en DRAFT
 4/5; el último estado observado fue SUBMITTED 5/5. Los miembros que aparecen
 en la pantalla final son Diego Lucchelli y Sole Lucchelli; Codex no editó el equipo.
+
+## Nueva grabación con lectura estable — Codex, 25/09/2026
+
+Pedido del usuario: rehacer el video y las pruebas tras las mejoras. Base
+sincronizada `b6736f2`, con PR #25; respecto de la toma anterior (`370d9ba`)
+cambia la presentación del frontend, no el backend. Material separado en
+`~/Videos/decilo-demo/revisiones/v3/`; se conserva la versión publicada.
+
+- [x] 5.1 Sincronizar main y compilar el frontend actualizado — Responsable: Codex |
+  Estado: terminada. No hay PRs abiertos; `npm run build` correcto.
+- [x] 5.2 Repetir capturas humanas local/nube y dos fuentes simultáneas —
+  Responsable: Codex | Estado: terminada. Cinco casos nuevos sobre los cuatro
+  videos: ES local, ES nube, dos EN nube simultáneos y EN local adicional.
+  Intervalo compartido de nube: 101,628 s, IDs y fuentes distintos. Se conservan
+  audios, eventos, reportes y capturas. En las sesiones EN, 1.030/1.030/710
+  muestras cada 100 ms conservaron tamaño de video y barra. ES conserva diez
+  observaciones iguales por sesión. Hay pausas de salida en nube (unos 34 s
+  en ES y 47 s en EN A, sin eventos gap) y siete gaps de sobrecarga en EN
+  local; no se presentan como resueltos ni como aprobación de latencia.
+- [x] 5.3 Montar y verificar versión de hasta dos minutos — Responsable: Codex |
+  Estado: terminada. `Decilo-demo-v3-1m55.mp4`: 115,000 s, Full HD/30,
+  H.264/AAC, 8.618.826 bytes. Ocho fotogramas revisados; decodificación completa
+  sin errores; pico de audio −4,2 dBFS, 30 cues EN y 30 ES dentro del montaje.
+  Conserva voz argentina, pronunciación «páiton» y música original. Nueva
+  galería, página local y ZIP comprobado. La publicación de YouTube/Devpost
+  permanece en v2; esta tarea no modifica los servicios externos.

@@ -1,0 +1,211 @@
+{
+  "code_commit": "b6736f22da0ab2321111ec93aad96ba1180d30dc",
+  "revision": "v3",
+  "scope": "Nuevas pruebas cortas con cuatro videos humanos y captura real de pestaña; no benchmark sostenido ni SLA.",
+  "voice": "Narración argentina v2 reutilizada; subtítulos ingleses editoriales, no generados por Decilo.",
+  "primary_parallel_cases": [
+    "dos-nube-a",
+    "dos-nube-b"
+  ],
+  "parallel_overlap_seconds": 101.628,
+  "parallel_continuous_edited_seconds": 24,
+  "parallel_play_start_difference_ms": 0,
+  "cases": [
+    {
+      "case": "es-local",
+      "source": "https://www.youtube.com/watch?v=Emv8SiDtPkI",
+      "provider": "local",
+      "language": "es",
+      "session_id": "capture-2a2032ae67e24aa5990c2351d4ccf96a",
+      "original_final_segments": 22,
+      "translated_final_segments": 0,
+      "events": {
+        "events": 99,
+        "upserts": 97,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1041,
+      "max_visible_history": 21,
+      "play_started_utc": "2026-09-25T11:16:31.092000+00:00",
+      "captured_seconds": 102.44,
+      "page_errors": [],
+      "layout_distinct_boxes_10s_samples": 1,
+      "layout_100ms": null,
+      "intervals_without_caption_events_over_5s": []
+    },
+    {
+      "case": "es-nube",
+      "source": "https://www.youtube.com/watch?v=Emv8SiDtPkI",
+      "provider": "gemini",
+      "language": "es",
+      "session_id": "capture-b3b31f5b7fb6466382bb37cb88ae4b90",
+      "original_final_segments": 9,
+      "translated_final_segments": 0,
+      "events": {
+        "events": 93,
+        "upserts": 91,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1027,
+      "max_visible_history": 9,
+      "play_started_utc": "2026-09-25T11:16:31.092000+00:00",
+      "captured_seconds": 102.44,
+      "page_errors": [],
+      "layout_distinct_boxes_10s_samples": 1,
+      "layout_100ms": null,
+      "intervals_without_caption_events_over_5s": [
+        {
+          "start_seconds": 30.177,
+          "duration_seconds": 34.302
+        },
+        {
+          "start_seconds": 84.619,
+          "duration_seconds": 17.821,
+          "until_capture_stop": true
+        }
+      ]
+    },
+    {
+      "case": "dos-nube-a",
+      "source": "https://www.youtube.com/watch?v=GVadbxHks_A",
+      "provider": "gemini",
+      "language": "en",
+      "session_id": "capture-c755d5519da441d78a00f55a2f60c45c",
+      "original_final_segments": 14,
+      "translated_final_segments": 13,
+      "events": {
+        "events": 127,
+        "upserts": 125,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1019,
+      "max_visible_history": 13,
+      "play_started_utc": "2026-09-25T11:18:42.357000+00:00",
+      "captured_seconds": 101.628,
+      "page_errors": [],
+      "layout_distinct_boxes_10s_samples": 1,
+      "layout_100ms": {
+        "samples": 1030,
+        "videoWidths": [
+          882
+        ],
+        "videoHeights": [
+          412.4375
+        ],
+        "captionHeights": [
+          84.46875
+        ]
+      },
+      "intervals_without_caption_events_over_5s": [
+        {
+          "start_seconds": 8.717,
+          "duration_seconds": 47.127
+        }
+      ]
+    },
+    {
+      "case": "dos-nube-b",
+      "source": "https://www.youtube.com/watch?v=d1TZv_CjSTY",
+      "provider": "gemini",
+      "language": "en",
+      "session_id": "capture-7459bd586d7045cd824946d6893d0c33",
+      "original_final_segments": 22,
+      "translated_final_segments": 18,
+      "events": {
+        "events": 195,
+        "upserts": 193,
+        "gaps": 0,
+        "errors": 0
+      },
+      "gaps_by_reason": {},
+      "audio_packets_sent": 1025,
+      "max_visible_history": 18,
+      "play_started_utc": "2026-09-25T11:18:42.357000+00:00",
+      "captured_seconds": 101.629,
+      "page_errors": [],
+      "layout_distinct_boxes_10s_samples": 1,
+      "layout_100ms": {
+        "samples": 1030,
+        "videoWidths": [
+          882
+        ],
+        "videoHeights": [
+          412.4375
+        ],
+        "captionHeights": [
+          84.46875
+        ]
+      },
+      "intervals_without_caption_events_over_5s": [
+        {
+          "start_seconds": 23.663,
+          "duration_seconds": 14.077
+        },
+        {
+          "start_seconds": 58.652,
+          "duration_seconds": 15.223
+        }
+      ]
+    },
+    {
+      "case": "en-human-local",
+      "source": "https://www.youtube.com/watch?v=7rteJoZSSzo",
+      "provider": "local",
+      "language": "en",
+      "session_id": "capture-6d9c830d855945c39ce2169c5245319e",
+      "original_final_segments": 9,
+      "translated_final_segments": 9,
+      "events": {
+        "events": 93,
+        "upserts": 84,
+        "gaps": 7,
+        "errors": 0
+      },
+      "gaps_by_reason": {
+        "overload": 7
+      },
+      "audio_packets_sent": 711,
+      "max_visible_history": 4,
+      "play_started_utc": "2026-09-25T11:20:45.861000+00:00",
+      "captured_seconds": 70.831,
+      "page_errors": [],
+      "layout_distinct_boxes_10s_samples": 1,
+      "layout_100ms": {
+        "samples": 710,
+        "videoWidths": [
+          882
+        ],
+        "videoHeights": [
+          412.4375
+        ],
+        "captionHeights": [
+          84.46875
+        ]
+      },
+      "intervals_without_caption_events_over_5s": [
+        {
+          "start_seconds": 13.221,
+          "duration_seconds": 5.515
+        },
+        {
+          "start_seconds": 85.049,
+          "duration_seconds": 7.14
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "En español nube hubo una pausa de aproximadamente 34 s sin nuevos caption.upsert; no fue señalada como gap por el backend.",
+    "En nube A hubo unos 47 s sin eventos nuevos; la captura continuaba enviando audio y el video avanzaba.",
+    "El inglés local publicó 7 gaps de sobrecarga de CPU. Se conserva como prueba adicional, fuera del montaje principal.",
+    "Los intervalos sin eventos no son una medida de latencia: pueden incluir silencios, acumulación, pérdidas o problemas del proveedor.",
+    "La demostración selecciona fragmentos de corridas completas conservadas; las tomas no se aceleran ni se fabrican subtítulos.",
+    "La diferencia respecto de la versión filmada anterior es el frontend del PR #25; no se declara una mejora del motor de inferencia."
+  ]
+}

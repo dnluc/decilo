@@ -8,6 +8,9 @@ usuario: **voz argentina y subtítulos en inglés**.
 **Video publicado:** [ver demo en YouTube](https://youtu.be/mrHqqAIPJkQ), canal @dnluc,
 visibilidad no listado. Versión con música y narración v2.
 
+**Nueva grabación v3:** solicitada tras el PR #25. Ver la revisión al final
+de este documento; conserva la publicación v2 y sus resultados históricos.
+
 ## Montaje final: 1 minuto 55 segundos
 
 | Tiempo | Imagen / acción | Qué demuestra |
@@ -209,3 +212,49 @@ recargas del formulario y la carga del video y las imágenes en la vista previa.
 La preparación dejó el envío a cargo del usuario. Durante la verificación final
 se observó **SUBMITTED, 5/5 steps done** y «Project submitted!». Codex no pulsó
 Submit ni ejecutó el envío. La copia del texto guardado está en [devpost.md](devpost.md).
+
+## Nuevas pruebas y montaje v3 — 25/09/2026
+
+Base sincronizada `b6736f2`, con la mejora visual del PR #25. El frontend fue
+compilado nuevamente; el backend no cambió respecto de la grabación original.
+Se volvieron a capturar los cuatro videos con audio real en cinco sesiones
+nuevas. La carátula, arquitectura, voz argentina, música y subtítulos editoriales
+se reutilizan; todas las tomas de la aplicación del nuevo montaje son nuevas.
+
+| Prueba v3 | Originales finales | Traducciones finales | Gaps publicados |
+| --- | ---: | ---: | ---: |
+| ES local | 22 | No aplica | 0 |
+| ES nube | 9 | No aplica | 0 |
+| EN nube A, Data Modeling | 14 | 13 | 0 |
+| EN nube B, documentación | 22 | 18 | 0 |
+| EN local, Human-Centric Engineering | 9 | 9 | 7 por sobrecarga |
+
+Las dos sesiones EN nube procesaron fuentes distintas durante **101,628 s**
+compartidos. El montaje conserva 24 s continuos, a velocidad real. La geometría
+del video y de la barra permaneció constante en las 1.030 observaciones por
+sesión nube y 710 locales, tomadas cada 100 ms; ES también mantuvo la geometría
+en las diez observaciones de cada sesión. Esto comprueba estabilidad visual
+durante las tomas, no estabilidad de la inferencia ni fidelidad de traducción.
+
+Hubo intervalos sin nuevos eventos de subtítulos: aproximadamente **34 s en
+ES nube y 47 s en EN nube A**. El backend no los publicó como gaps. El video
+y envío de paquetes seguían progresando en EN A; la causa no se diagnosticó
+con esta grabación. La ausencia de errores publicados no certifica continuidad.
+El inglés local tuvo siete gaps por sobrecarga de CPU. Se conserva esa prueba
+adicional, con sus avisos visibles, fuera del montaje principal. Las salidas
+residuales de nube siguen pudiendo quedar sin una traducción final.
+
+Carpeta local de la revisión: `~/Videos/decilo-demo/revisiones/v3/`, con scripts,
+audios originales, grabaciones completas, reportes y evidencia. La toma española
+doble utiliza el intervalo 65–78 s, con cambios de texto reales en ambos modos.
+Las demás tomas conservan los tiempos del guion. Los resultados completos
+quedan en [evidencia v3](demo/v3/evidencia.json).
+
+Entrega v3: `~/Videos/decilo-demo/Decilo-demo-v3-1m55.mp4` y
+`~/Videos/decilo-demo/Decilo-presentacion-v3.zip`. Video verificado de **115,000 s**,
+1920×1080/30, H.264/AAC, 8.618.826 bytes; decodificación completa correcta,
+pico −4,2 dBFS, 30 cues EN y 30 ES. Se revisaron ocho fotogramas y la integridad
+del ZIP. Capturas nuevas: [español local](demo/v3/03-local-es.png) y
+[dos sesiones](demo/v3/10-sesiones-simultaneas.png). La página local está en
+`revisiones/v3/presentacion.html`. YouTube y Devpost conservan la v2 publicada;
+no se modificaron con esta revisión.
