@@ -19,3 +19,20 @@ Chrome, el audio humano de YouTube ni la calidad/latencia. Tarea 4 parcialmente
 verificada: falta la autorización y prueba manual del usuario sobre YouTube.
 Metadata del enlace verificada mediante oEmbed de YouTube: API Gateway: On
 Contracts, Doors and Dangers of the Outside — Vlad Tomashpolskyi, Nerdearla.
+
+## Revisión del selector del PR #18 — Codex, 2026-09-25
+
+Base revisada: `f209397`, PR de Claude ya integrado al comenzar la revisión.
+Correcciones en `codex/review-provider-selector`, con integración solicitada
+expresamente por el usuario. Esto no acredita revisión cruzada de Claude sobre
+las correcciones nuevas.
+
+- [x] S1 Revisar selector, privacidad de credenciales y aislamiento por sesión — Responsable: Codex | Estado: terminada. La selección se propaga a tareas/threads; la API solo publica presencia de clave.
+- [x] S2 Conservar configuración por etapa si falta provider y restaurar contexto al terminar — Responsable: Codex | Estado: terminada. Regresiones cubren defaults nube, híbridos, selección explícita y fallo de captura.
+- [x] S3 Permitir nube aunque falle preparación local — Responsable: Codex | Estado: terminada. Tests de captura y archivo verifican aceptación nube y rechazo local.
+- [x] S4 Aislar pruebas de .env y servicios pagos — Responsable: Codex | Estado: terminada. Tests unitarios bloquean transportes HTTP reales; fixture de integración usa proveedores simulados y configuración propia.
+
+Validación: 186 tests Python, 23 Node, 20 navegador y 3 de integración correctos;
+Ruff y build frontend correctos. Inferencia simulada: no se hicieron llamadas
+pagas ni se acredita calidad/latencia de Gemini 3.1 con estos tests. Servidores
+de backend, frontend y Ollama detenidos por pedido del usuario.

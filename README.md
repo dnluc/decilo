@@ -249,18 +249,23 @@ deshabilitada en vez de fallar al conectar. El navegador nunca recibe la clave:
 
 
 El backend carga `.env` de la raíz al iniciar; las variables exportadas tienen
-prioridad. El archivo está excluido de Git. Default: `local` (Whisper/Ollama).
+prioridad. `DECILO_ENV_FILE` permite indicar otro archivo (útil para tests
+aislados). El archivo `.env` está excluido de Git. Default: `local` (Whisper/Ollama).
 Para usar nube, configurar y reiniciar el backend:
 
 ```dotenv
 DECILO_AI_PROVIDER=gemini
 GEMINI_API_KEY=tu_clave
-DECILO_GEMINI_MODEL=gemini-3.8-flash
+DECILO_GEMINI_MODEL=gemini-3.1-flash-lite
 ```
 
 Para mezclar: `DECILO_STT_PROVIDER=local` y
-`DECILO_TRANSLATION_PROVIDER=gemini`; estos valores prevalecen sobre el selector
-global. La clave queda solamente en el backend. Gemini recibe audio si se usa
+`DECILO_TRANSLATION_PROVIDER=gemini`; estos valores prevalecen sobre
+`DECILO_AI_PROVIDER`. Aplican a archivos y capturas que omiten `provider`.
+La elección explícita del navegador prevalece sobre ambos para esa captura:
+`provider=local` o `provider=gemini` selecciona las dos etapas. Un fallo al
+preparar modelos locales no bloquea una captura elegida en nube.
+La clave queda solamente en el backend. Gemini recibe audio si se usa
 para STT y texto si se usa para traducción; aplican cuotas/costos del proyecto.
 No hay fallback automático ni reintentos ocultos. Timeout por petición: 30s.
 

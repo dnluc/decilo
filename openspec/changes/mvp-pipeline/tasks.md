@@ -214,3 +214,17 @@ Se mantiene activa la selección nube local a pedido del usuario; .env no se
 publica. Las sesiones no arrancan automáticamente para cuidar saldo prepago.
 Esta prueba sustituye el bloqueo de acceso anterior, no acredita calidad general
 ni capacidad de dos sesiones. No se hicieron reintentos ni benchmarks extra.
+
+## Cambio a Gemini 3.1 Flash-Lite — Codex, 2026-09-25
+
+Por pedido del usuario se detuvieron backend, frontends y Ollama, y se cambió
+el modelo predeterminado del adaptador a `gemini-3.1-flash-lite`, también en el
+`.env` local ignorado por Git. STT y traducción siguen configurados para nube;
+el selector del navegador permite elegir local por captura. Rama:
+`codex/review-provider-selector`; revisión del PR #18 registrada en
+`captura-pestana/tasks.md`.
+
+Test de transporte simulado comprueba el nombre del modelo en la URL, y pasan
+186 tests Python. No se invocó inferencia paga; el resultado anterior de 3.8
+Flash no constituye una medición de 3.1 Flash-Lite. Los servicios quedan
+apagados al terminar esta intervención.
