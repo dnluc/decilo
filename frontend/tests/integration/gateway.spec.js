@@ -66,3 +66,39 @@ test('audible playback creates a fresh run and starts on playing', async ({ page
   expect(await page.locator('audio').evaluate(a => a.paused)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('tab capture sends actual worklet PCM and releases audio on stop', async ({ page }) => {
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getDisplayMedia = async () => {
+      const ctx = new AudioContext();
+      const oscillator = ctx.createOscillator();
+      const destination = ctx.createMediaStreamDestination();
+      oscillator.connect(destination);
+      oscillator.start();
+      await ctx.resume();
+      window.testCapture = { ctx, stream: destination.stream };
+      return destination.stream;
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Compartir audio de pestaña', exact: true }).click();
+  await expect(page.locator('#capture-message')).toContainText('Capturando audio');
+  await page.locator('#language').selectOption('en');
+  await expect(page.locator('.caption')).toContainText('Captured audio test', { timeout: 15000 });
+  await page.getByRole('button', { name: 'Detener captura', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.testCapture.stream.getTracks().every(t => t.readyState === 'ended'))).toBe(true);
+  await expect(page.locator('#session-status')).toHaveText('Charla finalizada');
+  await expect(page.locator('#capture-start')).toBeEnabled();
+  await page.evaluate(() => window.testCapture.ctx.close());
+});
+
+test('tab capture reports missing audio without creating a session', async ({ page }) => {
+  await page.addInitScript(() => { navigator.mediaDevices.getDisplayMedia = async () => new MediaStream(); });
+  const starts = [];
+  page.on('websocket', ws => { if (ws.url().includes('/capture?')) starts.push(ws.url()); });
+  await page.goto('/');
+  await page.locator('#capture-start').click();
+  await expect(page.locator('#capture-message')).toContainText('No se compartió audio');
+  await expect(page.locator('#capture-start')).toBeEnabled();
+  expect(starts).toEqual([]);
+});

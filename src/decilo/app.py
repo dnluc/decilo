@@ -185,5 +185,30 @@ async def start_session(session_id: str):
     return record.session
 
 
+
+
+@app.websocket('/api/v1/capture')
+async def capture_audio(websocket: WebSocket, language: str = 'en'):
+    from decilo.capture import receive_capture
+
+    if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es'}:
+        await websocket.close(code=4403)
+        return
+    if sum(not task.done() for task in file_tasks.values()) >= 2 or len(registry.list_sessions()) >= 20:
+        await websocket.close(code=4429)
+        return
+    session = Session(id=f'capture-{uuid4().hex}', title='Audio de pestaña',
+                      source_language=language, translation_languages=['es'] if language == 'en' else [],
+                      target_locale='es-AR', status='live')
+    registry.register(session)
+    task = asyncio.current_task()
+    file_tasks[session.id] = task
+    try:
+        await websocket.accept()
+        await receive_capture(websocket, _gateway_for(session.id))
+    finally:
+        file_tasks.pop(session.id, None)
+
+
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 import './style.css';
+import { setupCapture } from './capture.js';
 import { setupPlayback } from './playback.js';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
 import { CaptionConnection, loadSessions } from './connection.js';
@@ -135,6 +136,17 @@ function render() {
   highlightAudio(playback.time());
   transcript.scrollTop = $('follow').checked ? transcript.scrollHeight : scrollTop;
   const latest = rows.filter(row => row.caption?.status === 'final').at(-1)?.caption;
+  // Barra bajo el video: lo último dicho, para leerlo sin despegar la vista
+  // del video ni depender del scroll del historial. Se prefiere el texto en
+  // curso sobre el confirmado: mientras se habla, eso es lo que corresponde.
+  // Barra bajo el video: solo subtítulos listos. Nada de textos de estado —
+  // mientras no haya texto confirmado queda en blanco, y lo que se fue
+  // diciendo se acumula en el historial de abajo.
+  const current = rows.at(-1)?.caption;
+  const live = $('live-caption');
+  live.textContent = current?.text || '';
+  live.dataset.empty = current?.text ? 'false' : 'true';
+  live.lang = language;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';
   if (signature && signature !== announced) {
     $('live-announcement').textContent = latest.text;
@@ -167,6 +179,11 @@ $('refresh').onclick = refresh;
 $('demo-banner').hidden = !demo;
 $('demo-link').hidden = demo;
 setupReading();
+$('youtube-test').hidden = demo;
+if (!demo) setupCapture({ selectSession(session) {
+  sessions.push(session);
+  select(session);
+} });
 if (demo) demoModule = await import('./demo.js');
 await refresh();
 window.addEventListener('pagehide', () => {

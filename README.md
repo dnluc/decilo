@@ -133,3 +133,35 @@ Este modo está pensado para uso local. El inicio de inferencia se solicita
 cuando el navegador empieza a reproducir, con un desfase de red/scheduling;
 no constituye una medición exacta de latencia hasta pantalla. La inferencia
 actual puede quedar muy por detrás del audio en CPU.
+
+### YouTube y audio de pestaña (experimental)
+
+El reproductor incluye el video proporcionado para la prueba:
+[API Gateway — Vlad Tomashpolskyi, Nerdearla](https://www.youtube.com/watch?v=IW0unWVDnrI).
+Usá el mismo backend en modo demo local y el frontend de la sección anterior.
+
+1. Pulsá **Cargar video**. Si YouTube no permite embeberlo, usá el enlace para
+   abrirlo en otra pestaña.
+2. Seleccioná el idioma original y pulsá **Compartir audio de pestaña**.
+3. En Chrome elegí la pestaña donde se reproduce el video y marcá **Compartir
+   audio**. Compartir una ventana o pantalla puede no ofrecer audio.
+4. Dale Play al video; los subtítulos aparecen en una sesión nueva debajo.
+5. **Detener captura** libera las pistas y deja terminar lo pendiente.
+
+Se envía solo PCM mono de audio al backend local. El permiso de pantalla es
+parte de la API del navegador; no se envían frames de video, no se usa micrófono
+ni se descargan subtítulos de YouTube. La compatibilidad depende del navegador
+([getDisplayMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)).
+Los timestamps parten del inicio de captura, no del minuto de YouTube.
+
+Bloques de hasta 5s, dos bloques pendientes por sesión: si la inferencia no
+alcanza, se descarta el pendiente más antiguo y aparece un aviso de interrupción.
+Esto limita la cola, pero no garantiza baja latencia ni calidad. Máximo dos
+workers simultáneos entre archivos/captura, captura de hasta una hora y veinte
+sesiones en el catálogo para admitir nuevas capturas. El servidor cierra tras
+15s sin recibir audio; al detener espera hasta 90s para drenar el trabajo.
+
+Para acotar también los frames en la capa WebSocket del servidor, agregá a
+uvicorn `--ws-max-size 160004 --ws-max-queue 4`. El formato se valida además en
+la aplicación. Este ingreso es experimental y requiere revisión; no tiene
+autenticación para desplegarlo públicamente.
