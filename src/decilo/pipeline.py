@@ -49,12 +49,25 @@ def _iter_chunks(audio_path: Path, chunk_seconds: float) -> Iterator[tuple[Path,
 
 
 async def run_file_session(stream: SessionStream, gateway: SessionGateway, audio_path: Path) -> None:
-    """Recorre un archivo de audio completo, publicando eventos en `gateway`."""
+    """Recorre un archivo de audio a velocidad real, publicando eventos en `gateway`.
+
+    Un chunk recién está "disponible" cuando transcurrió su intervalo real
+    de audio — así se simula una fuente en vivo (micrófono/stream) en vez
+    de procesar el archivo completo tan rápido como puedan los modelos.
+    Sin esto, la latencia medida no tiene sentido (el pipeline puede
+    adelantarse al propio audio).
+    """
     source_language = stream.session.source_language
     translation_languages = stream.session.translation_languages
     segment_seq = 0
+    t_start = asyncio.get_event_loop().time()
 
     for chunk_path, start_ms, end_ms in _iter_chunks(audio_path, CHUNK_SECONDS):
+        target = t_start + end_ms / 1000
+        wait = target - asyncio.get_event_loop().time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+
         segment_seq += 1
         segment_id = f"seg-{segment_seq}"
         try:
