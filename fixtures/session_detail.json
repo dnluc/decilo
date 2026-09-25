@@ -1,0 +1,10 @@
+{
+  "id": "konex-sala-1-charla-1",
+  "title": "Building reliable systems",
+  "source_language": "en",
+  "translation_languages": [
+    "es"
+  ],
+  "target_locale": "es-AR",
+  "status": "live"
+}

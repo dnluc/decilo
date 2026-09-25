@@ -1,0 +1,21 @@
+{
+  "protocol_version": 1,
+  "session_id": "konex-sala-1-charla-1",
+  "stream_id": "run-1",
+  "seq": 6,
+  "emitted_at": "2026-09-25T01:00:00Z",
+  "type": "session.gap",
+  "data": {
+    "gap_id": "gap-1",
+    "start_ms": 950,
+    "end_ms": 1800,
+    "reason": "overload",
+    "discard_captions": [
+      {
+        "segment_id": "seg-2",
+        "kind": "transcript",
+        "language": "en"
+      }
+    ]
+  }
+}
