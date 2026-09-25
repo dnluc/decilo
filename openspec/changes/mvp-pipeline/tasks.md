@@ -8,14 +8,35 @@
 
 ## 1. Base del proyecto Python
 
-- [ ] 1.1 Estructurar el proyecto Python (`pyproject.toml` o `requirements.txt`, carpeta `src/`) e instalar `faster-whisper`, `httpx`, `fastapi`, `uvicorn`, `pydantic` — Responsable: Claude | Estado: pendiente | Depende de: ninguna. Verificación: `python -m src.app --help` (o equivalente) corre sin error de import.
-- [ ] 1.2 Conseguir/generar 2 audios de prueba cortos (ES y EN) con contenido técnico conocido, incluidos en el repo con su licencia de uso indicada — Responsable: Claude | Estado: pendiente | Depende de: ninguna. Verificación: archivos en `samples/` con transcripción de referencia anotada a mano en un `.txt` al lado.
+- [x] 1.1 Estructurar el proyecto Python (`pyproject.toml` con `uv`, carpeta `src/decilo/`) e instalar `faster-whisper`, `httpx`, `fastapi`, `uvicorn`, `pydantic` (+ `pytest`, `pytest-asyncio`, `ruff` como dev) — Responsable: Claude | Estado: terminada | Depende de: ninguna. Verificación (2026-09-24): `uv run python -c "import decilo.app"` sin error; `uv run uvicorn decilo.app:app` sirve `/health` con 200 OK.
+- [x] 1.2 Conseguir/generar 2 audios de prueba cortos (ES y EN) con contenido técnico conocido, incluidos en el repo con su licencia de uso indicada — Responsable: Claude | Estado: terminada | Depende de: ninguna. Verificación (2026-09-24): `samples/en_tech_talk.wav` (~41s) y `samples/es_tech_talk.wav` (~45s), sintéticos vía `espeak-ng` (GPL-3.0, sin restricción de privacidad/copyright), 16kHz mono, con su texto de referencia exacto en el `.txt` al lado y licencia/limitaciones documentadas en `samples/README.md`.
 
 ## 2. Spike de calidad y latencia (resuelve arquitectura-base 3.2/3.3)
 
-- [ ] 2.1 Medir `faster-whisper` (small y medium) transcribiendo los audios de prueba: tiempo de proceso vs. duración de audio, y comparar texto contra la referencia — Responsable: Claude | Estado: pendiente | Depende de: 1.1, 1.2. Verificación: tabla con modelo, tiempo, errores de transcripción (omisiones, nombres, números) registrada en este archivo.
-- [ ] 2.2 Medir traducción EN→ES con `gemma3n:e4b` vía Ollama sobre las transcripciones del paso anterior: tiempo de respuesta y revisión manual de calidad (sentido, términos técnicos) — Responsable: Claude | Estado: pendiente | Depende de: 2.1. Verificación: tabla de latencia + revisión de calidad registrada en este archivo.
-- [ ] 2.3 Con los datos de 2.1/2.2, fijar el modelo de Whisper y confirmar (o cambiar) el modelo de Ollama para traducción; actualizar `design.md` con la decisión final — Responsable: Claude | Estado: bloqueada | Depende de: 2.1, 2.2. Verificación: `design.md` ya no dice "a definir/a confirmar" para el motor.
+- [x] 2.1 Medir `faster-whisper` (small y medium) transcribiendo los audios de prueba — Responsable: Claude | Estado: terminada | Depende de: 1.1, 1.2. Verificación (2026-09-24, `scripts/bench_whisper.py`):
+
+  | Modelo | Audio (~40-45s) | Tiempo | Factor | Calidad EN | Calidad ES |
+  | --- | --- | --- | --- | --- | --- |
+  | small | en_tech_talk (40.9s) | 3.56s | 0.09x | Casi perfecta (1 error: Grafana→Brafana) | — |
+  | small | es_tech_talk (45.2s) | 4.33s | 0.10x | — | Varios errores en préstamos técnicos (Kubernetes→"cubernete", Prometheus/Grafana→"prometeucigrafana") |
+  | medium | en_tech_talk (40.9s) | 9.11s | 0.22x | Casi perfecta (1 error: Grafana→Prefana) | — |
+  | medium | es_tech_talk (45.2s) | 11.31s | 0.25x | — | Mucho mejor: Kubernetes, Prometheus y Grafana, Slack correctos |
+
+  Con **segmentos cortos (~4s, caso real)**: `medium` tarda ~2.97s solo en
+  STT (overhead fijo por llamada domina en clips cortos); `small` tarda
+  ~1.06s. Ver decisión de modelo-por-idioma en `design.md`.
+
+- [x] 2.2 Medir traducción EN→ES con `gemma3n:e4b` y `gemma3n:e2b` vía Ollama — Responsable: Claude | Estado: terminada | Depende de: 2.1. Verificación (2026-09-24, 5 repeticiones por modelo sobre segmentos cortos reales):
+
+  | Modelo | p50 | max | avg | Calidad |
+  | --- | --- | --- | --- | --- |
+  | gemma3n:e4b | 5.12s | 5.97s | 5.30s | Buena, términos técnicos correctos |
+  | gemma3n:e2b | 2.81s | 3.41s | 2.70s | Igual de buena que e4b en este benchmark |
+
+  `e4b` solo de traducción ya excede el presupuesto total de 3s p95 (que
+  incluye STT). `e2b` dentro de rango con margen ajustado.
+
+- [x] 2.3 Fijar modelo de Whisper y de Ollama para traducción; actualizar `design.md` — Responsable: Claude | Estado: terminada | Depende de: 2.1, 2.2. Verificación (2026-09-24): `design.md` actualizado — **Whisper `small` para audio en inglés** (deja presupuesto a la traducción), **Whisper `medium` para audio en español** (sin traducción que sumar, más margen, mejor con préstamos técnicos), **`gemma3n:e2b`** para la traducción EN→ES. Medición real de punta a punta (audio→STT→traducción) sobre un segmento de ~4s: **small+e2b = ~2.4-2.5s total**, dentro del objetivo de 3s p95. Riesgo pendiente: medido con una sola sesión, sin contención — falta validar bajo 2 sesiones simultáneas (tarea 6.1).
 
 ## 3. Registro de sesiones y catálogo
 

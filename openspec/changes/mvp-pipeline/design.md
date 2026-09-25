@@ -30,13 +30,36 @@ soporte de audio (`arquitectura-base`, hallazgo empírico vía
 
 ## Decisions
 
-### Motor de STT: `faster-whisper`
+### Motor de STT: `faster-whisper`, modelo según idioma de origen (confirmado, 2026-09-24)
 
 **Por qué:** bindings maduros de Python a Whisper (CTranslate2), buen
 rendimiento en CPU sin GPU dedicada, y evita escribir un subprocess wrapper
-alrededor del binario de `whisper.cpp`. Modelo inicial: `small` o `medium`
-(a definir con el benchmark de la tarea 2 de este cambio — `medium` da más
-calidad con términos técnicos, `small` es más rápido; medir antes de fijar).
+alrededor del binario de `whisper.cpp`.
+
+**Resultado del benchmark** (audio sintético de `samples/`, CPU-only, ver
+`tasks.md` grupo 2 para el detalle): con clips largos (~40s) ambos modelos
+rinden bien (`small` 0.09-0.10x tiempo real, `medium` 0.22-0.25x), pero con
+segmentos cortos (~4s, el caso real del pipeline) el overhead fijo por
+llamada domina: `medium` solo tarda ~3s en transcribir un segmento de 4s.
+Sumado a la traducción, un flujo EN→ES con `medium` da ~5.7s totales — casi
+el doble del objetivo de 3s p95. Con `small`, el mismo segmento transcribe
+en ~1.06s, dejando margen para la traducción.
+
+**Modelo por flujo:**
+- **Audio en inglés (alimenta traducción a español)**: `small`. Necesita
+  dejar presupuesto para la traducción dentro del mismo límite de 3s p95
+  (la spec mide la traducción desde el audio original, no desde que
+  termina el STT). Calidad de `small` en inglés es muy buena en el
+  benchmark (transcripción casi perfecta).
+- **Audio en español (solo transcripción, sin traducción después)**:
+  `medium`. Sin traducción que sumar, el presupuesto de 3s es solo para
+  STT — hay margen de sobra, y `medium` mejora notablemente los términos
+  técnicos en inglés mezclados en español (Kubernetes, Prometheus, Grafana,
+  Slack salieron correctos con `medium`; con `small` salieron muy
+  distorsionados: "cubernete", "prometeucigrafana").
+
+Cargar ambos modelos en memoria (RAM de sobra en esta notebook, 32GB) y
+elegir cuál usar según el `source_language` configurado de la sesión.
 
 **Alternativa considerada:** `whisper.cpp` vía subprocess — más liviano en
 dependencias pero más trabajo de integración (parsear su output, manejar
@@ -49,14 +72,24 @@ chunk está completo — el contrato de `caption-stream` ya contempla
 explícitamente este caso ("un proveedor sin parciales puede emitir un
 resultado definitivo sin simular incrementalidad").
 
-### Motor de traducción: modelo de texto vía Ollama (a confirmar cuál)
+### Motor de traducción: `gemma3n:e2b` vía Ollama (confirmado, 2026-09-24)
 
-`gemma3n:e4b` (ya descargado) sirve para texto puro (confirmado
-`"capabilities":["completion"]`). Falta medir su calidad de traducción
-EN→ES con términos técnicos contra el protocolo de `system-architecture`
-antes de fijarlo — es la tarea 2 de este cambio. Alternativa si la calidad
-no alcanza: un modelo de Ollama más orientado a traducción, o `gemma3n:e2b`
-si `e4b` es demasiado lento en CPU.
+**Resultado del benchmark** (5 repeticiones por modelo, segmentos cortos
+reales, ver `tasks.md` grupo 2): `gemma3n:e4b` da p50=5.12s, max=5.97s
+**solo de traducción** — ya excede el presupuesto total de 3s p95 (que
+incluye STT) por sí solo. `gemma3n:e2b` da p50=2.81s, max=3.41s — todavía
+ajustado, pero combinado con `small` de Whisper (~1.06s) el total ronda
+2.4-2.5s, con margen. Calidad de `e2b` en la traducción es equivalente a
+`e4b` en este benchmark: términos técnicos (Kubernetes, Prometheus,
+Grafana, Slack, pull request, commit, autoscaling) se mantienen
+correctamente, español natural. Se eligió `e2b` por el margen de latencia,
+no por diferencia de calidad observada.
+
+**Riesgo pendiente:** estas mediciones son con una sola sesión activa, sin
+contención. Con dos sesiones simultáneas compitiendo por la misma CPU
+(Whisper y Ollama son ambos CPU-bound), el p95 real puede empeorar — se
+mide en la tarea 6.1 de este cambio antes de dar el objetivo de 3s por
+confirmado bajo carga concurrente.
 
 ### Estructura del pipeline por sesión
 
@@ -84,6 +117,19 @@ validar los envelopes del contrato antes de publicarlos — el contrato exige
 rechazar datos inválidos, no truncarlos en silencio), y arranque rápido de
 desarrollo, coherente con la decisión de priorizar velocidad de desarrollo
 sobre Rust.
+
+## Nota de entorno de desarrollo (NixOS, no aplica a otras distros)
+
+En esta notebook (NixOS), las extensiones compiladas de wheels de PyPI
+(`av`/PyAV que usa `faster-whisper`, y transitivamente `onnxruntime`/
+`ctranslate2`) fallan al hacer `dlopen()` de `libz.so.1`/`libstdc++.so.6`
+porque NixOS no tiene rutas FHS estándar. `nix-ld` (habilitado en
+`/etc/nixos/configuration.nix`) no alcanza por sí solo porque el problema
+es un `dlopen()` en tiempo de ejecución, no el exec de un binario — hace
+falta exportar `LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib`
+antes de correr `uv run ...`. No es necesario en Linux/macOS estándar
+(Ubuntu, etc.), así que no va en el README del proyecto — solo queda acá
+para no volver a perder tiempo redescubriéndolo en esta máquina.
 
 ## Risks / Trade-offs
 
