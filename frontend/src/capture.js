@@ -5,6 +5,7 @@ export function setupCapture({ selectSession }) {
   let media, context, processor, socket;
   let finishing = false;
   let ready = false;
+  let droppedSamples = 0;
   let flush;
   let closeTimer;
   let cleanup;
@@ -35,6 +36,7 @@ export function setupCapture({ selectSession }) {
   start.onclick = async () => {
     start.disabled = true;
     finishing = false;
+    droppedSamples = 0;
     ready = false;
     socket = null;
     cleanup = null;
@@ -62,7 +64,17 @@ export function setupCapture({ selectSession }) {
           processor = new AudioWorkletNode(context, 'capture-pcm');
           processor.port.onmessage = ({ data }) => {
             if (data.stopped) { flush?.(); return; }
+            if (data.dropped) {
+              // El worklet tuvo que descartar audio. Decirlo: el backend ve el
+              // salto de offset, pero acá se sabe que fue congestión local y no
+              // que se cortó la fuente.
+              droppedSamples += data.dropped;
+              message.textContent = `Capturando audio. Se perdieron ${(droppedSamples / 16000).toFixed(1)}s por congestión; esos tramos quedan marcados como interrupción.`;
+              return;
+            }
             if (data.packet && socket.readyState === WebSocket.OPEN) {
+              // Con paquetes de 100ms el buffer del socket no debería crecer;
+              // si crece, la red no acompaña y es mejor cortar que acumular.
               if (socket.bufferedAmount > 320008) {
                 finish('La conexión no alcanza para enviar audio. Captura detenida.');
               } else socket.send(data.packet);
