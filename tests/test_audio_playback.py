@@ -19,7 +19,7 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "_background_tasks", set())
     calls = []
 
-    async def worker(stream, gateway, path):
+    async def worker(stream, gateway, path, **kwargs):
         calls.append(stream.session.id)
         await asyncio.Event().wait()
 

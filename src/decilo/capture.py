@@ -8,7 +8,7 @@ from pathlib import Path
 from starlette.websockets import WebSocketDisconnect
 
 from decilo.models import GapData
-from decilo.pipeline import process_chunk
+from decilo.pipeline import process_chunk, translation_queue
 
 RATE = 16000
 MAX_SAMPLES = RATE * 5
@@ -25,8 +25,9 @@ def decode_packet(packet: bytes, previous_end: int):
 
 
 class CaptureBuffer:
-    def __init__(self, gateway):
+    def __init__(self, gateway, submit_translation=None):
         self.gateway = gateway
+        self.submit_translation = submit_translation
         self.queue = asyncio.Queue(maxsize=2)
         self.last_end = 0
         self.seq = 0
@@ -63,8 +64,9 @@ class CaptureBuffer:
                     wav.setsampwidth(2)
                     wav.setframerate(RATE)
                     wav.writeframes(pcm)
+                options = {"submit_translation": self.submit_translation} if self.submit_translation else {}
                 await process_chunk(self.gateway.stream, self.gateway, path,
-                                    seq, start * 1000 // RATE, end * 1000 // RATE)
+                                    seq, start * 1000 // RATE, end * 1000 // RATE, **options)
             except Exception:
                 self.gap(start, end, "processing_error")
             finally:
@@ -73,16 +75,14 @@ class CaptureBuffer:
                 self.queue.task_done()
 
 
-async def receive_capture(websocket, gateway):
-    buffer = CaptureBuffer(gateway)
+async def _receive_audio(websocket, gateway, submit, deadline):
+    buffer = CaptureBuffer(gateway, submit)
     worker = asyncio.create_task(buffer.consume())
-    disconnected = False
     try:
         await websocket.send_json({"type": "ready", "session": gateway.stream.session.model_dump()})
         while True:
             message = await asyncio.wait_for(websocket.receive(), timeout=15)
             if message['type'] == 'websocket.disconnect':
-                disconnected = True
                 buffer.gap(buffer.last_end, buffer.last_end, "source_disconnect")
                 break
             if message.get('text') == 'stop':
@@ -96,22 +96,36 @@ async def receive_capture(websocket, gateway):
         ))
         buffer.gap(buffer.last_end, buffer.last_end, "source_disconnect")
     except WebSocketDisconnect:
-        disconnected = True
+        pass
     finally:
+        # One shared deadline includes both ASR and translation queue draining.
+        deadline.reschedule(asyncio.get_running_loop().time() + 90)
         try:
-            await asyncio.wait_for(buffer.queue.join(), timeout=90)
-        except asyncio.TimeoutError:
+            await buffer.queue.join()
+        except asyncio.CancelledError:
             while not buffer.queue.empty():
                 _, start, end, _ = buffer.queue.get_nowait()
                 buffer.queue.task_done()
                 buffer.gap(start, end, 'processing_error')
+            raise
         finally:
             worker.cancel()
             await asyncio.gather(worker, return_exceptions=True)
-            session = gateway.stream.session.model_copy(update={"status": "ended"})
-            gateway.publish_nowait(gateway.stream.record_status(session))
-            if not disconnected:
-                try:
-                    await websocket.close()
-                except (RuntimeError, WebSocketDisconnect):
-                    pass
+
+
+async def receive_capture(websocket, gateway, *, overlap_translation=False):
+    try:
+        async with asyncio.timeout(None) as deadline:
+            async with translation_queue(gateway.stream, gateway, None, overlap_translation) as submit:
+                await _receive_audio(websocket, gateway, submit, deadline)
+    except TimeoutError:
+        gateway.publish_nowait(gateway.stream.record_error(
+            'inference_unavailable', 'Se agotó el tiempo para terminar el audio pendiente.', retryable=False,
+        ))
+    finally:
+        session = gateway.stream.session.model_copy(update={"status": "ended"})
+        gateway.publish_nowait(gateway.stream.record_status(session))
+        try:
+            await websocket.close()
+        except (RuntimeError, WebSocketDisconnect):
+            pass

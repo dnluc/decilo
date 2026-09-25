@@ -64,3 +64,65 @@ def test_capture_end_to_end_and_disconnect(monkeypatch):
             assert ws.receive()['type'] == 'websocket.close'
         assert len(received) == 1
         assert app.gateways[sid].stream.gaps[0].reason == 'source_disconnect'
+
+
+@pytest.mark.asyncio
+async def test_live_queue_drains_translation_before_ended(monkeypatch):
+    import asyncio
+    from decilo import pipeline
+
+    stream = SessionStream(Session(id='live-queue', title='Live', source_language='en',
+                                   translation_languages=['es'], status='live'))
+    gateway = SessionGateway(stream)
+    translating = asyncio.Event()
+    second_asr = asyncio.Event()
+    release = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    calls = []
+
+    def transcribe(*args):
+        calls.append(1)
+        if len(calls) == 2:
+            loop.call_soon_threadsafe(second_asr.set)
+        return 'Hello'
+
+    async def translate(text):
+        translating.set()
+        await release.wait()
+        return 'Hola'
+
+    monkeypatch.setattr(pipeline, 'transcribe', transcribe)
+    monkeypatch.setattr(pipeline, 'translate', translate)
+
+    class Socket:
+        count = 0
+        closed = False
+
+        async def send_json(self, data):
+            pass
+
+        async def receive(self):
+            self.count += 1
+            if self.count == 1:
+                return {'type': 'websocket.receive', 'bytes': packet()}
+            if self.count == 2:
+                await translating.wait()
+                return {'type': 'websocket.receive', 'bytes': packet(160)}
+            await second_asr.wait()
+            return {'type': 'websocket.receive', 'text': 'stop'}
+
+        async def close(self):
+            self.closed = True
+
+    socket = Socket()
+    task = asyncio.create_task(capture.receive_capture(socket, gateway, overlap_translation=True))
+    try:
+        await asyncio.wait_for(second_asr.wait(), 2)
+        assert stream.session.status == 'live'
+        assert not socket.closed
+    finally:
+        release.set()
+        await asyncio.wait_for(task, 2)
+    assert socket.closed
+    assert stream.session.status == 'ended'
+    assert len(stream._captions) == 4

@@ -36,7 +36,7 @@ os.environ["DECILO_DEMO_SESSIONS"] = "1"
 os.environ["DECILO_DEMO_AUTOSTART"] = "0"
 
 
-async def playback_worker(stream, gateway, path):
+async def playback_worker(stream, gateway, path, **kwargs):
     await asyncio.sleep(.15)
     gateway.publish_nowait(stream.upsert_caption(CaptionData(
         segment_id="audio-1", segment_seq=1, kind="transcript", language="en",
