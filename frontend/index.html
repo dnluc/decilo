@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ec">
+  <meta name="description" content="Seguí las charlas de tu evento con subtítulos en tu idioma.">
+  <title>Decilo — Seguí la conversación</title>
+</head>
+<body>
+  <a class="skip-link" href="#transcript">Ir a los subtítulos</a>
+  <header class="header">
+    <a class="brand" href="/" aria-label="Decilo, inicio">decilo<span aria-hidden="true">✳</span></a>
+    <span class="event-name">NERDEARLA <span>2026</span></span>
+  </header>
+  <main>
+    <div id="demo-banner" class="demo-banner" hidden>Muestra de la interfaz · Texto simulado, sin audio ni traducción en vivo. <a href="/">Ir a sesiones reales</a></div>
+    <section class="intro" aria-labelledby="intro-title">
+      <p class="eyebrow">QUE NINGUNA IDEA SE PIERDA</p>
+      <h1 id="intro-title">Seguí la conversación<span>.</span></h1>
+      <p>Elegí una charla. Leela en tu idioma.</p>
+    </section>
+    <div class="workspace">
+      <aside class="sessions-panel" aria-labelledby="sessions-heading">
+        <div class="panel-heading"><h2 id="sessions-heading">Las charlas</h2><button id="refresh" class="text-button" type="button">Actualizar</button></div>
+        <p id="catalog-message" role="status">Buscando sesiones…</p>
+        <div id="sessions" class="session-list"></div>
+        <div class="aside-note"><span aria-hidden="true">↳</span> Cada escenario, una conversación.<br>Podés cambiar de charla cuando quieras.</div>
+      </aside>
+      <section class="reading-panel" aria-labelledby="session-title">
+        <div class="reading-header">
+          <div><p id="session-status" class="eyebrow">TU ESPACIO PARA LEER</p><h2 id="session-title">Elegí una charla para empezar</h2></div>
+          <label class="language-label">Leer en<select id="language" disabled aria-label="Idioma de los subtítulos"></select></label>
+        </div>
+        <div class="reading-preferences" aria-label="Opciones de lectura">
+          <label for="text-size">Tamaño del texto</label>
+          <select id="text-size">
+            <option value="normal">Normal</option>
+            <option value="large">Grande</option>
+            <option value="extra">Muy grande</option>
+          </select>
+          <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
+        </div>
+        <div class="reading-tools">
+          <p id="connection" role="status">Los subtítulos aparecerán acá.</p>
+          <label><input id="follow" type="checkbox" checked> Seguir lo último</label>
+        </div>
+        <div id="notices" class="notices" role="status"></div>
+        <div id="transcript" class="transcript" tabindex="0" aria-label="Subtítulos de la charla">
+          <div class="empty"><span aria-hidden="true">“</span><p>Un lugar para todas las voces.</p><small>Seleccioná una sesión de la lista.</small></div>
+        </div>
+        <p id="live-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+        <footer class="reading-footer"><span><i aria-hidden="true"></i> El texto en curso puede cambiar.</span><span>Hecho para escuchar con los ojos.</span></footer>
+      </section>
+    </div>
+    <footer class="page-footer"><span>Abierto por naturaleza. Accesible por diseño.</span><a href="?demo=1" id="demo-link">Ver una muestra ↗</a></footer>
+  </main>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
