@@ -139,14 +139,12 @@ function render() {
   // Barra bajo el video: lo último dicho, para leerlo sin despegar la vista
   // del video ni depender del scroll del historial. Se prefiere el texto en
   // curso sobre el confirmado: mientras se habla, eso es lo que corresponde.
-  const lastRow = rows.at(-1);
-  const current = lastRow?.caption;
+  // Barra bajo el video: solo subtítulos listos. Nada de textos de estado —
+  // mientras no haya texto confirmado queda en blanco, y lo que se fue
+  // diciendo se acumula en el historial de abajo.
+  const current = rows.at(-1)?.caption;
   const live = $('live-caption');
-  // Si el segmento llegó pero su traducción todavía no, decirlo: dejar el
-  // texto de bienvenida haría creer que no se está escuchando nada.
-  const waiting = lastRow && !current;
-  live.textContent = current?.text
-    || (waiting ? 'Traduciendo…' : 'Acá vas a leer lo que se dice, mientras se dice.');
+  live.textContent = current?.text || '';
   live.dataset.empty = current?.text ? 'false' : 'true';
   live.lang = language;
   const signature = latest ? `${latest.segment_id}:${latest.language}:${latest.revision}` : '';

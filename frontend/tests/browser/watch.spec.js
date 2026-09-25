@@ -16,16 +16,16 @@ async function openSession(page) {
   return sockets;
 }
 
-test('el video ocupa el ancho del escenario, no la columna de sesiones', async ({ page }) => {
+test('el video es el protagonista, no un recuadro en una columna', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('**/api/v1/sessions', route => route.fulfill({ json: { sessions: [] } }));
   await page.goto('/');
 
   const video = await page.locator('.video-frame').boundingBox();
-  const panel = await page.locator('.sessions-panel').boundingBox();
+  const main = await page.locator('main').boundingBox();
   // Antes el video vivía dentro del <aside> de 285px y quedaba diminuto.
   expect(video.width).toBeGreaterThan(700);
-  expect(video.width).toBeGreaterThan(panel.width * 2);
+  expect(video.width).toBeGreaterThan(main.width * 0.5);
 
   // Video y subtítulos son una sola pieza: el texto va pegado abajo.
   const captionBox = await page.locator('#live-caption').boundingBox();
@@ -46,11 +46,12 @@ test('la barra bajo el video muestra lo último dicho, en el idioma elegido', as
   const sockets = await openSession(page);
   await expect(page.locator('#live-caption')).toHaveAttribute('data-empty', 'true');
 
-  // Por defecto se lee en español: hasta que llegue la traducción, la barra
-  // avisa en vez de quedarse con el texto de bienvenida.
+  // Por defecto se lee en español: hasta que llegue la traducción la barra
+  // queda vacía. Nunca muestra mensajes de estado, solo subtítulos listos.
   sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
     caption({ text: 'We need another code review.', status: 'final' }), 1)));
-  await expect(page.locator('#live-caption')).toHaveText('Traduciendo…');
+  await expect(page.locator('#transcript')).toContainText('Esperando traducción');
+  await expect(page.locator('#live-caption')).toHaveText('');
 
   await page.getByLabel('Idioma de los subtítulos').selectOption('en');
   await expect(page.locator('#live-caption')).toHaveText('We need another code review.');
@@ -68,6 +69,33 @@ test('la barra bajo el video muestra lo último dicho, en el idioma elegido', as
       text: 'Small changes make systems easier to understand.', status: 'final' }), 3)));
   await page.getByLabel('Idioma de los subtítulos').selectOption('en');
   await expect(page.locator('#live-caption')).toHaveText('Small changes make systems easier to understand.');
+
+  // Y el historial de abajo conserva todo lo dicho, no solo lo último.
+  await expect(page.locator('.caption')).toHaveCount(2);
+  await expect(page.locator('#transcript')).toContainText('We need another code review.');
+  await expect(page.locator('#transcript')).toContainText('Small changes make systems easier to understand.');
+});
+
+test('la barra no muestra mensajes de estado, solo subtítulos listos', async ({ page }) => {
+  const sockets = await openSession(page);
+  // Recién conectado, sin nada dicho todavía: la barra está vacía.
+  await expect(page.locator('#live-caption')).toHaveText('');
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'Partial text', status: 'provisional' }), 1)));
+  await page.getByLabel('Idioma de los subtítulos').selectOption('en');
+  await expect(page.locator('#live-caption')).toHaveText('Partial text');
+});
+
+test('el historial queda debajo del video, no en otra columna', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('**/api/v1/sessions', route => route.fulfill({ json: { sessions: [] } }));
+  await page.goto('/');
+  const stage = await page.locator('.stage').boundingBox();
+  const history = await page.locator('.reading-panel').boundingBox();
+  expect(history.y).toBeGreaterThan(stage.y + stage.height);
+  // A todo el ancho, no arrinconado junto a un catálogo lateral.
+  expect(history.width).toBeGreaterThan(stage.width * 0.9);
 });
 
 test('el texto del subtítulo se interpreta como texto, no como HTML', async ({ page }) => {

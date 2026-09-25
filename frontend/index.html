@@ -20,6 +20,11 @@
       <h1 id="intro-title">Seguí la conversación<span>.</span></h1>
       <p>Elegí una charla. Leela en tu idioma.</p>
     </section>
+    <aside class="sessions-panel" aria-labelledby="sessions-heading">
+      <div class="panel-heading"><h2 id="sessions-heading">Las charlas</h2><button id="refresh" class="text-button" type="button">Actualizar</button></div>
+      <p id="catalog-message" role="status">Buscando sesiones…</p>
+      <div id="sessions" class="session-list"></div>
+    </aside>
     <section id="youtube-test" class="watch" aria-labelledby="youtube-heading">
       <div class="watch-head">
         <div>
@@ -33,7 +38,7 @@
           <iframe title="Video de YouTube para probar Decilo" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <button id="youtube-load" class="video-cover" type="button"><span class="play" aria-hidden="true">▶</span>Cargar video</button>
         </div>
-        <p id="live-caption" class="live-caption" data-empty="true">Acá vas a leer lo que se dice, mientras se dice.</p>
+        <p id="live-caption" class="live-caption" data-empty="true"></p>
       </div>
       <div class="watch-controls">
         <button id="capture-start" class="primary" type="button">Compartir audio de pestaña</button>
@@ -43,15 +48,9 @@
       <p class="watch-help"><span>1.</span> Cargá el video. <span>2.</span> Compartí <em>esta</em> pestaña con audio. <span>3.</span> Dale Play. <a href="https://www.youtube.com/watch?v=IW0unWVDnrI" target="_blank" rel="noopener noreferrer">Si no carga, abrilo en YouTube ↗</a></p>
     </section>
     <div class="workspace">
-      <aside class="sessions-panel" aria-labelledby="sessions-heading">
-        <div class="panel-heading"><h2 id="sessions-heading">Las charlas</h2><button id="refresh" class="text-button" type="button">Actualizar</button></div>
-        <p id="catalog-message" role="status">Buscando sesiones…</p>
-        <div id="sessions" class="session-list"></div>
-        <div class="aside-note"><span aria-hidden="true">↳</span> Cada escenario, una conversación.<br>Podés cambiar de charla cuando quieras.</div>
-      </aside>
       <section class="reading-panel" aria-labelledby="session-title">
         <div class="reading-header">
-          <div><p id="session-status" class="eyebrow">TU ESPACIO PARA LEER</p><h2 id="session-title">Elegí una charla para empezar</h2></div>
+          <div><p id="session-status" class="eyebrow">TU ESPACIO PARA LEER</p><h2 id="session-title">Elegí una charla para empezar</h2><p class="panel-subtitle">Historial de todo lo que se dijo, de principio a fin.</p></div>
           <label class="language-label">Leer en<select id="language" disabled aria-label="Idioma de los subtítulos"></select></label>
         </div>
         <div class="reading-preferences" aria-label="Opciones de lectura">
