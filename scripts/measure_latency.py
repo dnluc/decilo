@@ -52,7 +52,7 @@ class MeasuringGateway(SessionGateway):
         super().publish_nowait(event)
 
 
-async def measure(language, keep_all):
+async def measure(language, keep_all, overlap):
     stream = SessionStream(Session(
         id=f"measure-{language}", title=f"Medición {language}",
         source_language=language, translation_languages=["es"] if language == "en" else [],
@@ -63,12 +63,12 @@ async def measure(language, keep_all):
     stages = []
     await asyncio.wait_for(run_file_session(
         stream, gateway, SAMPLES / f"{language}_tech_talk.wav", started_at=started_at, observe=stages.append,
-        max_backlog_seconds=None if keep_all else 10.0,
+        max_backlog_seconds=None if keep_all else 10.0, overlap_translation=overlap,
     ), timeout=300)
     return gateway.observations, stages
 
 
-async def main(output, languages, warmup, beam_size, keep_all):
+async def main(output, languages, warmup, beam_size, keep_all, overlap):
     from decilo import pipeline, stt
     pipeline.transcribe = partial(stt.transcribe, beam_size=beam_size)
     if warmup:
@@ -85,9 +85,9 @@ async def main(output, languages, warmup, beam_size, keep_all):
             finally:
                 path.unlink(missing_ok=True)
                 chunks.close()
-    measured = await asyncio.gather(*(measure(language, keep_all) for language in languages))
+    measured = await asyncio.gather(*(measure(language, keep_all, overlap) for language in languages))
     recordings = [item[0] for item in measured]
-    report = {"measurement": "audio end to backend publication", "warmup": warmup, "beam_size": beam_size, "max_backlog_seconds": None if keep_all else 10.0,
+    report = {"measurement": "audio end to backend publication", "warmup": warmup, "overlap_translation": overlap, "beam_size": beam_size, "max_backlog_seconds": None if keep_all else 10.0,
               "source": "synthetic WAV", "languages": languages, "sessions": {}}
     for language, (observations, stages) in zip(languages, measured, strict=True):
         groups = {}
@@ -105,7 +105,7 @@ async def main(output, languages, warmup, beam_size, keep_all):
                             "p95": values[math.ceil(len(values) * .95) - 1],
                             "max": max(values)}
         stage_summary = {}
-        for stage in ("backlog", "asr", "translation", "discard"):
+        for stage in ("backlog", "asr", "translation", "discard", "translation_queue", "translation_backpressure"):
             values = [s["seconds"] for s in stages if s["stage"] == stage]
             if values:
                 stage_summary[stage] = {"n": len(values), "p50": statistics.median(values),
@@ -134,6 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--warmup", action="store_true")
     parser.add_argument("--keep-all", action="store_true", help="diagnóstico sin descarte por atraso")
     parser.add_argument("--beam-size", type=int, choices=(1, 5), default=5)
+    parser.add_argument("--overlap-translation", action="store_true")
     args = parser.parse_args()
     languages = ["en", "es"] if args.sessions == "both" else [args.sessions]
-    asyncio.run(main(args.output, languages, args.warmup, args.beam_size, args.keep_all))
+    asyncio.run(main(args.output, languages, args.warmup, args.beam_size, args.keep_all, args.overlap_translation))
