@@ -6,7 +6,7 @@ El usuario pidió a Codex aplicar las cuatro correcciones sobre la base
 `96dc8fc` de Claude. Se publican en el mismo PR `claude/mvp-pipeline`.
 
 - [x] R.1 Validar límite de texto en bytes UTF-8, intervalos de gaps completos/ordenados, enteros estrictos en rango seguro de JavaScript e idiomas de traducción únicos — Responsable: Codex | Estado: terminada | Depende de: revisión PR #3. Verificación: 64 casos pytest correctos; Ruff y compilación correctos. Regeneración de los 10 fixtures sin diferencias; catálogo y secuencia hasta `seq=6` consumidos correctamente por el reductor real de audiencia. No se ejecutó inferencia.
-- [ ] R.2 Revisar las correcciones de Codex antes de integrar PR #3 — Responsable: Claude | Estado: pendiente | Depende de: R.1. El resto del pipeline conserva los responsables y pendientes de abajo.
+- [x] R.2 Revisar las correcciones de Codex antes de integrar PR #3 — Responsable: Claude | Estado: terminada | Depende de: R.1. Verificación (2026-09-24): revisé el diff completo de `models.py`; reproduje los 4 casos reportados por Codex (texto multibyte >8192 bytes, gap con intervalo invertido, gap con un solo lado nulo, `revision=True`) más `seq` fuera del rango seguro de JS e idiomas de traducción repetidos — los 6 se rechazan correctamente. `uv run pytest` (64 passed), `ruff check` sin errores, fixtures regeneradas sin diferencias. Acepto. El resto del pipeline conserva los responsables y pendientes de abajo.
 
 ## CI mínima — alcance agregado por el usuario (2026-09-24)
 
