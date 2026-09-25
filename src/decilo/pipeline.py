@@ -48,7 +48,10 @@ def _iter_chunks(audio_path: Path, chunk_seconds: float) -> Iterator[tuple[Path,
             offset += count
 
 
-async def run_file_session(stream: SessionStream, gateway: SessionGateway, audio_path: Path) -> None:
+async def run_file_session(
+    stream: SessionStream, gateway: SessionGateway, audio_path: Path,
+    *, started_at: float | None = None,
+) -> None:
     """Recorre un archivo de audio a velocidad real, publicando eventos en `gateway`.
 
     Un chunk recién está "disponible" cuando transcurrió su intervalo real
@@ -60,17 +63,17 @@ async def run_file_session(stream: SessionStream, gateway: SessionGateway, audio
     source_language = stream.session.source_language
     translation_languages = stream.session.translation_languages
     segment_seq = 0
-    t_start = asyncio.get_event_loop().time()
+    loop = asyncio.get_running_loop()
+    # Optional origin uses this event loop’s monotonic clock (never wall time).
+    t_start = loop.time() if started_at is None else started_at
 
     for chunk_path, start_ms, end_ms in _iter_chunks(audio_path, CHUNK_SECONDS):
-        target = t_start + end_ms / 1000
-        wait = target - asyncio.get_event_loop().time()
-        if wait > 0:
-            await asyncio.sleep(wait)
-
         segment_seq += 1
         segment_id = f"seg-{segment_seq}"
         try:
+            wait = t_start + end_ms / 1000 - loop.time()
+            if wait > 0:
+                await asyncio.sleep(wait)
             text = await asyncio.to_thread(transcribe, chunk_path, source_language)
         except Exception as exc:
             gateway.publish_nowait(

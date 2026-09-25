@@ -1,66 +1,83 @@
-"""Mide latencia real con las dos sesiones de muestra corriendo en simultáneo.
+"""Mide desde fin de audio hasta publicación del backend, con reloj compartido.
 
-Requiere el servidor corriendo con DECILO_DEMO_SESSIONS=1, arrancado justo
-antes de correr este script (para minimizar el desfasaje entre el inicio
-del pipeline y la conexión).
-
-Latencia = (hora de llegada del evento - hora de conexión) - (end_ms / 1000)
-Es una aproximación: el pipeline puede haber arrancado un poco antes de
-que este script se conecte. Sirve para detectar contención real entre las
-dos sesiones corriendo a la vez, no como medición de laboratorio exacta.
-
-Uso: uv run scripts/measure_latency.py
+Uso: uv run scripts/measure_latency.py --output /tmp/decilo-latency.json
+Inicia dos workers con modelos reales; no requiere un servidor previo.
+No mide transporte/renderizado del navegador ni acredita el protocolo de
+10 minutos/100 segmentos. Incluye arranque frío; usa WAV sintéticos cortos.
 """
 
+import argparse
 import asyncio
 import json
+import math
 import statistics
-import time
+from pathlib import Path
 
-import websockets
+from decilo.gateway import SessionGateway
+from decilo.models import Session
+from decilo.pipeline import run_file_session
+from decilo.stream import SessionStream
 
-SESSIONS = ["konex-sala-1-charla-1", "konex-sala-2-charla-1"]
-
-
-async def watch(session_id: str, results: dict) -> None:
-    t_connect = time.monotonic()
-    uri = f"ws://localhost:8000/api/v1/sessions/{session_id}/events"
-    latencies = []
-    try:
-        async with websockets.connect(uri) as ws:
-            while True:
-                try:
-                    raw = await asyncio.wait_for(ws.recv(), timeout=90)
-                except asyncio.TimeoutError:
-                    break
-                event = json.loads(raw)
-                now = time.monotonic()
-                if event["type"] == "caption.upsert":
-                    end_ms = event["data"]["end_ms"]
-                    latency = (now - t_connect) - (end_ms / 1000)
-                    latencies.append((event["data"]["kind"], event["data"]["language"], latency))
-                elif event["type"] == "session.status" and event["data"]["session"]["status"] == "ended":
-                    break
-    except (websockets.exceptions.ConnectionClosed, OSError):
-        pass
-    results[session_id] = latencies
+SAMPLES = Path(__file__).resolve().parents[1] / "samples"
 
 
-async def main() -> None:
-    results: dict[str, list] = {}
-    await asyncio.gather(*(watch(s, results) for s in SESSIONS))
+class MeasuringGateway(SessionGateway):
+    def __init__(self, stream, started_at):
+        super().__init__(stream)
+        self.started_at = started_at
+        self.observations = []
 
-    for session_id, latencies in results.items():
-        print(f"\n=== {session_id} ({len(latencies)} eventos) ===")
-        by_kind: dict[str, list[float]] = {}
-        for kind, lang, lat in latencies:
-            by_kind.setdefault(f"{kind}/{lang}", []).append(lat)
-        for key, values in by_kind.items():
+    def publish_nowait(self, event):
+        if event is not None:
+            elapsed = asyncio.get_running_loop().time() - self.started_at
+            self.observations.append({"elapsed_seconds": elapsed,
+                                      "event": event.model_dump(mode="json")})
+        super().publish_nowait(event)
+
+
+async def measure(language):
+    stream = SessionStream(Session(
+        id=f"measure-{language}", title=f"Medición {language}",
+        source_language=language, translation_languages=["es"] if language == "en" else [],
+        target_locale="es-AR", status="live",
+    ))
+    started_at = asyncio.get_running_loop().time()
+    gateway = MeasuringGateway(stream, started_at)
+    await asyncio.wait_for(run_file_session(
+        stream, gateway, SAMPLES / f"{language}_tech_talk.wav", started_at=started_at,
+    ), timeout=300)
+    return gateway.observations
+
+
+async def main(output):
+    recordings = await asyncio.gather(measure("en"), measure("es"))
+    report = {"measurement": "audio end to backend publication; includes cold start",
+              "source": "synthetic WAV; two concurrent sessions", "sessions": {}}
+    for language, observations in zip(("en", "es"), recordings, strict=True):
+        groups = {}
+        for item in observations:
+            event = item["event"]
+            if event["type"] == "caption.upsert":
+                data = event["data"]
+                key = f"{data['kind']}/{data['language']}"
+                delay = item["elapsed_seconds"] - data["end_ms"] / 1000
+                groups.setdefault(key, []).append(delay)
+        summary = {}
+        for key, values in groups.items():
             values.sort()
-            p50 = statistics.median(values)
-            p95 = values[min(len(values) - 1, int(len(values) * 0.95))]
-            print(f"  {key}: n={len(values)} p50={p50:.2f}s p95={p95:.2f}s max={max(values):.2f}s")
+            summary[key] = {"n": len(values), "p50": statistics.median(values),
+                            "p95": values[math.ceil(len(values) * .95) - 1],
+                            "max": max(values)}
+        report["sessions"][language] = {"summary": summary, "observations": observations}
+        print(language, json.dumps(summary), flush=True)
+    output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
+    errors = [item for observations in recordings for item in observations
+              if item["event"]["type"] in {"session.error", "session.gap"}]
+    if errors:
+        raise SystemExit(f"Medición incompleta: {len(errors)} errores/gaps; ver {output}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    asyncio.run(main(parser.parse_args().output))
