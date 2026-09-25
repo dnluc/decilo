@@ -50,9 +50,9 @@ def test_audio_dispatch_and_payload(monkeypatch, tmp_path):
     monkeypatch.setenv('DECILO_STT_PROVIDER', 'gemini')
     path = tmp_path / 'audio.wav'
     path.write_bytes(b'RIFF-test')
-    def post(self, url, *, headers, json):
+    def post(self, url, *, headers, json, **kwargs):
         assert 'test-secret' not in url
-        assert url.endswith('/gemini-3.1-flash-lite:generateContent')
+        assert url.endswith('/gemini-3.5-flash-lite:generateContent')
         assert headers['x-goog-api-key'] == 'test-secret'
         audio = json['contents'][0]['parts'][0]['inlineData']
         assert base64.b64decode(audio['data']) == path.read_bytes()
@@ -66,7 +66,7 @@ def test_audio_dispatch_and_payload(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_translation_dispatch(monkeypatch):
     monkeypatch.setenv('DECILO_TRANSLATION_PROVIDER', 'gemini')
-    async def post(self, url, *, headers, json):
+    async def post(self, url, *, headers, json, **kwargs):
         assert json['contents'][0]['parts'] == [{'text': 'Hello'}]
         return response()
     monkeypatch.setattr(httpx.AsyncClient, 'post', post)

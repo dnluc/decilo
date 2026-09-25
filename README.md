@@ -282,7 +282,7 @@ Para usar nube, configurar y reiniciar el backend:
 ```dotenv
 DECILO_AI_PROVIDER=gemini
 GEMINI_API_KEY=tu_clave
-DECILO_GEMINI_MODEL=gemini-3.1-flash-lite
+DECILO_GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Para mezclar: `DECILO_STT_PROVIDER=local` y
@@ -295,8 +295,33 @@ La clave queda solamente en el backend. Gemini recibe audio si se usa
 para STT y texto si se usa para traducción; aplican cuotas/costos del proyecto.
 No hay fallback automático ni reintentos ocultos. Timeout por petición: 30s.
 
-Se usa [generateContent](https://ai.google.dev/api/generate-content) por segmento,
-no Live API ni resultados parciales. Se preservan el protocolo de subtítulos,
-las colas y los cortes por pausa; el selector no elimina la espera del transporte.
+### Nube en streaming: Gemini Live (el camino rápido)
+
+Con proveedor `gemini`, la captura no espera pausas ni sube WAVs: cada paquete
+de 100ms del navegador se reenvía tal cual (ya es PCM16 mono a 16kHz, el
+formato exacto de la [Live API](https://ai.google.dev/gemini-api/docs/live-api/live-transcribe))
+a `gemini-3.5-transcribe-live`, que devuelve la transcripción palabra por
+palabra mientras se habla. Los resultados intermedios se publican como
+revisiones provisionales y el resultado de cada frase como final, que dispara
+la traducción con `gemini-3.5-flash-lite` y `thinkingLevel: MINIMAL` (medido:
+~0.6s por frase contra ~1.5s del modelo anterior con thinking por defecto).
+
+Latencias medidas de punta a punta en esta máquina: primera palabra visible
+~1.3s después de empezar a hablar, revisiones cada ~0.5s, final ~0.8s después
+de la pausa y traducción ~0.8s después del final. Antes (por segmento, CPU
+local compitiendo): el texto aparecía recién al cerrar la frase y la
+traducción llegaba 13–20s tarde.
+
+- `DECILO_GEMINI_LIVE=0` desactiva el streaming y vuelve al envío por
+  segmento con `generateContent`; si Google no responde al conectar, la
+  captura cae sola a ese camino (se avisa con un error retryable).
+- `DECILO_GEMINI_LIVE_MODEL` cambia el modelo de streaming.
+- La sesión de Google se renueva sola antes de su límite de 10 minutos, sin
+  perder la numeración de segmentos.
+- La credencial viaja solo en el header, nunca en la URL.
+
+Con proveedor local, o como fallback, se usa
+[generateContent](https://ai.google.dev/api/generate-content) por segmento.
+Se preservan el protocolo de subtítulos, las colas y los cortes por pausa.
 Los scripts de medición requieren variables exportadas (la carga automática de
 `.env` ocurre en el arranque de la app).
