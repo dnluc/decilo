@@ -99,15 +99,18 @@ function render() {
   if (!rows.length) {
     log.replaceChildren(node('p', 'chat-empty', 'Todo lo que se diga va a quedar acá, de principio a fin.'));
   } else {
-    log.replaceChildren(...rows.map(({ segmentId, original, caption }, index) => {
-      const turn = node('div', `turn ${caption?.status || 'pending'}${index === rows.length - 1 ? ' current' : ''}`);
+    // Lo último arriba: lo que se acaba de decir es lo que más importa y no
+    // debería haber que perseguirlo hasta el fondo de la lista.
+    log.replaceChildren(...[...rows].reverse().map(({ segmentId, original, caption }, index) => {
+      const turn = node('div', `turn ${caption?.status || 'pending'}${index === 0 ? ' current' : ''}`);
       turn.dataset.segment = segmentId;
       turn.append(node('span', 'turn-time', timestamp(original.start_ms)),
         node('p', '', caption?.text || 'Traduciendo…'));
       return turn;
     }));
   }
-  log.scrollTop = $('follow').checked ? log.scrollHeight : scrollTop;
+  // Con lo más nuevo arriba, "seguir lo último" es volver al principio.
+  log.scrollTop = $('follow').checked ? 0 : scrollTop;
   $('chat-count').textContent = rows.length ? `${rows.length} ${rows.length === 1 ? 'intervención' : 'intervenciones'}` : '';
 
   // El último subtítulo va a la barra a través del marcador de ritmo, que
