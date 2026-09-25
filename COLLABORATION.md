@@ -10,8 +10,11 @@ quedan pendientes de la decisión del usuario.
 - Codex: acepta el procedimiento y el ajuste de Claude (2026-09-24).
 - Claude: acepta el procedimiento y propone simplificar el flujo por tarea;
   ver su respuesta al final (2026-09-24).
-- Worktrees separados: pendientes de crear; al redactar este documento solo
-  existe `/home/dnluc/projects/decilo`, en `main`.
+- Worktrees separados: Claude usa `/home/dnluc/projects/decilo` (`main`);
+  Codex usa `/home/dnluc/projects/decilo-codex-contrato` (HEAD detached).
+- Por decisión posterior del usuario, ambos publican avances verificados en
+  `origin/main`. Este procedimiento reemplaza el uso de ramas de trabajo
+  mencionado en las respuestas históricas de abajo.
 
 ## Objetivo compartido
 
@@ -56,15 +59,18 @@ deben quedar explícitos; evitar que ambos implementen la misma tarea.
 
 ## Trabajo en paralelo
 
-1. Cada asistente implementa en su propia rama y worktree. Usar nombres como
-   `claude/<cambio>` y `codex/<cambio>` y carpetas hermanas al repo.
-2. Antes de separarlos, integrar o compartir el commit con este acuerdo y las
-   especificaciones iniciales. Los worktrees no comparten cambios sin commit.
+1. Cada asistente edita únicamente su propio worktree. Claude conserva `main`
+   en su carpeta; Codex trabaja con HEAD detached en la suya. No forzar que
+   ambos worktrees tengan la misma rama checkout ni mover la rama del otro.
+2. Antes de trabajar y de publicar, hacer `git fetch origin`, revisar estado
+   e integrar `origin/main` en el worktree propio preservando los cambios locales.
+   Los worktrees no comparten archivos modificados ni sincronizan conversaciones.
 3. Revisar `git status` y `git worktree list` antes de crear o cambiar el entorno.
    Preservar los cambios existentes y no cambiar la rama de la carpeta del otro.
-4. Mientras no existan worktrees separados, coordinar turnos de escritura y
-   limitarse a los archivos asignados. No ejecutar operaciones Git que alteren
-   el trabajo del otro.
+4. Commitear solo archivos propios, verificar la integración y publicar con
+   `git push origin HEAD:main`. Si se rechaza porque el otro publicó antes,
+   hacer fetch, integrar, verificar y reintentar. Nunca usar force push.
+   En HEAD detached, publicar cada commit terminado antes de cambiar de revisión.
 5. Asignar también un responsable a los archivos compartidos, como dependencias,
    configuración y contratos. Coordinar cualquier cambio transversal antes de editar.
 6. Los worktrees aíslan archivos, pero no puertos, procesos ni servicios locales.
@@ -97,11 +103,12 @@ Al entregar una tarea, registrar en el cambio de OpenSpec la rama y el commit,
 qué se completó, cómo se verificó y qué limitaciones o dependencias siguen abiertas.
 Las pruebas deben ser proporcionales al cambio; no declarar resultados sin ejecutarlas.
 
-El responsable de integración incorpora los cambios de a uno, resuelve los
-conflictos preservando el trabajo de ambos y prueba el recorrido completo.
-El otro asistente revisa. Tener ramas separadas no elimina conflictos al fusionar.
-Actualizar y archivar las especificaciones desde la rama integrada, evitando
-que ambos archiven el mismo cambio por separado.
+Cada autor integra el último `origin/main` antes de su push y resuelve los
+conflictos preservando el trabajo de ambos. Publicar una propuesta en `main`
+no equivale a aprobarla ni a dar su implementación por terminada. El reparto
+de revisión e integración funcional sigue pendiente. Actualizar y archivar
+las especificaciones solo al completar el cambio, evitando que ambos lo
+archiven por separado.
 
 ## Respuesta de Claude
 
@@ -163,15 +170,16 @@ la implementación o la configuración que dejó Claude.
 ## Coordinación actual — contrato de sesiones y subtítulos
 
 Codex toma la redacción de la propuesta `contrato-sesiones-subtitulos` tras
-el pedido del usuario de continuar. Trabajará en la rama
-`codex/contrato-sesiones-subtitulos`, worktree
-`/home/dnluc/projects/decilo-codex-contrato`.
+el pedido del usuario de continuar. La propuesta se redactó en el commit
+`d6ec32f`; por pedido posterior del usuario se publica en `main` y se retira
+la rama `codex/contrato-sesiones-subtitulos`. Codex conserva el worktree
+`/home/dnluc/projects/decilo-codex-contrato` con HEAD detached.
 
 Alcance: artefactos OpenSpec del contrato de consulta de sesiones y eventos
 para audiencia, revisiones de texto/traducción, estados y reconexión.
 No toma la implementación del pipeline ni cambia el reparto pendiente.
 Claude puede revisar la propuesta publicada; su aceptación queda pendiente.
-Este registro se publica antes de redactar el contrato para evitar duplicación.
+El registro inicial de autoría se publicó antes de redactar el contrato.
 
 Por instrucción del usuario, los cambios terminados y verificados se
-commitean y pushean en su rama con mensajes que permitan seguir la evolución.
+commitean y pushean en `main` con mensajes que permitan seguir la evolución.

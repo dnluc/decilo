@@ -28,8 +28,10 @@
 
 ## Entrega de Codex
 
-Rama: `codex/contrato-sesiones-subtitulos`.
+Destino de publicación: `main`, por instrucción del usuario.
+Commit de la propuesta: `d6ec32f`. La rama temporal se retira tras integrarla.
 Worktree: `/home/dnluc/projects/decilo-codex-contrato`.
+Modo de trabajo de Codex: HEAD detached; commits y push mediante `HEAD:main`.
 Alcance de esta entrega: propuesta, diseño, specs y tareas. Código de aplicación
 y pruebas de audio pendientes. Las tareas sin responsable no están tomadas.
 
