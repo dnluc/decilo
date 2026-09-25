@@ -380,3 +380,27 @@ test('detectar idioma automáticamente es la opción por defecto', async ({ page
   await page.goto('/');
   await expect(page.locator('#capture-language')).toHaveValue('auto');
 });
+
+test('el video no se mueve cuando el subtítulo crece a varias líneas', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+  const before = await page.locator('#video-frame').boundingBox();
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'Una palabra', status: 'provisional' }), 1)));
+  await expect(page.locator('#live-caption')).toHaveText('Una palabra');
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ revision: 2, status: 'provisional', text:
+      'Un texto provisional larguísimo que crece palabra por palabra hasta ocupar varias líneas de la barra de subtítulos y que antes empujaba el layout entero hacia arriba con cada renglón nuevo que aparecía en la pantalla del espectador' }), 2)));
+  await expect(page.locator('#live-caption')).toContainText('espectador');
+
+  const after = await page.locator('#video-frame').boundingBox();
+  expect(after.height).toBe(before.height);
+  expect(after.y).toBe(before.y);
+  // Y al desbordar, lo visible es el final del texto (lo último dicho).
+  expect(await page.evaluate(() => {
+    const bar = document.getElementById('live-caption');
+    return bar.scrollHeight >= bar.clientHeight;
+  })).toBe(true);
+});
