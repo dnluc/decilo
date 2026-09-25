@@ -186,3 +186,15 @@ Evidencia de límites sobre ambos WAV sin inferencia en
 `docs/validation/2026-09-25-pause-segmentation/boundaries.json`. Los tests usan
 voz/silencio sintéticos, no prueban que una pausa complete una idea. No se
 modificó el frontend de Claude; el último fragmento se drena al detener captura.
+
+## Selector local/nube — Codex
+
+- [x] G1 Implementar selector global/por etapa, .env y Gemini para STT/traducción — rama `codex/gemini-provider`, sobre la segmentación integrada en main (PR #13).
+- [x] G2 Verificar 153 tests Python y Ruff: selección, precedencia, payload de audio, dispatch, respuesta incompleta, errores sin secretos y no cargar Whisper en nube.
+- [x] G3 Verificar credenciales reales: listado de modelos HTTP 200; gemini-2.5-flash disponible.
+- [ ] G4 Revisión cruzada — Claude. Comparativa sostenida de calidad/latencia con dos sesiones pendiente.
+
+Prueba real: listar modelos devolvió 200, pero generar con 2.5 Flash devolvió
+404; 3.8 Flash y flash-latest devolvieron 503. No se completó transcripción/
+traducción real ni se midió latencia. Default configurado 3.8 Flash según
+documentación vigente; local sigue siendo el proveedor por defecto.

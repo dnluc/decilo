@@ -1,8 +1,8 @@
 """Worker de sesión: audio (archivo) → STT → traducción → eventos.
 
 Soporta ventanas fijas de referencia y cortes acústicos por pausa con máximo.
-Publica cada segmento directamente
-como `final` — el contrato de `caption-stream` contempla explícitamente
+El ASR publica cada segmento directamente
+como `final`; la traducción permite provisionales opt-in. El ASR sin parciales — el contrato de `caption-stream` contempla explícitamente
 que "un proveedor sin parciales puede emitir un resultado definitivo sin
 simular incrementalidad".
 """
@@ -10,10 +10,11 @@ simular incrementalidad".
 from __future__ import annotations
 
 import asyncio
+import os
 import tempfile
 import wave
 from pathlib import Path
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, aclosing
 from typing import Callable, Iterator
 
 from decilo.gateway import SessionGateway
@@ -21,7 +22,7 @@ from decilo.models import CaptionData, GapData
 from decilo.stream import SessionStream
 from decilo.segmentation import PauseConfig, PauseSegmenter
 from decilo.stt import transcribe
-from decilo.translate import translate
+from decilo.translate import translate, translate_stream
 
 CHUNK_SECONDS = 5.0
 
@@ -207,6 +208,10 @@ async def translate_caption(stream, gateway, transcript, observe=None):
     for target_language in stream.session.translation_languages:
         translation_started = loop.time()
         try:
+            if os.environ.get('DECILO_STREAM_TRANSLATION') == '1':
+                await _stream_translation(stream, gateway, transcript, target_language, observe)
+                record_timing(observe, stream, transcript, "translation", translation_started)
+                continue
             translated_text = await translate(transcript.text)
             record_timing(observe, stream, transcript, "translation", translation_started)
         except Exception as exc:
@@ -223,13 +228,50 @@ async def translate_caption(stream, gateway, transcript, observe=None):
             kind="translation",
             language=target_language,
             revision=1,
-            source_revision=1,
+            source_revision=transcript.revision,
             text=translated_text,
             status="final",
             start_ms=transcript.start_ms,
             end_ms=transcript.end_ms, boundary_reason=transcript.boundary_reason,
         )
         gateway.publish_nowait(stream.upsert_caption(translation))
+
+
+async def _stream_translation(stream, gateway, transcript, language, observe):
+    """Stage B: stream translations of final originals without changing v1."""
+    if transcript.status != 'final':
+        raise ValueError('La etapa B requiere original confirmado')
+    loop = asyncio.get_running_loop()
+    began = loop.time()
+    last_emitted = None
+    last_text = None
+    revision = 0
+    # Explicit close releases HTTP resources even on cancellation/upsert failure.
+    async with aclosing(translate_stream(transcript.text)) as updates:
+        async for update in updates:
+            now = loop.time()
+            if not update.final and (update.text == last_text or
+                    (last_emitted is not None and now - last_emitted < .3)):
+                continue
+            revision += 1
+            caption = CaptionData(
+                segment_id=transcript.segment_id, segment_seq=transcript.segment_seq,
+                kind='translation', language=language, revision=revision,
+                source_revision=transcript.revision, text=update.text,
+                status='final' if update.final else 'provisional',
+                start_ms=transcript.start_ms, end_ms=transcript.end_ms,
+                boundary_reason=transcript.boundary_reason,
+            )
+            event = stream.upsert_caption(caption)
+            if event is None:
+                return  # Original retired/evicted; do not resurrect it.
+            gateway.publish_nowait(event)
+            if last_emitted is None:
+                record_timing(observe, stream, transcript, 'translation_first_content', began)
+            last_emitted, last_text = now, update.text
+            if update.metrics is not None and observe is not None:
+                observe({'session_id': stream.session.id, 'segment_seq': transcript.segment_seq,
+                         'stage': 'ollama', 'outcome': 'ok', 'metrics': update.metrics})
 
 
 @asynccontextmanager
