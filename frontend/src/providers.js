@@ -17,9 +17,13 @@ export function setupProviders() {
 
   const describe = () => { note.textContent = NOTAS[select.value] ?? ''; };
 
+  let eligioAntes = false;
   try {
     const guardada = localStorage.getItem(preferencia);
-    if (guardada && NOTAS[guardada]) select.value = guardada;
+    if (guardada && NOTAS[guardada]) {
+      select.value = guardada;
+      eligioAntes = true;
+    }
   } catch { /* El almacenamiento puede no estar disponible; sigue funcionando. */ }
 
   select.addEventListener('change', () => {
@@ -33,14 +37,23 @@ export function setupProviders() {
   fetch('/api/v1/providers', { cache: 'no-store' })
     .then(response => (response.ok ? response.json() : null))
     .then(info => {
-      if (!info || info.cloud_available) return;
-      cloudOption.disabled = true;
-      cloudOption.textContent = 'En la nube (sin credenciales)';
-      if (select.value === 'gemini') {
-        select.value = 'local';
+      if (!info) return;
+      if (!info.cloud_available) {
+        cloudOption.disabled = true;
+        cloudOption.textContent = 'En la nube (sin credenciales)';
+        if (select.value === 'gemini') {
+          select.value = 'local';
+          describe();
+        }
+        note.textContent += ' La nube está deshabilitada: el servidor no tiene GEMINI_API_KEY.';
+        return;
+      }
+      // Sin preferencia propia, se adopta el default del servidor: si el
+      // operador configuró la nube es porque es el camino rápido.
+      if (!eligioAntes && NOTAS[info.default] && select.value !== info.default) {
+        select.value = info.default;
         describe();
       }
-      note.textContent += ' La nube está deshabilitada: el servidor no tiene GEMINI_API_KEY.';
     })
     .catch(() => { /* Sin catálogo de proveedores se sigue con el default local. */ });
 

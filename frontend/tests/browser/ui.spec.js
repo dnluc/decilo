@@ -285,6 +285,23 @@ test('la elección se recuerda entre visitas', async ({ page }) => {
   await expect(page.locator('#provider')).toHaveValue('gemini');
 });
 
+test('sin preferencia propia se adopta el default del servidor', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'gemini', cloud_available: true } }));
+  await page.goto('/');
+  await expect(page.locator('#provider')).toHaveValue('gemini');
+  await expect(page.locator('#provider-note')).toContainText('se envía a Google');
+});
+
+test('la preferencia guardada le gana al default del servidor', async ({ page }) => {
+  await page.route('**/api/v1/providers', route =>
+    route.fulfill({ json: { default: 'gemini', cloud_available: true } }));
+  await page.goto('/');
+  await page.selectOption('#provider', 'local');
+  await page.reload();
+  await expect(page.locator('#provider')).toHaveValue('local');
+});
+
 test('cada opción explica qué implica, incluido dónde va el audio', async ({ page }) => {
   await page.route('**/api/v1/providers', route =>
     route.fulfill({ json: { default: 'local', cloud_available: true } }));

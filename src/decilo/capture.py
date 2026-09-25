@@ -182,6 +182,77 @@ async def _receive_audio(websocket, gateway, submit, deadline, segmentation, pre
             await asyncio.gather(worker, return_exceptions=True)
 
 
+async def _start_live(gateway, submit):
+    """Nube: transcripción en streaming contra Gemini Live si se puede.
+
+    Devuelve el transcriptor conectado, o None para seguir por segmentos
+    (proveedor local, camino desactivado, o Google no contestó)."""
+    from decilo import gemini_live
+    from decilo.providers import provider
+
+    if provider('stt') != 'gemini' or not gemini_live.live_enabled():
+        return None
+    live = gemini_live.GeminiLiveTranscriber(
+        gateway, submit, gateway.stream.session.source_language)
+    try:
+        await live.connect()
+        return live
+    except Exception as error:
+        gateway.publish_nowait(gateway.stream.record_error(
+            'inference_unavailable',
+            f'Gemini Live no disponible ({error}); se sigue por segmentos.',
+            retryable=True,
+        ))
+        return None
+
+
+async def _receive_audio_live(websocket, gateway, live, deadline, prebuffered=()):
+    """Cada paquete del navegador va directo a Gemini; acá solo se validan
+    offsets y se registran huecos. Las captions las publica el lector."""
+    last_end = 0
+    gaps = 0
+
+    def add(packet):
+        nonlocal last_end, gaps
+        start, end, pcm = decode_packet(packet, last_end)
+        if start > last_end:
+            gaps += 1
+            gateway.publish_nowait(gateway.stream.record_gap(GapData(
+                gap_id=f"capture-gap-{gaps}", start_ms=last_end * 1000 // RATE,
+                end_ms=start * 1000 // RATE, reason="source_disconnect",
+                discard_captions=[],
+            )))
+        last_end = end
+        return pcm
+
+    try:
+        await websocket.send_json({"type": "ready", "session": gateway.stream.session.model_dump()})
+        for packet in prebuffered:
+            await live.feed(add(packet))
+        while True:
+            message = await asyncio.wait_for(websocket.receive(), timeout=15)
+            if message['type'] == 'websocket.disconnect':
+                break
+            if message.get('text') == 'stop':
+                break
+            if message.get('bytes') is None:
+                raise ValueError('Se esperaba PCM binario o stop')
+            await live.feed(add(message['bytes']))
+    except (ValueError, asyncio.TimeoutError) as error:
+        gateway.publish_nowait(gateway.stream.record_error(
+            'inference_unavailable', str(error) or 'Captura sin audio durante 15 segundos', retryable=False,
+        ))
+    except WebSocketDisconnect:
+        pass
+    except Exception as error:  # enlace con Gemini irrecuperable
+        gateway.publish_nowait(gateway.stream.record_error(
+            'inference_unavailable', f'Gemini Live: {error}', retryable=False,
+        ))
+    finally:
+        deadline.reschedule(asyncio.get_running_loop().time() + 90)
+        await live.finish()
+
+
 VOICE_RMS_GATE = (0.01 * 32768) ** 2
 
 
@@ -223,7 +294,11 @@ async def receive_capture(websocket, gateway, *, overlap_translation=False, segm
     try:
         async with asyncio.timeout(None) as deadline:
             async with translation_queue(gateway.stream, gateway, None, overlap_translation) as submit:
-                await _receive_audio(websocket, gateway, submit, deadline, segmentation, prebuffered)
+                live = await _start_live(gateway, submit)
+                if live is not None:
+                    await _receive_audio_live(websocket, gateway, live, deadline, prebuffered)
+                else:
+                    await _receive_audio(websocket, gateway, submit, deadline, segmentation, prebuffered)
     except TimeoutError:
         gateway.publish_nowait(gateway.stream.record_error(
             'inference_unavailable', 'Se agotó el tiempo para terminar el audio pendiente.', retryable=False,
