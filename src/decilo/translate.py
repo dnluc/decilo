@@ -23,9 +23,17 @@ SYSTEM_PROMPT = (
     "de software. Traduci el texto del ingles al espanol de forma natural, "
     "como lo diria un orador en una charla tecnica en Argentina. Mantene "
     "terminos tecnicos de uso habitual en la industria en vez de forzar "
-    "una traduccion literal rara. Responde SOLO con la traduccion, sin "
-    "comentarios ni explicaciones."
+    "una traduccion literal rara. El texto puede llegar incompleto, a mitad "
+    "de una frase: traduci lo que hay sin inventar el final. Si una palabra "
+    "es ambigua o parece mal transcripta, elegi la interpretacion mas "
+    "natural segun el contexto de la charla, sin marcadores de duda ni "
+    "alternativas. Responde SOLO con la traduccion, sin comentarios ni "
+    "explicaciones."
 )
+
+# Contexto corto: los subtitulos son frases sueltas y en CPU el costo de
+# procesar el prompt crece con el contexto reservado.
+OLLAMA_OPTIONS = {"temperature": 0, "num_ctx": 1024}
 
 
 async def translate(text: str, *, model: str = MODEL, timeout: float = 30.0) -> str:
@@ -39,6 +47,7 @@ async def translate(text: str, *, model: str = MODEL, timeout: float = 30.0) -> 
             {"role": "user", "content": text},
         ],
         "stream": False,
+        "options": OLLAMA_OPTIONS,
     }
     async with ollama_client() as client:
         resp = await client.post(OLLAMA_URL, json=payload, timeout=timeout)
@@ -107,6 +116,7 @@ async def translate_stream(text, *, model=MODEL, timeout=30):
         'messages': [{'role': 'system', 'content': SYSTEM_PROMPT},
                      {'role': 'user', 'content': text}],
         'stream': True,
+        'options': OLLAMA_OPTIONS,
         'keep_alive': os.environ.get('DECILO_OLLAMA_KEEP_ALIVE', '5m'),
     }
     accumulated = ''

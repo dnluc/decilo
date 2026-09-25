@@ -111,9 +111,11 @@ Abrir **http://localhost:5173/**:
 
 Video usado durante el desarrollo: [API Gateway — Vlad Tomashpolskyi](https://www.youtube.com/watch?v=IW0unWVDnrI).
 Los tiempos se cuentan desde el inicio de captura, no desde el minuto de YouTube.
-El cambio de proveedor afecta la próxima captura. La UI muestra el original
-como provisional si todavía falta la traducción elegida; texto visible temprano
-no equivale necesariamente a español disponible.
+Cambiar el proveedor o el idioma con la captura andando reconecta la sesión al
+vuelo (misma pestaña compartida, sin recargar). Quien lee en otro idioma nunca
+ve el original: cada hipótesis provisional se traduce también en vivo en nube
+(el español aparece palabra por palabra ~0.5s detrás y la frase completa se
+re-traduce al confirmarse) y, sin traducción todavía, la fila espera invisible.
 
 ## Parámetros y comportamiento
 
@@ -134,6 +136,13 @@ no equivale necesariamente a español disponible.
 - `DECILO_PARTIALS=0` apaga parciales y señal textual local en el camino por segmentos.
   No apaga los interims de Live. El corte local textual necesita timestamps de Whisper;
   no existe ese corte en el fallback `generateContent`.
+- `DECILO_PROVISIONAL_TRANSLATION=0` apaga la traducción en vivo de hipótesis
+  provisionales (solo camino Live). En Live, un interim que ya termina la
+  oración se confirma al instante (la puntuación de Gemini es confiable; el
+  Whisper local no dispara por un punto al final del texto a medias).
+- `DECILO_STREAM_TRANSLATION=1` (activado en el `.env` de ejemplo) muestra la
+  traducción local a medida que Gemma la genera; el prompt pide resolver
+  palabras ambiguas por contexto, sin marcadores de duda.
 - El segmentador usa mínimo 1 s, pausa 0,4 s, máximo 6 s y RMS 0,01, configurables
   con `DECILO_MIN_SEGMENT_SECONDS`, `DECILO_PAUSE_SECONDS`,
   `DECILO_MAX_SEGMENT_SECONDS` y `DECILO_SILENCE_RMS`.
