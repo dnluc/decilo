@@ -1,0 +1,13 @@
+{
+  "protocol_version": 1,
+  "session_id": "konex-sala-1-charla-1",
+  "stream_id": "run-1",
+  "seq": 5,
+  "emitted_at": "2026-09-25T01:00:00Z",
+  "type": "session.error",
+  "data": {
+    "code": "inference_unavailable",
+    "message": "El motor de traduccion no responde",
+    "retryable": true
+  }
+}

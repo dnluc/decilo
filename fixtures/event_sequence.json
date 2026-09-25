@@ -1,0 +1,91 @@
+[
+  {
+    "protocol_version": 1,
+    "session_id": "konex-sala-1-charla-1",
+    "stream_id": "run-1",
+    "seq": 0,
+    "emitted_at": "2026-09-25T01:00:00Z",
+    "type": "session.snapshot",
+    "data": {
+      "session": {
+        "id": "konex-sala-1-charla-1",
+        "title": "Building reliable systems",
+        "source_language": "en",
+        "translation_languages": [
+          "es"
+        ],
+        "target_locale": "es-AR",
+        "status": "live"
+      },
+      "captions": [],
+      "gaps": [],
+      "history_truncated": false
+    }
+  },
+  {
+    "protocol_version": 1,
+    "session_id": "konex-sala-1-charla-1",
+    "stream_id": "run-1",
+    "seq": 1,
+    "emitted_at": "2026-09-25T01:00:00Z",
+    "type": "caption.upsert",
+    "data": {
+      "segment_id": "seg-1",
+      "segment_seq": 1,
+      "kind": "transcript",
+      "language": "en",
+      "revision": 1,
+      "source_revision": null,
+      "text": "We need",
+      "status": "provisional",
+      "start_ms": 0,
+      "end_ms": 400,
+      "speaker_id": null,
+      "boundary_reason": null
+    }
+  },
+  {
+    "protocol_version": 1,
+    "session_id": "konex-sala-1-charla-1",
+    "stream_id": "run-1",
+    "seq": 2,
+    "emitted_at": "2026-09-25T01:00:00Z",
+    "type": "caption.upsert",
+    "data": {
+      "segment_id": "seg-1",
+      "segment_seq": 1,
+      "kind": "transcript",
+      "language": "en",
+      "revision": 2,
+      "source_revision": null,
+      "text": "We need another code review.",
+      "status": "final",
+      "start_ms": 0,
+      "end_ms": 950,
+      "speaker_id": null,
+      "boundary_reason": "pause"
+    }
+  },
+  {
+    "protocol_version": 1,
+    "session_id": "konex-sala-1-charla-1",
+    "stream_id": "run-1",
+    "seq": 3,
+    "emitted_at": "2026-09-25T01:00:00Z",
+    "type": "caption.upsert",
+    "data": {
+      "segment_id": "seg-1",
+      "segment_seq": 1,
+      "kind": "translation",
+      "language": "es",
+      "revision": 1,
+      "source_revision": 2,
+      "text": "Necesitamos otra revision de codigo.",
+      "status": "final",
+      "start_ms": 0,
+      "end_ms": 950,
+      "speaker_id": null,
+      "boundary_reason": "pause"
+    }
+  }
+]

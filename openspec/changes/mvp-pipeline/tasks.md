@@ -1,5 +1,13 @@
 # Tasks
 
+## Correcciones de la revisión del PR #3 — Codex
+
+El usuario pidió a Codex aplicar las cuatro correcciones sobre la base
+`96dc8fc` de Claude. Se publican en el mismo PR `claude/mvp-pipeline`.
+
+- [x] R.1 Validar límite de texto en bytes UTF-8, intervalos de gaps completos/ordenados, enteros estrictos en rango seguro de JavaScript e idiomas de traducción únicos — Responsable: Codex | Estado: terminada | Depende de: revisión PR #3. Verificación: 64 casos pytest correctos; Ruff y compilación correctos. Regeneración de los 10 fixtures sin diferencias; catálogo y secuencia hasta `seq=6` consumidos correctamente por el reductor real de audiencia. No se ejecutó inferencia.
+- [x] R.2 Revisar las correcciones de Codex antes de integrar PR #3 — Responsable: Claude | Estado: terminada | Depende de: R.1. Verificación (2026-09-24): revisé el diff completo de `models.py`; reproduje los 4 casos reportados por Codex (texto multibyte >8192 bytes, gap con intervalo invertido, gap con un solo lado nulo, `revision=True`) más `seq` fuera del rango seguro de JS e idiomas de traducción repetidos — los 6 se rechazan correctamente. `uv run pytest` (64 passed), `ruff check` sin errores, fixtures regeneradas sin diferencias. Acepto. El resto del pipeline conserva los responsables y pendientes de abajo.
+
 ## CI mínima — alcance agregado por el usuario (2026-09-24)
 
 - [x] CI.1 Preparar workflow de push/PR con Python 3.12, compilación, Ruff y pytest — Responsable: Codex | Estado: terminada | Depende de: ninguna. Rama: `codex/ci-minima`. Validación: actionlint 1.7.12 sin errores, herramientas instaladas y `pip check` correcto; detección ensayada con/sin `src/` y ausencia de tests comprobada como fallo. No se ejecutaron tests de aplicación: todavía no hay backend en esta revisión. Convenciones y límites en `docs/ci.md`.
@@ -42,7 +50,7 @@
 
 - [ ] 3.1 Implementar el registro de sesiones en memoria y `GET /api/v1/sessions`, `GET /api/v1/sessions/{id}` según `specs/session-catalog` — Responsable: Claude | Estado: bloqueada | Depende de: 1.1. Verificación: request a ambos endpoints con 0, 1 y 2 sesiones configuradas, incluyendo 404 para sesión inexistente.
 - [ ] 3.2 Implementar las transiciones de estado (`starting`, `live`, `degraded`, `error`, `ended`) según las reglas de `session-catalog` — Responsable: Claude | Estado: bloqueada | Depende de: 3.1. Verificación: prueba unitaria de las transiciones permitidas/rechazadas.
-- [ ] 3.3 Modelar los envelopes del contrato (Pydantic) con validación estricta y publicar fixtures de catálogo/snapshot/eventos en un path compartido (ej. `fixtures/`) — Responsable: Claude | Estado: pendiente | Depende de: 1.1. Verificación (restaurada de la revisión de Codex sobre el commit `4bf2c28`): acepta los ejemplos válidos de `session-catalog`/`caption-stream` y rechaza idioma/tipo/revisión/tiempos/tamaños inválidos con error, no truncamiento silencioso; las fixtures quedan disponibles para que Codex construya y pruebe la audiencia sin esperar el backend real (ver ajuste en `contrato-sesiones-subtitulos` tarea 3.1).
+- [x] 3.3 Modelar los envelopes del contrato (Pydantic) con validación estricta y publicar fixtures de catálogo/snapshot/eventos en un path compartido (ej. `fixtures/`) — Responsable: Claude | Estado: terminada | Depende de: 1.1. Verificación (2026-09-24): `src/decilo/models.py` con validación estricta (idioma, tiempos, revisión, traducción sin `source_revision`, etc.) probada con 5 casos inválidos, todos rechazados. 10 fixtures generadas y validadas en `fixtures/` (ver `fixtures/README.md`), incluyendo una secuencia completa (`event_sequence.json`) para probar un reductor de eventos de punta a punta. Codex puede construir y probar la audiencia contra esto sin esperar el backend real (ver ajuste en `contrato-sesiones-subtitulos` tarea 3.1).
 
 ## 4. Pipeline de audio por sesión
 
