@@ -14,7 +14,7 @@ def request(parts, instruction):
     key = os.environ.get('GEMINI_API_KEY', '').strip()
     if not key:
         raise ValueError('Falta GEMINI_API_KEY para usar Gemini')
-    model = os.environ.get('DECILO_GEMINI_MODEL', 'gemini-3.8-flash')
+    model = os.environ.get('DECILO_GEMINI_MODEL', 'gemini-3.1-flash-lite')
     if not re.fullmatch(r'[a-zA-Z0-9._-]+', model):
         raise ValueError('DECILO_GEMINI_MODEL inválido')
     return (

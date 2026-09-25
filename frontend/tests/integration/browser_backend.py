@@ -3,6 +3,16 @@
 Estos endpoints solo se agregan al importar este módulo desde Playwright;
 no forman parte de decilo.app ni del servidor de producción.
 """
+import os
+
+# Integration inference is mocked; never load the developer's paid .env.
+os.environ['DECILO_ENV_FILE'] = '/dev/null'
+os.environ['DECILO_AI_PROVIDER'] = 'local'
+os.environ['DECILO_STT_PROVIDER'] = 'local'
+os.environ['DECILO_TRANSLATION_PROVIDER'] = 'local'
+os.environ['DECILO_PREWARM'] = '0'
+os.environ['GEMINI_API_KEY'] = ''
+
 from decilo.app import app, registry, gateways, _gateway_for
 from decilo.models import CaptionData, Session
 
@@ -29,7 +39,6 @@ async def subscribers():
 
 # Playback test uses a real WAV/HTTP/WS/player; inference is explicitly fake.
 import asyncio
-import os
 import decilo.app as application
 
 os.environ["DECILO_DEMO_SESSIONS"] = "1"

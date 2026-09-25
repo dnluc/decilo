@@ -1,9 +1,9 @@
 """Elección de proveedor por sesión (botón Local/Nube del frontend)."""
 import asyncio
-import os
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from decilo import providers
 from decilo.app import app, audio_sources, gateways, registry
@@ -89,14 +89,96 @@ def test_capture_rejects_cloud_without_key(monkeypatch):
     monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
     monkeypatch.delenv('GEMINI_API_KEY', raising=False)
     with TestClient(app) as client:
-        with pytest.raises(Exception):
+        with pytest.raises(WebSocketDisconnect) as exc:
             with client.websocket_connect('/api/v1/capture?language=en&provider=gemini'):
                 pass
+        assert exc.value.code == 4403
 
 
 def test_capture_rejects_unknown_provider(monkeypatch):
     monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
     with TestClient(app) as client:
-        with pytest.raises(Exception):
+        with pytest.raises(WebSocketDisconnect) as exc:
             with client.websocket_connect('/api/v1/capture?language=en&provider=pirata'):
                 pass
+        assert exc.value.code == 4403
+
+
+@pytest.mark.parametrize('choice,default,stt_override,expected', [
+    (None, 'gemini', None, ['gemini', 'gemini']),
+    ('local', 'gemini', None, ['local', 'local']),
+    ('gemini', 'local', None, ['gemini', 'gemini']),
+    (None, 'local', 'gemini', ['gemini', 'local']),
+])
+def test_capture_dispatch_preserves_explicit_and_legacy_choices(monkeypatch, choice, default, stt_override, expected):
+    import decilo.capture as capture
+    monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
+    monkeypatch.setenv('DECILO_AI_PROVIDER', default)
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only')
+    if stt_override:
+        monkeypatch.setenv('DECILO_STT_PROVIDER', stt_override)
+
+    async def receive(websocket, gateway, **kwargs):
+        async def worker():
+            stt_choice = await asyncio.to_thread(provider, 'stt')
+            return [stt_choice, provider('translation')]
+        await websocket.send_json(await asyncio.create_task(worker()))
+        await websocket.close()
+
+    monkeypatch.setattr(capture, 'receive_capture', receive)
+    suffix = '' if choice is None else f'&provider={choice}'
+    with TestClient(app) as client:
+        with client.websocket_connect('/api/v1/capture?language=en' + suffix) as websocket:
+            assert websocket.receive_json() == expected
+        assert client.get('/api/v1/providers').json()['default'] == default
+
+
+@pytest.mark.asyncio
+async def test_capture_restores_context_on_failure(monkeypatch):
+    from unittest.mock import AsyncMock
+    import decilo.app as application
+    import decilo.capture as capture
+    monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only')
+    monkeypatch.setattr(application, '_models_ready', lambda: True)
+    monkeypatch.setattr(capture, 'receive_capture', AsyncMock(side_effect=RuntimeError('capture failed')))
+    with pytest.raises(RuntimeError, match='capture failed'):
+        await application.capture_audio(AsyncMock(), 'en', 'gemini')
+    assert providers.provider('stt') == 'local'
+    assert not application.file_tasks
+
+
+@pytest.mark.parametrize('choice', ['local', 'gemini'])
+def test_cloud_capture_independent_of_failed_local_preparation(monkeypatch, choice):
+    import decilo.capture as capture
+    monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only')
+    async def receive(websocket, gateway, **kwargs):
+        await websocket.send_json({'selected': provider('stt')})
+        await websocket.close()
+    monkeypatch.setattr(capture, 'receive_capture', receive)
+    with TestClient(app) as client:
+        monkeypatch.setattr(app.state, 'inference_readiness', 'error')
+        if choice == 'local':
+            with pytest.raises(WebSocketDisconnect) as exc:
+                with client.websocket_connect('/api/v1/capture?provider=local'):
+                    pass
+            assert exc.value.code == 1013
+        else:
+            with client.websocket_connect('/api/v1/capture?provider=gemini') as websocket:
+                assert websocket.receive_json() == {'selected': 'gemini'}
+
+
+def test_cloud_file_can_start_when_local_preparation_failed(monkeypatch):
+    from unittest.mock import AsyncMock
+    import decilo.app as application
+    monkeypatch.setenv('DECILO_DEMO_SESSIONS', '1')
+    monkeypatch.setenv('DECILO_AI_PROVIDER', 'gemini')
+    monkeypatch.setenv('GEMINI_API_KEY', 'test-only')
+    worker = AsyncMock()
+    monkeypatch.setattr(application, 'run_file_session', worker)
+    with TestClient(app) as client:
+        monkeypatch.setattr(app.state, 'inference_readiness', 'error')
+        sid = client.get('/api/v1/sessions').json()['sessions'][0]['id']
+        assert client.post(f'/api/v1/sessions/{sid}/start').status_code == 200
+    worker.assert_awaited_once()

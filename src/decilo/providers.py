@@ -20,13 +20,19 @@ def use_provider(value: str | None):
     return _session_provider.set(value)
 
 
+def reset_provider(token):
+    """Restore caller context even if capture fails or is cancelled."""
+    _session_provider.reset(token)
+
+
 def cloud_available() -> bool:
     """Si no hay clave, ofrecer la nube en la interfaz sería una promesa falsa."""
     return bool(os.environ.get('GEMINI_API_KEY', '').strip())
 
 
 def load_config():
-    load_dotenv(Path(__file__).resolve().parents[2] / '.env', override=False)
+    env_file = Path(os.environ.get('DECILO_ENV_FILE', Path(__file__).resolve().parents[2] / '.env'))
+    load_dotenv(env_file, override=False)
     for stage in ('stt', 'translation'):
         if provider(stage) == 'gemini' and not os.environ.get('GEMINI_API_KEY', '').strip():
             raise ValueError('Falta GEMINI_API_KEY para usar Gemini')

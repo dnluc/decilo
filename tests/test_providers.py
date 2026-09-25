@@ -52,6 +52,7 @@ def test_audio_dispatch_and_payload(monkeypatch, tmp_path):
     path.write_bytes(b'RIFF-test')
     def post(self, url, *, headers, json):
         assert 'test-secret' not in url
+        assert url.endswith('/gemini-3.1-flash-lite:generateContent')
         assert headers['x-goog-api-key'] == 'test-secret'
         audio = json['contents'][0]['parts'][0]['inlineData']
         assert base64.b64decode(audio['data']) == path.read_bytes()

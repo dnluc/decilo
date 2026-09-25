@@ -12,7 +12,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Query, WebSocket
 from fastapi.responses import FileResponse
 
-from decilo.providers import cloud_available, load_config, provider, use_provider
+from decilo.providers import cloud_available, load_config, provider, use_provider, reset_provider
 from decilo.gateway import SessionGateway
 from decilo.ollama_runtime import ollama_lifespan
 from decilo.translate import prepare_ollama
@@ -208,10 +208,11 @@ async def create_run(session_id: str):
 @app.post("/api/v1/sessions/{session_id}/start", response_model=Session)
 async def start_session(session_id: str):
     _require_demo()
-    if not _models_ready():
-        raise HTTPException(503, 'Los modelos todavía no están listos.')
     path = _audio_source(session_id)
     record = registry.get(session_id)
+    stages = ['stt'] + (['translation'] if record.session.translation_languages else [])
+    if any(provider(stage) == 'local' for stage in stages) and not _models_ready():
+        raise HTTPException(503, 'Los modelos locales todavía no están listos.')
     if session_id in file_tasks and not file_tasks[session_id].done():
         return record.session
     if record.session.status != "starting":
@@ -257,19 +258,24 @@ async def list_providers():
 
 @app.websocket('/api/v1/capture')
 async def capture_audio(websocket: WebSocket, language: str = 'en',
-                        chosen_provider: str = Query('local', alias='provider')):
+                        chosen_provider: str | None = Query(None, alias='provider')):
     from decilo.capture import receive_capture
 
     if os.environ.get('DECILO_DEMO_SESSIONS') != '1' or language not in {'en', 'es'}:
         await websocket.close(code=4403)
         return
-    if chosen_provider not in {'local', 'gemini'} or (
-            chosen_provider == 'gemini' and not cloud_available()):
-        # Sin clave configurada, aceptar la sesión y después fallar en cada
-        # segmento sería peor: se rechaza acá con un motivo distinguible.
+    if chosen_provider not in {None, 'local', 'gemini'}:
         await websocket.close(code=4403)
         return
-    if not _models_ready():
+    # Legacy clients without this query parameter keep the environment defaults,
+    # including hybrid STT/translation settings. Explicit UI choice overrides both.
+    effective = [chosen_provider] if chosen_provider else [provider('stt')]
+    if chosen_provider is None and language == 'en':
+        effective.append(provider('translation'))
+    if 'gemini' in effective and not cloud_available():
+        await websocket.close(code=4403)
+        return
+    if 'local' in effective and not _models_ready():
         await websocket.close(code=1013)
         return
     if sum(not task.done() for task in file_tasks.values()) >= 2 or len(registry.list_sessions()) >= 20:
@@ -283,13 +289,14 @@ async def capture_audio(websocket: WebSocket, language: str = 'en',
     file_tasks[session.id] = task
     # Antes de arrancar los workers: `create_task` y `asyncio.to_thread` copian
     # el contexto, así que la elección viaja sola hasta transcribe/translate.
-    use_provider(chosen_provider)
+    token = use_provider(chosen_provider)
     try:
         await websocket.accept()
         await receive_capture(websocket, _gateway_for(session.id),
                               overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
                                    segmentation=configured_segmentation())
     finally:
+        reset_provider(token)
         file_tasks.pop(session.id, None)
 
 

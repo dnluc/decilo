@@ -18,3 +18,18 @@ El navegador cierra si su buffer de transporte supera 320008 bytes; no acumula
 una cola infinita. Stop libera pistas/contexto y envía el último bloque parcial.
 Si la fuente no trae pista de audio, se explica el problema y no se crea sesión.
 No hay fallback a texto simulado. El permiso real lo concede el usuario.
+
+## Selección de proveedor por captura — revisión del PR #18
+
+`GET /api/v1/providers` devuelve `default` (proveedor de traducción del entorno)
+y `cloud_available` (hay clave configurada; no verifica saldo ni disponibilidad
+del servicio). Nunca devuelve la clave. El frontend conserva la preferencia
+local/nube en el navegador y envía `provider=local|gemini` al abrir la captura.
+Esta elección sustituye STT y traducción solo en esa sesión; cambiar el selector
+después no modifica workers ya iniciados. `ContextVar` propaga la elección a
+tareas y threads y se restaura al terminar, incluso ante errores.
+
+Si se omite `provider`, se conservan los valores del entorno por etapa, incluso
+configuraciones híbridas. Proveedor inválido o nube sin clave: cierre 4403.
+La preparación local pendiente o fallida bloquea con 1013 únicamente capturas
+que necesitan algún modelo local. La ruta de nube sigue disponible.
