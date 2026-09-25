@@ -1,96 +1,123 @@
 1
-00:00:00,150 --> 00:00:00,701
-Decilo.
+00:00:00,247 --> 00:00:00,930
+Decilo!
 
 2
-00:00:00,701 --> 00:00:05,112
-Live captions so no idea gets left out.
+00:00:01,592 --> 00:00:02,833
+Live captions.
 
 3
-00:00:06,150 --> 00:00:10,388
-At a conference, language should never leave
-anyone out.
+00:00:03,521 --> 00:00:05,107
+So no idea gets left out!
 
 4
-00:00:10,388 --> 00:00:15,096
-Decilo transcribes English and Spanish, and
-translates English into Spanish.
+00:00:06,245 --> 00:00:09,371
+Language should never leave you out of a conference!
 
 5
-00:00:16,150 --> 00:00:20,499
-Paste a link, choose the language and share
-the tab audio.
+00:00:10,056 --> 00:00:12,054
+Decilo transcribes English and Spanish,
 
 6
-00:00:20,499 --> 00:00:26,033
-Whisper transcribes on your machine; when
-the audio is in English, Gemma translates it
+00:00:12,054 --> 00:00:13,830
+and translates English into Spanish.
 
 7
-00:00:26,033 --> 00:00:26,824
-into Spanish.
+00:00:16,246 --> 00:00:17,341
+It is this easy!
 
 8
-00:00:31,150 --> 00:00:33,617
-For cloud processing, choose Gemini.
+00:00:17,947 --> 00:00:21,776
+Paste a link, choose the language and share the tab
+audio.
 
 9
-00:00:33,617 --> 00:00:39,045
-Audio is transcribed live, and translation
-appears incrementally while the history
+00:00:22,456 --> 00:00:24,198
+Whisper transcribes on your machine;
 
 10
-00:00:39,045 --> 00:00:41,512
-keeps track of the talk.
+00:00:24,308 --> 00:00:27,658
+when the audio is in English, Gemma translates it into
+Spanish.
 
 11
-00:00:46,150 --> 00:00:51,587
-Two different talks are being translated at
-the same time in the cloud.
+00:00:31,245 --> 00:00:34,613
+Prefer cloud processing? Choose Gemini.
 
 12
-00:00:51,587 --> 00:00:54,932
-Each session keeps its own audio and
-captions.
+00:00:35,279 --> 00:00:36,697
+Audio is transcribed live
 
 13
-00:00:54,932 --> 00:00:58,696
-More viewers can follow a session without
-duplicating inference.
+00:00:36,697 --> 00:00:38,997
+and translation appears incrementally,
 
 14
-00:01:10,150 --> 00:01:15,458
-We also tested a Spanish talk, both locally
-and in the cloud.
+00:00:39,096 --> 00:00:41,598
+while the history keeps track of the talk.
 
 15
-00:01:15,458 --> 00:01:18,112
-Here, we show the original transcription.
+00:00:46,247 --> 00:00:47,119
+And look at this!
 
 16
-00:01:23,150 --> 00:01:27,029
-The browser sends audio to the Python
-backend.
+00:00:47,813 --> 00:00:50,939
+Two different talks translated at the same time in the
+cloud.
 
 17
-00:01:27,029 --> 00:01:32,364
-It selects the local engine or Gemini,
-coordinates sessions and distributes
+00:00:51,608 --> 00:00:54,511
+Each session keeps its own audio and captions.
 
 18
-00:01:32,364 --> 00:01:33,818
-captions over WebSocket.
+00:00:55,168 --> 00:00:58,919
+More viewers can follow a session without duplicating
+inference.
 
 19
-00:01:33,818 --> 00:01:36,728
-Processing is separate from the audience.
+00:01:10,245 --> 00:01:12,434
+It also works with talks in Spanish!
 
 20
-00:01:45,150 --> 00:01:49,111
-Decilo is open source under the Apache 2.0
-license.
+00:01:13,052 --> 00:01:14,370
+We tested local and cloud processing.
 
 21
-00:01:49,111 --> 00:01:52,632
-The code and setup instructions are on
-GitHub.
+00:01:15,050 --> 00:01:17,897
+Here, we show the original transcription.
+
+22
+00:01:23,245 --> 00:01:25,969
+The browser sends audio to the Python backend.
+
+23
+00:01:26,588 --> 00:01:28,698
+It selects the local engine or Gemini,
+
+24
+00:01:28,786 --> 00:01:30,070
+coordinates sessions
+
+25
+00:01:30,070 --> 00:01:32,415
+and distributes captions over WebSocket.
+
+26
+00:01:33,072 --> 00:01:35,651
+Processing is separate from the audience.
+
+27
+00:01:45,245 --> 00:01:46,753
+Decilo is open source!
+
+28
+00:01:47,427 --> 00:01:49,415
+Under the Apache 2.0 license.
+
+29
+00:01:50,083 --> 00:01:51,736
+Find the code on GitHub.
+
+30
+00:01:52,360 --> 00:01:53,600
+Try it and join us!

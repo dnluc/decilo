@@ -44,31 +44,21 @@ trabajos nominales.
 
 ## Guion de narración
 
-**Portada:** Decilo. Subtítulos en vivo para que ninguna idea quede afuera.
+**Portada:** ¡Decilo! Subtítulos en vivo. ¡Que ninguna idea quede afuera!
 
-**Propósito:** En una conferencia, el idioma no debería dejar a nadie afuera.
-Decilo transcribe inglés y español, y traduce del inglés al español.
+**Propósito:** ¡El idioma no debería dejarte afuera de una conferencia! Decilo transcribe inglés y español, y traduce del inglés al español.
 
-**Local:** Pegás el enlace, elegís el idioma y compartís el audio de la pestaña.
-Whisper transcribe en tu máquina; si el audio está en inglés, Gemma lo traduce al español.
+**Local:** ¡Así de fácil! Pegás el enlace, elegís el idioma y compartís el audio de la pestaña. Whisper transcribe en tu máquina; si el audio está en inglés, Gemma lo traduce al español.
 
-**Nube:** Para usar la nube, seleccionás Gemini. El audio se transcribe en vivo
-y la traducción aparece de forma incremental, mientras el historial conserva
-lo que vas escuchando.
+**Nube:** ¿Preferís usar la nube? Seleccionás Gemini. El audio se transcribe en vivo y la traducción aparece de forma incremental, mientras el historial conserva lo que vas escuchando.
 
-**Simultaneidad:** Acá hay dos charlas distintas traduciéndose al mismo tiempo en la nube.
-Cada sesión mantiene su propio audio y sus subtítulos.
-Más espectadores pueden seguir una misma sesión sin duplicar la inferencia.
+**Simultaneidad:** ¡Y mirá esto! Dos charlas distintas traduciéndose al mismo tiempo en la nube. Cada sesión mantiene su propio audio y sus subtítulos. Más espectadores pueden seguir una misma sesión sin duplicar la inferencia.
 
-**Español:** También probamos una charla en español, tanto en local como en nube.
-En este caso, mostramos la transcripción original.
+**Español:** ¡También funciona con charlas en español! Probamos local y nube. En este caso, mostramos la transcripción original.
 
-**Arquitectura:** El navegador envía audio al backend en Python. Ahí se elige
-el motor local o Gemini, se coordinan las sesiones y se distribuyen los
-subtítulos por WebSocket. La arquitectura separa procesamiento y audiencia.
+**Arquitectura:** El navegador envía audio al backend en Python. Ahí se elige el motor local o Gemini, se coordinan las sesiones y se distribuyen los subtítulos por WebSocket. La arquitectura separa procesamiento y audiencia.
 
-**Cierre:** Decilo es open source, con licencia Apache dos punto cero.
-El código y las instrucciones están en GitHub.
+**Cierre:** ¡Decilo es open source! Con licencia Apache dos punto cero. Encontrá el código en GitHub. ¡Probalo y sumate!
 
 El montaje usa las tomas completadas y conserva las limitaciones en la evidencia.
 La voz es sintética `es-AR-ElenaNeural`; la traducción inglesa del guion es
@@ -131,8 +121,8 @@ montaje local.
 
 ## Resultado y archivos publicados
 
-Video local final: `~/Videos/decilo-demo/Decilo-demo-1m55.mp4`. Duración medida
-con ffprobe: **115,000 s**, 1920×1080, 30 fps, H.264 + AAC, unos 7,9 MB.
+Video local final: `~/Videos/decilo-demo/Decilo-demo-1m55-con-musica.mp4`. Duración medida
+con ffprobe: **115,000 s**, 1920×1080, 30 fps, H.264 + AAC, tamaño verificado en el manifiesto local.
 La galería y el paquete de entrega están en esa misma carpeta. El MP4 no se
 versiona en Git; subirlo a YouTube y completar Devpost sigue siendo un paso
 pendiente. Este documento no afirma que el proyecto haya sido enviado.
@@ -169,3 +159,21 @@ Se atenúa durante la narración y se deja audible en sus pausas; en pantalla
 dividida se escucha una fuente y ambas continúan procesándose. Se verificaron
 duración, codecs, presencia de audio, ausencia de clipping digital y siete
 fotogramas distribuidos por el montaje.
+
+## Revisión de audio v2 — 25/09/2026
+
+A pedido del usuario, se conserva el montaje de 115 s y se rehace la locución
+con más énfasis, frases breves y pausas expresivas. La voz sigue siendo
+`es-AR-ElenaNeural`; ritmo `+12%` y tono `+4Hz`. Solo el texto enviado a la voz
+sustituye Python por «páiton»: el guion visible y los subtítulos mantienen Python.
+Los SRT se regeneraron con los tiempos de palabras informados por la síntesis.
+
+Se agregó **Decilo — Pulso**, una pieza instrumental original sintetizada para
+esta presentación: 112 BPM, acordes, bajo, arpegios suaves y percusión, sin
+samples externos. El volumen baja durante las demostraciones y se atenúa
+además con la narración. Las pistas reales de las charlas se conservan.
+Partitura programada, WAV y créditos quedan dentro del paquete local, en
+`musica/`. La primera versión se conserva en `revisiones/v1/`.
+
+No se volvieron a ejecutar modelos de Decilo ni se modificaron las tomas de
+simultaneidad. Esta revisión cambia el audio editorial y sus subtítulos.

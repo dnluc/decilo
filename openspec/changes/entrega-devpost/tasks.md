@@ -57,3 +57,16 @@ bibliotecas C++/zlib al entorno del proceso de grabación.
 No se simularon subtítulos ni se aceleró la toma de simultaneidad. La demora
 local y el cierre residual sin traducción de algunos segmentos Live siguen
 como límites; estas corridas no completan el benchmark sostenido de OpenSpec.
+
+### Revisión de audio solicitada por el usuario — 25/09/2026
+
+- [x] 3.6 Incorporar música y rehacer la narración — Responsable: Codex |
+  Estado: terminada. Música instrumental original sintetizada, énfasis y pausas
+  más expresivas; Python se envía como «páiton» únicamente al sintetizador.
+  Subtítulos EN/ES regenerados con tiempos de palabras; mismas tomas reales,
+  sin nuevas inferencias ni cambios de código de la aplicación. Se conserva v1.
+
+  Validación de v2: MP4 de 115,000 s, H.264/AAC 1080p/30; mezcla con pico
+  de −4,1 dBFS, 30 cues EN y 30 ES dentro del montaje, revisión visual de
+  arquitectura/cierre e integridad del ZIP. Material actualizado en la misma
+  carpeta de entrega; esta revisión no publica el video en YouTube.
