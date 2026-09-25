@@ -145,6 +145,16 @@ para no volver a perder tiempo redescubriéndolo en esta máquina.
 - [Riesgo] `faster-whisper` es CPU-bound y puede bloquear el loop de
   asyncio si se llama directo → ejecutarlo en un thread/process pool
   (`asyncio.to_thread` o `ProcessPoolExecutor`).
+- [Riesgo, confirmado con audio real 2026-09-24] Los chunks de ventana fija
+  (5s) cortan palabras a la mitad en el borde de cada chunk, degradando la
+  transcripción ("control plane" → "Troll plane", "Grafana" → "Prefana").
+  El pipeline funciona de punta a punta (verificado con `scripts/smoke_e2e.py`
+  contra Whisper/Ollama reales, eventos correctos según el contrato), pero
+  la calidad en los bordes es peor que la medida en el spike (que usaba el
+  audio completo, sin cortar). Mitigación no implementada por tiempo:
+  VAD o corte en silencio en vez de ventana fija — ya está en `VISION.md`
+  como diferencial futuro ("segmentación semántica"). Aceptado como
+  limitación conocida de v1; documentar en el README de la demo.
 
 ## Open Questions
 
