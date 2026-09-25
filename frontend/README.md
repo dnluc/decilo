@@ -60,3 +60,14 @@ calidad de inferencia ni el objetivo de latencia; falta la integración con audi
 `/api/` al backend **bajo el mismo origen**, con soporte de WebSocket. Usar HTTPS
 para obtener WSS automáticamente. Vite es el servidor de desarrollo; este cambio
 no incluye despliegue de producción.
+
+## Opciones de lectura
+
+El selector **Tamaño del texto** ofrece Normal, Grande y Muy grande. Se recuerda
+la preferencia en este navegador cuando el almacenamiento local está disponible;
+si está bloqueado, sigue funcionando durante la visita.
+
+Después de elegir una sesión, **Solo subtítulos** oculta el catálogo y la
+presentación. Mantiene idioma, conexión, avisos y la identificación de muestra.
+Volver con **Volver a las charlas** o **Escape**. El modo no abre una conexión
+nueva ni se restaura automáticamente al recargar, para poder elegir otra charla.

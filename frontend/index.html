@@ -32,6 +32,15 @@
           <div><p id="session-status" class="eyebrow">TU ESPACIO PARA LEER</p><h2 id="session-title">Elegí una charla para empezar</h2></div>
           <label class="language-label">Leer en<select id="language" disabled aria-label="Idioma de los subtítulos"></select></label>
         </div>
+        <div class="reading-preferences" aria-label="Opciones de lectura">
+          <label for="text-size">Tamaño del texto</label>
+          <select id="text-size">
+            <option value="normal">Normal</option>
+            <option value="large">Grande</option>
+            <option value="extra">Muy grande</option>
+          </select>
+          <button id="focus-reading" type="button" aria-pressed="false" disabled>Solo subtítulos</button>
+        </div>
         <div class="reading-tools">
           <p id="connection" role="status">Los subtítulos aparecerán acá.</p>
           <label><input id="follow" type="checkbox" checked> Seguir lo último</label>

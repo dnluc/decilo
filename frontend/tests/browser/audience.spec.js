@@ -51,3 +51,50 @@ test('catalog failure has an explicit retry and never presents simulated session
   await page.getByRole('button', { name: 'Actualizar' }).click();
   await expect(page.locator('#catalog-message')).toContainText('Todavía no hay sesiones');
 });
+
+test('reading preferences persist text size and focus mode preserves the active stream', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/api/v1/sessions', route => route.fulfill({ json: { sessions: demoSessions } }));
+  const sockets = [];
+  await page.routeWebSocket('**/api/v1/sessions/*/events', ws => {
+    sockets.push(ws);
+    ws.send(JSON.stringify(snapshot(demoSessions[0], [caption({ status: 'final' })])));
+  });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Solo subtítulos' })).toBeDisabled();
+  await page.getByRole('button', { name: /Building reliable/ }).click();
+  await page.getByLabel('Idioma de los subtítulos').selectOption('en');
+  const text = page.locator('.caption p').first();
+  const normal = await text.evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+  await page.getByLabel('Tamaño del texto').selectOption('extra');
+  expect(await text.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThan(normal);
+  await page.getByRole('button', { name: 'Solo subtítulos' }).click();
+  await expect(page.locator('.sessions-panel')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Volver a las charlas' })).toBeFocused();
+  sockets[0].send(JSON.stringify(envelope(demoSessions[0], 'caption.upsert', caption({
+    segment_id: 'seg-2', segment_seq: 2, text: 'Still connected.', status: 'final',
+  }), 1)));
+  await expect(page.locator('#transcript')).toContainText('Still connected.');
+  expect(sockets).toHaveLength(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.sessions-panel')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Solo subtítulos' })).toBeFocused();
+  await page.reload();
+  await expect(page.getByLabel('Tamaño del texto')).toHaveValue('extra');
+  await expect(page.locator('.sessions-panel')).toBeVisible();
+});
+
+test('blocked storage does not prevent reading controls and demo stays identified in focus mode', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new Error('Storage blocked'); } });
+  });
+  await page.goto('/?demo=1');
+  await page.getByRole('button', { name: /Código abierto/ }).click();
+  await page.getByLabel('Tamaño del texto').selectOption('large');
+  await page.getByRole('button', { name: 'Solo subtítulos' }).click();
+  await expect(page.locator('#demo-banner')).toBeVisible();
+  await expect(page.locator('#transcript')).toContainText('El código abierto');
+  await page.getByRole('button', { name: 'Volver a las charlas' }).click();
+  await expect(page.locator('.sessions-panel')).toBeVisible();
+});

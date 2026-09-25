@@ -24,3 +24,17 @@ selección explícita del usuario.
 #### Scenario: Backend no disponible
 - **WHEN** falla la consulta del catálogo real
 - **THEN** se informa el error con una opción de reintento sin presentar fixtures
+
+### Requirement: Lectura adaptable sin interrumpir la sesión
+La audiencia SHALL poder ampliar el texto y ocultar elementos ajenos a la
+lectura sin reiniciar la suscripción. El modo de lectura SHALL conservar los
+avisos de conexión y de simulación, y ofrecer una salida por botón y teclado.
+
+#### Scenario: Ampliar texto y seguir recibiendo eventos
+- **WHEN** la persona elige texto grande y activa Solo subtítulos
+- **THEN** las actualizaciones continúan en la misma sesión y conexión
+- **AND** puede volver al catálogo con el botón visible o Escape
+
+#### Scenario: Preferencia local no disponible
+- **WHEN** el navegador impide guardar preferencias
+- **THEN** los controles siguen funcionando durante la visita sin bloquear la lectura

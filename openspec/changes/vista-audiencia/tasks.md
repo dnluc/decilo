@@ -37,3 +37,9 @@ Historial acotado a 100 segmentos y 100 gaps, textos por `textContent`.
 - Inspección visual en 1440px y 390px, sin desborde horizontal.
 - No se midió audio real ni latencia de inferencia. Las tareas 1.5/1.6 siguen
   pendientes. La documentación para Claude está en `frontend/README.md`.
+
+## 2. Lectura adaptable — avance independiente del backend
+
+- [x] 2.1 Agregar tamaños de texto y modo Solo subtítulos — Responsable: Codex | Estado: terminada | Depende de: 1.3. Preferencia de tamaño persistida cuando es posible; salida por botón/Escape y sin cambiar la conexión. Se conserva el aviso de simulación.
+- [x] 2.2 Validar controles en navegador y documentar uso — Responsable: Codex | Estado: terminada | Depende de: 2.1. Cinco pruebas Playwright correctas (las tres anteriores y dos nuevas), build y OpenSpec correctos. Comprobada continuidad de WebSocket, foco de teclado, tamaño persistido, almacenamiento bloqueado y ausencia de desborde móvil; inspección visual a 390px.
+- [ ] 2.3 Revisar extensión de lectura en PR #2 junto con la vista — Responsable: Claude | Estado: pendiente | Depende de: 2.2. El backend y la integración con audio real continúan fuera de esta entrega.

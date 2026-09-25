@@ -39,6 +39,19 @@ h2 { font-size: 16px; margin: 0; }
 .language-label { font-size: 10px; color: #62695f; display: grid; gap: 5px; flex-shrink: 0; }
 select { border: 1px solid #c8d1bc; border-radius: 7px; background: #f5f6ee; color: #303a29; padding: 9px 27px 9px 10px; min-width: 118px; }
 .reading-tools { padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #5c6556; font-size: 11px; }
+.reading-preferences { display: flex; align-items: center; gap: 10px; padding: 12px 30px 0; flex-wrap: wrap; font-size: 12px; color: #4d5945; }
+.reading-preferences select { min-width: 100px; font-size: 12px; }
+.reading-preferences button { margin-left: auto; padding: 9px 12px; border: 1px solid #c8d1bc; border-radius: 7px; color: #303a29; background: #f5f6ee; font-size: 12px; }
+.reading-preferences button:disabled { opacity: .55; cursor: default; }
+.reading-preferences button[aria-pressed='true'] { background: #e4ebd9; border-color: #41714c; }
+body[data-text-size='large'] .caption p { font-size: clamp(28px, 3vw, 38px); }
+body[data-text-size='extra'] .caption p { font-size: clamp(34px, 4vw, 52px); }
+.reading-focus .header, .reading-focus .intro, .reading-focus .sessions-panel, .reading-focus .page-footer { display: none; }
+.reading-focus main { max-width: none; padding: 20px; }
+.reading-focus .workspace { display: block; }
+.reading-focus .demo-banner { margin: 0 0 12px; }
+.reading-focus .reading-panel { min-height: calc(100dvh - 40px); display: flex; flex-direction: column; }
+.reading-focus .transcript { flex: 1; height: auto; min-height: 50dvh; max-height: 70dvh; }
 .reading-tools p { margin: 0; }
 .reading-tools label { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
 input { accent-color: #3e734b; }
@@ -70,7 +83,7 @@ input { accent-color: #3e734b; }
   .intro { padding: 32px 0; } .workspace { grid-template-columns: 1fr; gap: 20px; }
   .session-list { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .session-card { padding: 16px; } .aside-note { display: none; }
-  .reading-header, .reading-tools, .reading-footer { padding-left: 18px; padding-right: 18px; }
+  .reading-header, .reading-tools, .reading-footer, .reading-preferences { padding-left: 18px; padding-right: 18px; }
   .transcript { padding-left: 18px; padding-right: 18px; height: 400px; }
   .reading-header { align-items: start; } .reading-header h2 { font-size: 17px; }
   .event-name { font-size: 10px; } .notices { padding: 0 18px; }

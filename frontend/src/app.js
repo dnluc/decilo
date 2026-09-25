@@ -1,6 +1,7 @@
 import './style.css';
 import { applyEvent, initialState, visibleCaptions } from './state.js';
 import { CaptionConnection, loadSessions } from './connection.js';
+import { setupReading } from './reading.js';
 
 const $ = id => document.getElementById(id);
 const demo = new URLSearchParams(location.search).get('demo') === '1';
@@ -61,6 +62,7 @@ function select(session) {
   demoTimers = [];
   client.stop();
   selected = session;
+  $('focus-reading').disabled = false;
   state = initialState(session.id);
   announced = '';
   $('live-announcement').textContent = '';
@@ -145,6 +147,7 @@ $('follow').onchange = () => { if ($('follow').checked) render(); };
 $('refresh').onclick = refresh;
 $('demo-banner').hidden = !demo;
 $('demo-link').hidden = demo;
+setupReading();
 if (demo) demoModule = await import('./demo.js');
 await refresh();
 window.addEventListener('pagehide', () => {
