@@ -155,3 +155,87 @@ test('en pantalla angosta la transcripción pasa abajo sin desbordar', async ({ 
   expect(chat.y).toBeGreaterThan(video.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+// Casos del contrato v1 que el ASR incremental va a ejercitar mucho más
+// seguido (backend-latencia-incremental, tarea 4.2): la UI debe reemplazar
+// la entrada por (segment_id, kind, language) + revision, nunca anexar cada
+// revisión como una frase nueva.
+
+test('una revisión reemplaza el texto en lugar de agregar otra línea', async ({ page }) => {
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'We need', status: 'provisional' }), 1)));
+  await expect(page.locator('.turn')).toHaveCount(1);
+
+  for (const [i, text] of ['We need another', 'We need another code review.'].entries()) {
+    sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+      caption({ revision: i + 2, text, status: 'provisional' }), i + 2)));
+  }
+  // Tres revisiones del mismo segmento siguen siendo una sola intervención.
+  await expect(page.locator('#transcript')).toContainText('We need another code review.');
+  await expect(page.locator('.turn')).toHaveCount(1);
+  await expect(page.locator('#live-caption')).toHaveText('We need another code review.');
+});
+
+test('una traducción obsoleta no reemplaza a la vigente', async ({ page }) => {
+  const sockets = await openSession(page);
+  const send = (data, seq) => sockets[0].send(JSON.stringify(
+    envelope(session, 'caption.upsert', data, seq)));
+
+  send(caption({ text: 'We need', status: 'provisional' }), 1);
+  send(caption({ kind: 'translation', language: 'es', source_revision: 1,
+    text: 'Necesitamos', status: 'provisional' }), 2);
+  await expect(page.locator('#transcript')).toContainText('Necesitamos');
+
+  // Avanza el original: su traducción anterior deja de ser vigente.
+  send(caption({ revision: 2, text: 'We need a code review.', status: 'final' }), 3);
+  await expect(page.locator('#transcript')).not.toContainText('Necesitamos');
+
+  // Una traducción tardía de la revisión vieja no debe volver a aparecer.
+  send(caption({ kind: 'translation', language: 'es', source_revision: 1, revision: 2,
+    text: 'Traducción vieja', status: 'provisional' }), 4);
+  send(caption({ kind: 'translation', language: 'es', source_revision: 2, revision: 2,
+    text: 'Necesitamos una revisión de código.', status: 'final' }), 5);
+  await expect(page.locator('#transcript')).toContainText('Necesitamos una revisión de código.');
+  await expect(page.locator('#transcript')).not.toContainText('Traducción vieja');
+});
+
+test('un final no se reescribe y una revisión repetida no duplica', async ({ page }) => {
+  const sockets = await openSession(page);
+  await page.selectOption('#language', 'en');
+  const final = caption({ text: 'Confirmado.', status: 'final' });
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert', final, 1)));
+  await expect(page.locator('.turn.final')).toContainText('Confirmado.');
+  // Repetir la misma revisión es idempotente.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert', final, 2)));
+  await expect(page.locator('.turn')).toHaveCount(1);
+  await expect(page.locator('#transcript')).toContainText('Confirmado.');
+});
+
+test('al reconectar, el snapshot reemplaza el estado sin duplicar', async ({ page }) => {
+  const sockets = [];
+  await page.route(`**/api/v1/sessions/${session.id}`, route => route.fulfill({ json: session }));
+  await page.routeWebSocket('**/api/v1/sessions/*/events', ws => {
+    sockets.push(ws);
+    // La segunda conexión trae el historial ya acumulado.
+    const previas = sockets.length === 1 ? [] : [caption({ text: 'Ya dicho.', status: 'final' })];
+    ws.send(JSON.stringify(snapshot(session, previas, sockets.length === 1 ? 0 : 4)));
+  });
+  await page.goto(`/?session=${session.id}`);
+  await expect(page.locator('#connection')).toHaveText('Conectado');
+  await page.selectOption('#language', 'en');
+
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ text: 'Ya dicho.', status: 'final' }), 1)));
+  await expect(page.locator('.turn')).toHaveCount(1);
+
+  // Un salto de secuencia fuerza reconexión; el snapshot manda.
+  sockets[0].send(JSON.stringify(envelope(session, 'caption.upsert',
+    caption({ segment_id: 'seg-9', segment_seq: 9, text: 'Perdido', status: 'final' }), 99)));
+  await expect.poll(() => sockets.length).toBe(2);
+  await expect(page.locator('#connection')).toHaveText('Conectado');
+  await expect(page.locator('.turn')).toHaveCount(1);
+  await expect(page.locator('#transcript')).toContainText('Ya dicho.');
+});
