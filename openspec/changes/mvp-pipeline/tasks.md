@@ -173,3 +173,16 @@ La captura drena audio y traducciones con un único presupuesto de 90s después
 de Stop, antes de ended/cierre. La autorización de pruebas no acredita calidad
 ni mejoras de rendimiento en captura real. El frontend mantiene sus contratos.
 Backend local de Codex en puerto 8000, consumido por Vite de Claude (5173).
+
+## Cortes por pausas y límite máximo — Codex
+
+- [x] P1 Segmentador incremental PCM16 por energía/pausas, mínimo/máximo y motivos de corte; conservar muestras y tiempos — Responsable: Codex. Tests de invariancia por transporte, máximo exacto, silencio y parámetros inválidos.
+- [x] P2 Integrar archivos y captura con presupuesto de audio pendiente, gaps, flush al detener y boundary_reason existente — Responsable: Codex. 143 tests Python y 4 pruebas de integración con navegador correctos. Rama: `codex/pause-segmentation`, basada en PR #11. Segmentador por pausas activado por defecto en app; modo fixed reproducible.
+- [ ] P3 Claude adapta tamaño de paquetes para aprovechar la detección temprana — Responsable: Claude. Actual transporte de 5s limita la aparición temprana; contrato ya acepta bloques menores.
+- [ ] P4 Validar calidad y demora sobre charla humana y detector semántico con texto parcial — Responsable: Codex. No se afirma mejora sin medición.
+- [ ] P5 Revisión cruzada — Responsable: Claude.
+
+Evidencia de límites sobre ambos WAV sin inferencia en
+`docs/validation/2026-09-25-pause-segmentation/boundaries.json`. Los tests usan
+voz/silencio sintéticos, no prueban que una pausa complete una idea. No se
+modificó el frontend de Claude; el último fragmento se drena al detener captura.

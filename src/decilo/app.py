@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 from decilo.gateway import SessionGateway
 from decilo.models import Session, SessionCatalog
 from decilo.pipeline import run_file_session
+from decilo.segmentation import configured_segmentation
 from decilo.sessions import SessionNotFound, SessionRegistry
 from decilo.stream import SessionStream
 
@@ -74,6 +75,7 @@ async def lifespan(app: FastAPI):
     logging.getLogger("uvicorn.error").info(
         "Translation queue: %s", os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
     )
+    logging.getLogger("uvicorn.error").info("Segmentation: %s", configured_segmentation())
     await _start_sample_sessions()
     try:
         yield
@@ -175,7 +177,8 @@ async def start_session(session_id: str):
     async def run():
         try:
             await run_file_session(gateway.stream, gateway, path,
-                                   overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1")
+                                   overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
+                                   segmentation=configured_segmentation())
         except Exception:
             gateway.publish_nowait(gateway.stream.record_error(
                 "inference_unavailable", "No se pudo procesar el audio de esta prueba.", retryable=False,
@@ -211,7 +214,8 @@ async def capture_audio(websocket: WebSocket, language: str = 'en'):
     try:
         await websocket.accept()
         await receive_capture(websocket, _gateway_for(session.id),
-                              overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1")
+                              overlap_translation=os.environ.get("DECILO_TRANSLATION_QUEUE") == "1",
+                                   segmentation=configured_segmentation())
     finally:
         file_tasks.pop(session.id, None)
 

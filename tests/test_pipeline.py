@@ -218,3 +218,17 @@ async def test_asr_advances_while_first_translation_is_blocked(monkeypatch, tmp_
         await asyncio.wait_for(task, 2)
     assert stream.session.status == 'ended'
     assert len(stream._captions) == 4
+
+
+@pytest.mark.asyncio
+async def test_boundary_reason_preserved_on_original_and_translation(monkeypatch, tmp_path):
+    from unittest.mock import AsyncMock
+    chunk, stream, gateway = setup_worker(monkeypatch, tmp_path, 1000)
+    stream.record.session = stream.session.model_copy(update={
+        'source_language': 'en', 'translation_languages': ['es'],
+    })
+    monkeypatch.setattr(pipeline, 'transcribe', lambda *args: 'Hello')
+    monkeypatch.setattr(pipeline, 'translate', AsyncMock(return_value='Hola'))
+    await pipeline.process_chunk(stream, gateway, chunk, 1, 0, 1000, boundary_reason='deadline')
+    assert len(stream._captions) == 2
+    assert all(c.boundary_reason == 'deadline' for c in stream._captions.values())
