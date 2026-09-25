@@ -44,7 +44,10 @@ button.primary:hover { background: #63cd8a; }
 .url-error:empty { display: none; }
 
 /* Escenario a la izquierda, transcripción a la derecha. */
-.theater { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 18px; padding: 18px 24px 22px; }
+/* `grid-template-rows: minmax(0, 1fr)` y no solo `min-height: 0`: una fila de
+   grid se dimensiona por su contenido, así que sin esto el historial largo
+   estira la fila y el panel crece en vez de scrollear por dentro. */
+.theater { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 372px; grid-template-rows: minmax(0, 1fr); gap: 18px; padding: 18px 24px 22px; }
 /* El escenario también se acota y scrollea por su cuenta si no entra: no
    debe empujar al historial ni estirar la página. */
 .stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; overflow-y: auto; }

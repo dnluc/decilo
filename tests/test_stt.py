@@ -32,3 +32,33 @@ def test_concurrent_sessions_share_one_model(monkeypatch):
         release.set()
         assert first.result() is second.result() is model
     factory.assert_called_once()
+
+
+def test_silence_is_filtered_instead_of_hallucinated(monkeypatch):
+    """Whisper inventa frases sobre audio sin habla ("¡SUSCRÍBETE!", muletillas).
+
+    Se pide el VAD y se descartan los segmentos con alta probabilidad de
+    no-habla; sin esto esas frases llegan a la pantalla como si alguien las
+    hubiera dicho.
+    """
+    captured = {}
+
+    class FakeSegment:
+        def __init__(self, text, no_speech_prob):
+            self.text = text
+            self.no_speech_prob = no_speech_prob
+
+    def fake_transcribe(path, **kwargs):
+        captured.update(kwargs)
+        return [
+            FakeSegment(' Hola, esto sí es voz.', 0.05),
+            FakeSegment(' ¡SUSCRÍBETE!', 0.93),
+        ], object()
+
+    monkeypatch.setattr(stt, '_models', {'small': Mock(transcribe=fake_transcribe)})
+    text = stt.transcribe('audio.wav', 'en')
+
+    assert text == 'Hola, esto sí es voz.', 'la alucinación no debe llegar al texto'
+    assert captured['vad_filter'] is True
+    assert captured['condition_on_previous_text'] is False
+    assert captured['no_speech_threshold'] == stt.NO_SPEECH_THRESHOLD
