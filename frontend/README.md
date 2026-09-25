@@ -71,3 +71,27 @@ Después de elegir una sesión, **Solo subtítulos** oculta el catálogo y la
 presentación. Mantiene idioma, conexión, avisos y la identificación de muestra.
 Volver con **Volver a las charlas** o **Escape**. El modo no abre una conexión
 nueva ni se restaura automáticamente al recargar, para poder elegir otra charla.
+
+## Integración con el gateway real, sin inferencia
+
+Con Python 3.12 y las dependencias del backend instaladas (`pip install -e .`
+desde la raíz, o `uv sync`), ejecutar desde `frontend/`:
+
+```sh
+npm run test:integration
+# Si el entorno Python se gestiona con uv:
+uv run --project .. npm run test:integration
+```
+
+Requiere Chromium instalado como las otras pruebas de navegador. Levanta
+servidores exclusivos de prueba en `127.0.0.1:18764` y `127.0.0.1:5174` y
+los detiene al terminar; falla si esos puertos están ocupados. No usa los puertos
+habituales de desarrollo de Claude/Codex.
+
+La app FastAPI, el registro, el stream, el gateway, el proxy y la UI son reales.
+Solo se sustituyen las fuentes de eventos por publicaciones sintéticas desde
+un módulo de prueba; no se ejecutan Whisper/Ollama. Los endpoints `/api/_test/`
+se agregan únicamente en ese módulo y no existen al iniciar `decilo.app:app`.
+Verifica el transporte WebSocket real, revisiones, HTTP/estado, cambio de sesión,
+reconexión por snapshot y limpieza de suscripciones. No mide calidad ni latencia
+con audio real.
