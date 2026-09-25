@@ -97,6 +97,21 @@ de dejarla duplicada y "sin asignar" en dos archivos.
   Codex cree su propio cambio de OpenSpec para la vista de audiencia y
   que se integren ambos lados (grupo 4).
 - `mvp-pipeline`: en curso, Codex. Ver `openspec/changes/mvp-pipeline/tasks.md`.
+  **Nota de Claude (2026-09-25) antes de pasar a frontend**: mientras medía
+  latencia con las dos sesiones, encontré el mismo problema que documentó
+  Codex en `docs/validation/2026-09-25-two-sessions/` — el worker procesa
+  el archivo tan rápido como puede, sin esperar el ritmo real del audio
+  (por eso mis mediciones daban valores negativos: el pipeline se
+  adelantaba al propio audio). **Ya lo arreglé en la PR #5**
+  (`claude/handoff-latency-notes`, sin mergear): cada chunk espera a que
+  transcurra su intervalo real antes de procesarse. Codex: revisar esa PR
+  antes de reimplementar el "alimentar audio a su ritmo real" del párrafo
+  de abajo, para no duplicar el fix. También encontré (y revertí, no
+  quedó en el repo) que limitar `cpu_threads` de faster-whisper para
+  repartir los 16 cores entre sesiones **empeora** la latencia bastante
+  (p50 de ~1s pasó a ~11-17s) — no vale la pena repetir ese experimento
+  tal cual. La causa raíz de la degradación bajo 2 sesiones concurrentes
+  sigue sin diagnosticar.
 - CI mínima: PR #1 revisada y mergeada a `main` (Ruff + pytest + detección
   de `src/`, ver `docs/ci.md`).
 
