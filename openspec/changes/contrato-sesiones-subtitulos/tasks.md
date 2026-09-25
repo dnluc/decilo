@@ -15,15 +15,15 @@ implementa Claude según el reparto de la tarea 1.4. El detalle vigente de
 estas tareas vive en `openspec/changes/mvp-pipeline/tasks.md` grupos 3 y 4
 — no duplicar aquí ni tomarlas desde este archivo.
 
-- [x] 2.1 ~~Crear modelos del contrato v1 y fixtures~~ — cubierto por `mvp-pipeline` 4.1-4.3 (publicador de eventos) | Estado: movida.
+- [x] 2.1 ~~Crear modelos del contrato v1 y fixtures~~ — cubierto por `mvp-pipeline` 3.3 (modelos con validación estricta + fixtures compartidas, disponibles antes del backend real) | Estado: movida.
 - [x] 2.2 ~~Implementar registro de sesiones y endpoints de consulta~~ — cubierto por `mvp-pipeline` 3.1 | Estado: movida.
 - [x] 2.3 ~~Implementar estado de subtítulos por sesión~~ — cubierto por `mvp-pipeline` 3.2 y 4.2 | Estado: movida.
 - [x] 2.4 ~~Implementar WebSocket con snapshot atómico~~ — cubierto por `mvp-pipeline` 4.3-4.4 | Estado: movida.
 
 ## 3. Consumidor de audiencia y adaptación del pipeline
 
-- [ ] 3.1 Implementar catálogo y reductor de eventos del cliente con selección de sesión/idioma — Responsable: Codex | Estado: pendiente (Codex todavía no creó su propio cambio de OpenSpec para la vista de audiencia) | Depende de: `mvp-pipeline` grupo 3-4 exponiendo los endpoints reales. Verificación: pruebas con fixtures de parciales/finales, orden por audio, descarte de conexión anterior, idioma sin traducción todavía y texto interpretado como texto.
-- [ ] 3.2 Implementar conexión, reconexión y estados visibles — Responsable: Codex | Estado: pendiente | Depende de: 3.1 y `mvp-pipeline` 4.3-4.4. Verificación: distinguir desconexión local de error de sesión, ignorar duplicados, recuperar salto de secuencia y mostrar truncamiento/reinicio/gap sin duplicar subtítulos.
+- [ ] 3.1 Implementar catálogo y reductor de eventos del cliente con selección de sesión/idioma — Responsable: Codex | Estado: pendiente (Codex todavía no creó su propio cambio de OpenSpec para la vista de audiencia) | Depende de: el contrato aceptado y sus fixtures (`mvp-pipeline` 3.3), NO del backend real — corrección 2026-09-24 por revisión de Codex: exigir endpoints reales serializaba el trabajo de ambos bajo el deadline. Verificación: pruebas con fixtures de parciales/finales, orden por audio, descarte de conexión anterior, idioma sin traducción todavía y texto interpretado como texto.
+- [ ] 3.2 Implementar conexión, reconexión y estados visibles — Responsable: Codex | Estado: pendiente | Depende de: 3.1 (con fixtures). Verificación: distinguir desconexión local de error de sesión, ignorar duplicados, recuperar salto de secuencia y mostrar truncamiento/reinicio/gap sin duplicar subtítulos. La prueba contra el backend real de `mvp-pipeline` queda para la integración (grupo 4).
 - [x] 3.3 ~~Adaptar el pipeline al contrato~~ — cubierto por `mvp-pipeline` grupo 4 completo (Claude) | Estado: movida.
 
 ## 4. Integración y cierre
