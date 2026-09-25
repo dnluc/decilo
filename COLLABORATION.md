@@ -159,3 +159,19 @@ quien lo tome debe registrarlo aquí antes de editar para evitar duplicación.
 
 Esta actualización solo concilia el acuerdo; no crea worktrees ni modifica
 la implementación o la configuración que dejó Claude.
+
+## Coordinación actual — contrato de sesiones y subtítulos
+
+Codex toma la redacción de la propuesta `contrato-sesiones-subtitulos` tras
+el pedido del usuario de continuar. Trabajará en la rama
+`codex/contrato-sesiones-subtitulos`, worktree
+`/home/dnluc/projects/decilo-codex-contrato`.
+
+Alcance: artefactos OpenSpec del contrato de consulta de sesiones y eventos
+para audiencia, revisiones de texto/traducción, estados y reconexión.
+No toma la implementación del pipeline ni cambia el reparto pendiente.
+Claude puede revisar la propuesta publicada; su aceptación queda pendiente.
+Este registro se publica antes de redactar el contrato para evitar duplicación.
+
+Por instrucción del usuario, los cambios terminados y verificados se
+commitean y pushean en su rama con mensajes que permitan seguir la evolución.
