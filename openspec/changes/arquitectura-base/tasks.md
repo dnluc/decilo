@@ -8,16 +8,55 @@
 
 ## 2. Revisión y confirmación
 
-- [ ] 2.1 Codex revisa `proposal.md`, `spec.md` y `design.md`; registra aceptación o ajustes — Responsable: Codex | Estado: pendiente | Depende de: 1.1, 1.2, 1.3. Verificación: entrada escrita por Codex en este archivo o en `COLLABORATION.md`.
-- [ ] 2.2 Usuario confirma o ajusta el límite de latencia (3s p95 propuesto) y la elección de Rust — Responsable: usuario (dnluc) | Estado: pendiente | Depende de: ninguna. Verificación: confirmación registrada en este archivo.
+- [x] 2.1 Codex revisa `proposal.md`, `spec.md` y `design.md`; registra aceptación o ajustes — Responsable: Codex | Estado: terminada | Depende de: 1.1, 1.2, 1.3. Verificación: revisión del 2026-09-24 registrada abajo y correcciones en los cuatro artefactos; fuentes oficiales enlazadas en `design.md`.
+- [x] 2.2 Usuario confirma el límite de latencia y el lenguaje del backend — Responsable: usuario (dnluc) | Estado: terminada | Depende de: ninguna. Verificación (2026-09-24): 3s p95 confirmado tal cual propuesto. Lenguaje: **Python**, no Rust — decisión tomada junto con Claude porque el cómputo pesado (Whisper, Ollama) corre como proceso/API externo sea cual sea el lenguaje orquestador, y Python reduce la fricción de iterar bajo el plazo del hackathon (ver razonamiento completo en `design.md` § "Lenguaje/runtime del backend"). Nota: esto contradice a `VISION.md`, que sigue nombrando Rust; pendiente de reconciliar (ver sección 4).
+- [x] 2.3 Incorporar la visión del usuario y reconciliar los límites de arquitectura — Responsable: Codex | Estado: terminada | Depende de: 2.1. Verificación: `VISION.md` conserva los diez niveles y diferenciales; proposal/design enlazan la visión y reservan interfaces; el ejemplo de <1,5s no se presenta como una medición ni reemplaza 2.2.
 
-## 3. Spike técnico: audio con Gemma 3n vía Ollama
+## 3. Spike técnico: compatibilidad, calidad y capacidad de inferencia
 
-- [ ] 3.1 Enviar un audio de prueba corto a `gemma3n:e4b` vía la API de Ollama y confirmar si transcribe correctamente — Responsable: sin asignar (depende del reparto) | Estado: bloqueada | Depende de: que termine de bajar el modelo. Verificación: transcripción visible en la respuesta de la API para un audio con contenido conocido.
-- [ ] 3.2 Medir la latencia end-to-end del spike y compararla con el límite de 3s (p95) de `spec.md` — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.1. Verificación: medición en segundos registrada en este archivo.
-- [ ] 3.3 Si el spike falla o no cumple la latencia, registrar en `design.md` la decisión de fallback (Whisper + Gemma 3 texto) — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.2. Verificación: `design.md` actualizado con la decisión final y su justificación.
+- [x] 3.1 Comprobar modalidades y API del runtime instalado — Responsable: Claude | Estado: terminada (compatibilidad confirmada; falta transcripción real ES/EN y traducción EN→ES comparadas con referencias) | Depende de: ninguna. Verificación (2026-09-24): `ollama show gemma3n:e4b` reporta `Capabilities: completion` (sin audio/visión); `curl -s localhost:11434/api/show -d '{"model":"gemma3n:e4b"}'` confirma `"capabilities":["completion"]`. Ollama NO expone entrada de audio para este modelo en esta instalación. Siguiente paso: evaluar STT local separado (Whisper vía `whisper.cpp` o `faster-whisper`) + traducción de texto EN→ES con un modelo vía Ollama.
+- [ ] 3.2 Medir inferencia, cola y calidad con dos fuentes a velocidad real según `design.md`; registrar límites de cola y timeout propuestos — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.1. Verificación: configuración, duración, muestras, p50/p95, pérdidas y revisión de calidad documentados; una medición sin navegador se etiqueta como parcial y no como end-to-end.
+- [ ] 3.3 Registrar motor elegido o limitaciones y alternativa si falla compatibilidad, calidad o capacidad; alinear el README ES/EN — Responsable: sin asignar | Estado: bloqueada | Depende de: 3.1, 3.2 cuando el candidato sea compatible. Verificación: `design.md` y README describen solo el camino probado; no atribuyen recepción de audio a Ollama sin evidencia.
+
+La prueba final de latencia hasta el navegador, reconexión, aislamiento y
+sobrecarga corresponde al cambio de implementación del MVP. Debe quedar como
+tarea pendiente allí antes de cerrar este cambio; no está realizada por esta revisión.
 
 ## 4. Cierre del cambio
 
-- [ ] 4.1 `npx @fission-ai/openspec@latest validate arquitectura-base --strict` sin errores — Responsable: Claude | Estado: pendiente | Depende de: grupos 1-3. Verificación: salida del comando sin errores.
+- [ ] 4.1 Validar formato con OpenSpec y revisar coherencia tras resolver grupos 1-3; registrar la prueba end-to-end pendiente en el cambio de implementación — Responsable: Claude | Estado: pendiente | Depende de: grupos 1-3. Verificación: `openspec validate arquitectura-base --strict` sin errores y tarea de integración enlazada; el validador de formato no demuestra rendimiento ni calidad.
 - [ ] 4.2 Archivar el cambio (`openspec archive arquitectura-base`) una vez validado y con el spike resuelto — Responsable: quien integre según `COLLABORATION.md` | Estado: pendiente | Depende de: 4.1.
+
+## Revisión de Codex — 2026-09-24
+
+**Resultado: drivers aprobados con correcciones; decisiones técnicas pendientes.**
+
+- Corregida la dependencia de audio directo en Ollama: su catálogo identifica
+  Gemma 3n como Text. Separada la capacidad del modelo de la del runtime.
+- Recuperada calidad como driver central; solo el glosario es opcional.
+- Precisada la propuesta de 3s p95 por sesión y por salida, con origen de
+  tiempos, carga concurrente y evidencia reproducible. Pendiente 2.2.
+- Sustituida la garantía absoluta de no degradación por capacidad medida;
+  acotado aislamiento a errores locales y añadida gestión de sobrecarga.
+- Corregido el argumento del GIL: Python puede coordinar I/O concurrente;
+  Rust es una preferencia válida, no una prueba de menor latencia de inferencia.
+- La revisión es documental; no se ejecutaron modelos, pruebas de audio,
+  benchmarks ni validación visual del nuevo Mermaid. Los checks previos
+  de Claude en 1.1–1.3 describen la versión original.
+
+Validación de esta revisión: OpenSpec 1.13.2,
+`validate arquitectura-base --strict` → `Change 'arquitectura-base' is valid`.
+`git diff --check` sin errores. Esto valida formato, no comportamiento del MVP.
+
+## Incorporación de la lluvia de ideas del usuario
+
+Se conserva en `VISION.md` una síntesis identificada como tal, con dirección
+de producto y etapas. La revisión anterior no debe interpretarse como un
+recorte a un traductor convencional. Se amplió el diseño lógico con ASR
+incremental, realimentación de límites semánticos, versiones de traducción,
+contexto y políticas adaptativas, sin implementar ni prometer esos módulos.
+
+Pendientes del contrato posterior: protocolo de revisión/confirmación,
+límite de espera semántica, correcciones excepcionales y métricas de latencia
+percibida. El reparto de implementación sigue sin asignar; esta actualización
+no inicia el contrato en nombre de Claude ni marca su aceptación de la visión.
