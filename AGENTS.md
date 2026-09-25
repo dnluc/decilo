@@ -6,9 +6,9 @@ del cambio activo en `openspec/changes/`.
 
 Claude y Codex trabajan en paralelo. Respetar responsables y worktrees,
 preservar cambios ajenos y registrar decisiones y avances en OpenSpec.
-El procedimiento está acordado; el reparto propuesto sigue pendiente de la
-decisión del usuario. Leer las respuestas de ambos en el acuerdo y aplicar
-OpenSpec por cambios grandes, registrando avances y validaciones por tarea.
+El reparto confirmado por el usuario el 2026-09-25 es: Codex backend y
+Claude frontend, con revisión cruzada. Aplicar el acuerdo vigente en
+COLLABORATION.md y registrar avances y validaciones en OpenSpec.
 
 Preservar los diferenciales de la visión mediante interfaces extensibles y
 construcción por etapas. Distinguir ideas experimentales de capacidades probadas.

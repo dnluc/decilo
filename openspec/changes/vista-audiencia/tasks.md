@@ -1,4 +1,4 @@
-# Vista de audiencia — Codex
+# Vista de audiencia
 
 Implementa las tareas 3.1/3.2 de `contrato-sesiones-subtitulos` contra su
 contrato aceptado, sin modificar el backend de Claude. Rama: `codex/audiencia`.
@@ -8,7 +8,7 @@ contrato aceptado, sin modificar el backend de Claude. Rama: `codex/audiencia`.
 - [x] 1.3 Implementar vista accesible de sesiones, idiomas, subtítulos y estados — Responsable: Codex | Estado: terminada | Depende de: 1.1, 1.2.
 - [x] 1.4 Ejecutar tests de regresión, build y pruebas de navegador; agregar CI y documentación — Responsable: Codex | Estado: terminada | Depende de: 1.3.
 - [x] 1.5 Revisar PR contra contrato — Responsable: Claude | Estado: terminada | Depende de: 1.4. Verificación (2026-09-24): leí `state.js` y `connection.js` completos contra `contrato-sesiones-subtitulos`. Confirmé: inmutabilidad de finales, `start_ms` estable y `end_ms` solo creciente entre revisiones, invalidación en cascada de traducciones cuando el original avanza (incluida en `applyGap`), orden de aplicación original-antes-que-traducción en el snapshot, detección de salto de `seq`/reinicio de generación, backoff exponencial 0.5-10s con jitter igual al propuesto en el diseño del contrato, manejo del código de cierre `4008`, y modo `?demo=1` verificado en `app.js` — solo se activa por query param explícito, nunca como fallback. No encontré bugs funcionales. Un nitpick menor no bloqueante: `segment_seq` se valida como `>= 0` en `state.js`, el contrato/mis modelos exigen `>= 1`; sin impacto real porque mi backend nunca emite 0, pero vale ajustarlo en algún momento para fidelidad completa. Acepto el PR #2.
-- [ ] 1.6 Probar dos sesiones con audio real y medir entrega hasta navegador — Responsable: Codex | Estado: bloqueada | Depende de: backend real de Claude y 1.5. Los fixtures no acreditan inferencia, calidad ni latencia real.
+- [ ] 1.6 Probar dos sesiones con audio real y medir entrega hasta navegador — Responsable: Claude | Estado: bloqueada | Depende de: backend real de Codex y 1.5. Los fixtures no acreditan inferencia, calidad ni latencia real.
 
 ## Decisiones de implementación
 
@@ -43,3 +43,10 @@ Historial acotado a 100 segmentos y 100 gaps, textos por `textContent`.
 - [x] 2.1 Agregar tamaños de texto y modo Solo subtítulos — Responsable: Codex | Estado: terminada | Depende de: 1.3. Preferencia de tamaño persistida cuando es posible; salida por botón/Escape y sin cambiar la conexión. Se conserva el aviso de simulación.
 - [x] 2.2 Validar controles en navegador y documentar uso — Responsable: Codex | Estado: terminada | Depende de: 2.1. Cinco pruebas Playwright correctas (las tres anteriores y dos nuevas), build y OpenSpec correctos. Comprobada continuidad de WebSocket, foco de teclado, tamaño persistido, almacenamiento bloqueado y ausencia de desborde móvil; inspección visual a 390px.
 - [x] 2.3 Revisar extensión de lectura en PR #2 junto con la vista — Responsable: Claude | Estado: terminada | Depende de: 2.2. Verificación (2026-09-24): revisada junto con 1.5, sin objeciones. El backend y la integración con audio real continúan fuera de esta entrega (ver 1.6).
+
+## Cambio de responsables — 2026-09-25
+
+Por pedido del usuario, Claude asume el frontend pendiente y nuevo, incluido
+el reproductor de la demo audible; Codex revisa. Las tareas terminadas arriba
+conservan su autoría. Coordinar el inicio y reproducción con el contrato de
+backend en OpenSpec antes de implementar.

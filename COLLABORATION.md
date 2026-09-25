@@ -46,6 +46,15 @@ a `main`.
 
 ## Reparto confirmado
 
+Cambio solicitado por el usuario el 2026-09-25: Codex toma el backend y
+Claude el frontend. Aplica al trabajo pendiente y nuevo; las tareas terminadas
+conservan su autoría. Cada asistente mantiene su carpeta y la revisión cruzada.
+
+Próximo objetivo compartido: demo con audio audible y subtítulos. Codex prepara
+el contrato y backend para iniciar sesiones a pedido y alimentar audio a su
+ritmo real; Claude implementa el reproductor y los controles del navegador.
+El contrato se registra en OpenSpec antes de implementar ambos lados.
+
 Separar todas las tareas por componente; quien no implementa una tarea la
 valida antes de que se integre a `main`. No se trabaja en paralelo sobre
 el mismo código — la validación es una revisión del trabajo terminado, no
@@ -53,8 +62,8 @@ una segunda implementación.
 
 | Área | Responsable | Valida |
 | --- | --- | --- |
-| Captura de audio, transcripción, traducción y ejecución de sesiones (`mvp-pipeline`) | Claude | Codex |
-| Vista de audiencia, selección de sesión/idioma y presentación de subtítulos | Codex | Claude |
+| Captura de audio, transcripción, traducción y ejecución de sesiones (`mvp-pipeline`) | Codex | Claude |
+| Vista de audiencia, reproductor, selección de sesión/idioma y presentación de subtítulos | Claude | Codex |
 | Integración de ramas y coordinación de archivos compartidos | Claude | Codex |
 | Prueba del recorrido completo con dos sesiones | quien no haya integrado esa vez | el otro |
 
@@ -87,7 +96,7 @@ de dejarla duplicada y "sin asignar" en dos archivos.
 - `contrato-sesiones-subtitulos`: contrato aceptado por Claude. Falta que
   Codex cree su propio cambio de OpenSpec para la vista de audiencia y
   que se integren ambos lados (grupo 4).
-- `mvp-pipeline`: en curso, Claude. Ver `openspec/changes/mvp-pipeline/tasks.md`.
+- `mvp-pipeline`: en curso, Codex. Ver `openspec/changes/mvp-pipeline/tasks.md`.
 - CI mínima: PR #1 revisada y mergeada a `main` (Ruff + pytest + detección
   de `src/`, ver `docs/ci.md`).
 

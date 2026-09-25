@@ -61,19 +61,19 @@ El usuario pidió a Codex aplicar las cuatro correcciones sobre la base
 
 ## 5. Aislamiento y sobrecarga
 
-- [ ] 5.1 Verificar que dos sesiones en simultáneo no se degradan entre sí, y que la falla de una (archivo de audio corrupto/inexistente) no afecta a la otra — Responsable: Claude | Estado: bloqueada | Depende de: 4.4. Verificación: escenario de `specs/speech-pipeline` "Falla la fuente de audio de una sesión" reproducido.
-- [ ] 5.2 Implementar la política de descarte/pausa cuando la inferencia no alcanza la velocidad del audio entrante, publicando `session.gap` — Responsable: Claude | Estado: bloqueada | Depende de: 4.4. Verificación: forzar sobrecarga (audio más rápido que la capacidad medida en 2.1) y confirmar que se emite el gap en vez de acumular retraso sin límite.
+- [ ] 5.1 Verificar que dos sesiones en simultáneo no se degradan entre sí, y que la falla de una (archivo de audio corrupto/inexistente) no afecta a la otra — Responsable: Codex | Estado: bloqueada | Depende de: 4.4. Verificación: escenario de `specs/speech-pipeline` "Falla la fuente de audio de una sesión" reproducido.
+- [ ] 5.2 Implementar la política de descarte/pausa cuando la inferencia no alcanza la velocidad del audio entrante, publicando `session.gap` — Responsable: Codex | Estado: bloqueada | Depende de: 4.4. Verificación: forzar sobrecarga (audio más rápido que la capacidad medida en 2.1) y confirmar que se emite el gap en vez de acumular retraso sin límite.
 
 ## 6. Medición end-to-end y documentación
 
-- [ ] 6.1 Medir latencia p50/p95 real con dos sesiones activas, siguiendo el protocolo de `system-architecture` (10+ min, 100+ segmentos por sesión) — Responsable: Claude | Estado: bloqueada | Depende de: 5.1, 5.2. Verificación: informe con configuración, muestras, percentiles y pérdidas, igual que exige `specs/system-architecture`.
-- [ ] 6.2 Escribir instrucciones en el README para levantar el backend y correr dos sesiones de prueba — Responsable: Claude | Estado: bloqueada | Depende de: 6.1. Verificación: alguien sin contexto puede seguir el README y ver el resultado.
-- [ ] 6.3 Codex revisa el pipeline (código + resultados de 2.1/2.2/6.1) contra `speech-pipeline` y `caption-stream`, registra aceptación o ajustes — Responsable: Codex | Estado: bloqueada | Depende de: 6.1. Verificación: entrada de Codex en este archivo antes de integrar a `main` como definitivo.
+- [ ] 6.1 Medir latencia p50/p95 real con dos sesiones activas, siguiendo el protocolo de `system-architecture` (10+ min, 100+ segmentos por sesión) — Responsable: Codex | Estado: bloqueada | Depende de: 5.1, 5.2. Verificación: informe con configuración, muestras, percentiles y pérdidas, igual que exige `specs/system-architecture`.
+- [ ] 6.2 Escribir instrucciones en el README para levantar el backend y correr dos sesiones de prueba — Responsable: Codex | Estado: bloqueada | Depende de: 6.1. Verificación: alguien sin contexto puede seguir el README y ver el resultado.
+- [ ] 6.3 Claude revisa el pipeline (código + resultados de 2.1/2.2/6.1) contra `speech-pipeline` y `caption-stream`, registra aceptación o ajustes — Responsable: Claude | Estado: bloqueada | Depende de: 6.1. Verificación: entrada de Claude en este archivo antes de integrar a `main` como definitivo.
 
 ## 7. Cierre del cambio
 
-- [ ] 7.1 `openspec validate mvp-pipeline --strict` sin errores — Responsable: Claude | Estado: pendiente | Depende de: grupos 1-6. Verificación: salida del comando.
-- [ ] 7.2 Archivar el cambio una vez validado y con la revisión de Codex registrada — Responsable: Claude | Estado: bloqueada | Depende de: 7.1, 6.3.
+- [ ] 7.1 `openspec validate mvp-pipeline --strict` sin errores — Responsable: Codex | Estado: pendiente | Depende de: grupos 1-6. Verificación: salida del comando.
+- [ ] 7.2 Archivar el cambio una vez validado y con la revisión de Codex registrada — Responsable: Codex | Estado: bloqueada | Depende de: 7.1, 6.3.
 
 ## Correcciones del PR #4 — asignadas a Codex por el usuario
 
@@ -95,3 +95,10 @@ de captura. Hay cortes de palabras y agregados de traducción documentados.
 **No se marcan completas 5.1/5.2/6.1 ni se aprueba calidad/latencia.**
 La siguiente validación requiere mejorar/evaluar segmentación y traducción,
 probar audio humano y medir la capacidad bajo una fuente a velocidad real.
+
+## Cambio de responsables — 2026-09-25
+
+Por pedido del usuario, Codex asume implementación y medición pendientes del
+backend; Claude realiza la revisión cruzada. Se conserva la autoría histórica
+de las tareas terminadas. Próximo objetivo: inicio a pedido y audio a ritmo
+real para la demo audible, mediante un contrato compartido en OpenSpec.
