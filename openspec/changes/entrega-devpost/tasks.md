@@ -12,7 +12,7 @@ se registra el avance sin abrir un ciclo de especificación nuevo.
 - [x] 1.3 Verificar frontend disponible — Responsable: Codex | Estado: terminada | Depende de: 1.1. Ejecutados `npm test` y `npm run build` en `frontend/`, ambos con exit code 0. No se repitieron Playwright ni pruebas de inferencia; los resultados históricos se identifican como tales en el borrador.
 - [x] 1.4 Leer campos reales y completar el borrador en Devpost — Responsable: Codex | Estado: terminada | Depende de: conexión al navegador y enlace del formulario. Acceso resuelto abriendo Chrome con perfil separado y depuración local autorizados por el usuario. Guardados nombre, pitch, historia, ocho tecnologías, enlace al repo y campos adicionales de repositorio, stack, Argentina y aceptación de términos. País y aceptación confirmados expresamente por el usuario. Verificación: recarga independiente de cada paso, comparación exacta de textos y lectura de etiquetas, país y checkbox; **DRAFT, 4/5 steps done**. Equipo existente sin cambios. TinyFish no se usó.
 - [x] 1.5 Revisar materiales y estado final de la presentación — Responsable: Codex con el usuario | Estado: terminada | Depende de: 1.4. Usuario confirmó que todavía no tiene video; campo vacío y envío final pendiente. Galería y miniatura no se modificaron. La pantalla final recuerda el requisito de video. La implementación del pipeline sigue a cargo de Claude en `mvp-pipeline`; esta tarea no la reasigna.
-- [ ] 1.6 Actualizar evidencias y realizar entrega final — Responsable: usuario con Codex | Estado: pendiente | Depende de: video real y cierre del MVP. Actualizar historia/stack al integrar el pipeline, adjuntar video y verificar requisitos antes de enviar. No se pulsó «Submit project».
+- [x] 1.6 Actualizar evidencias y verificar entrega final — Responsable: usuario con Codex | Estado: terminada. Ver sección 4: formulario y materiales actualizados; al finalizar se observó SUBMITTED, 5/5. Codex no pulsó «Submit project»; el envío estaba reservado al usuario.
 
 Registro de la revisión inicial: entonces eran cambios locales. Claude publicó
 este seguimiento en `61e7b1d`; no implica que se haya enviado el proyecto.
@@ -55,8 +55,8 @@ bibliotecas C++/zlib al entorno del proceso de grabación.
   Versión v2 publicada como no listado: https://youtu.be/mrHqqAIPJkQ.
   Canal @dnluc; confirmación en Studio, recarga de detalles y consulta sin sesión
   verifican disponibilidad `unlisted` y 115 s. Miniatura y créditos cargados.
-- [ ] 3.7 Actualizar formulario y enviar proyecto — Pendiente; continúa 1.6.
-  Publicar en YouTube no completa la entrega en Devpost.
+- [x] 3.7 Actualizar formulario y dejarlo listo — Responsable: Codex | Estado: terminada.
+  Ver sección 4. El envío queda exclusivamente a cargo del usuario (1.6).
 
 No se simularon subtítulos ni se aceleró la toma de simultaneidad. La demora
 local y el cierre residual sin traducción de algunos segmentos Live siguen
@@ -74,3 +74,29 @@ como límites; estas corridas no completan el benchmark sostenido de OpenSpec.
   de −4,1 dBFS, 30 cues EN y 30 ES dentro del montaje, revisión visual de
   arquitectura/cierre e integridad del ZIP. Material actualizado en la misma
   carpeta de entrega; esta revisión no publica el video en YouTube.
+
+## Preparación final del formulario — Codex, 25/09/2026
+
+Pedido explícito: completar Devpost con video, imágenes y logo, y dejar que el
+usuario pulse Submit. La preparación no autoriza el envío final.
+
+- [x] 4.1 Actualizar nombre/pitch e imagen principal — Responsable: Codex |
+  Estado: terminada. Logo visible y verificado tras guardarlo.
+- [x] 4.2 Guardar historia y material real — Responsable: Codex | Estado: terminada.
+  Video `mrHqqAIPJkQ`, siete capturas/diagramas con captions y orden persistido;
+  historia de la implementación y pruebas, 15 etiquetas con Gemini/Gemini Live.
+- [x] 4.3 Completar información para jueces — Responsable: Codex | Estado: terminada.
+  Stack actualizado, repo público, archivo `Decilo-Devpost.zip` (11,4 MB).
+  Argentina y aceptación previa conservadas; equipo existente sin cambios.
+- [x] 4.4 Verificar por recargas independientes y vista previa — Responsable: Codex |
+  Estado: terminada. Coincidencia exacta de pitch, historia, video, captions,
+  orden y stack; «Current File: Decilo-Devpost.zip» presente; video incrustado
+  y siete imágenes cargadas. Repo verificado público sin autenticación.
+- [x] 4.5 Verificar estado tras el envío reservado al usuario — Estado: terminada.
+  Mientras Codex verificaba la pantalla final, pasó a SUBMITTED, 5/5 steps done
+  y «Project submitted!». Codex no pulsó Submit ni envió el formulario.
+
+Copia de textos guardados: `docs/devpost.md`. Evidencia local de verificación:
+`~/Videos/decilo-demo/devpost-verificacion.json`. La preparación estaba en DRAFT
+4/5; el último estado observado fue SUBMITTED 5/5. Los miembros que aparecen
+en la pantalla final son Diego Lucchelli y Sole Lucchelli; Codex no editó el equipo.

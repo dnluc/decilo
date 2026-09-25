@@ -128,7 +128,8 @@ Video local final: `~/Videos/decilo-demo/Decilo-demo-1m55-con-musica.mp4`. Durac
 con ffprobe: **115,000 s**, 1920×1080, 30 fps, H.264 + AAC, tamaño verificado en el manifiesto local.
 La galería y el paquete de entrega están en esa misma carpeta. El MP4 no se
 versiona en Git. La versión v2 ya está publicada en YouTube como no listado;
-completar Devpost sigue pendiente. Publicar el video no envía el proyecto.
+la presentación de Devpost fue completada y al cerrar la verificación se
+observó SUBMITTED, 5/5. Codex no pulsó Submit.
 
 | Prueba real | Originales finales | Traducciones finales | Gaps | Errores publicados |
 | --- | ---: | ---: | ---: | ---: |
@@ -152,7 +153,8 @@ Material reutilizable:
 - [Carátula inicial](demo/01-portada.png) y [carátula final](demo/08-cierre.png).
 - [Arquitectura para presentación](demo/07-arquitectura.png), también en [SVG](demo/07-arquitectura.svg).
 - Pantallas reales: [local ES](demo/03-local-es.png), [nube EN](demo/04-nube-en.png),
-  [segunda charla EN](demo/05-nube-documentacion.png), [nube ES](demo/06-nube-es.png).
+  [segunda charla EN](demo/05-nube-documentacion.png), [nube ES](demo/06-nube-es.png)
+  y [dos sesiones simultáneas](demo/09-sesiones-simultaneas.png).
 - [Resultados y fuentes de las pruebas](demo/evidencia.json).
 - [Subtítulos en inglés de la narración](demo/subtitulos-en.srt).
 
@@ -195,3 +197,15 @@ detalles mostró «Oculto». Una consulta independiente sin cookies ni sesión
 recuperó título, canal, disponibilidad `unlisted` y duración de 115 s. Las
 comprobaciones de YouTube no encontraron problemas al publicar. El formulario
 de Devpost no se modificó durante esta subida.
+
+## Presentación preparada en Devpost — 25/09/2026
+
+A pedido del usuario, se cargaron el video de YouTube, logo como miniatura,
+siete imágenes con captions, historia actualizada, etiquetas y stack. Se adjuntó
+`Decilo-Devpost.zip` (11,4 MB) con los materiales para los jueces. La vista previa
+está en https://devpost.com/software/decilo. Se verificó la persistencia mediante
+recargas del formulario y la carga del video y las imágenes en la vista previa.
+
+La preparación dejó el envío a cargo del usuario. Durante la verificación final
+se observó **SUBMITTED, 5/5 steps done** y «Project submitted!». Codex no pulsó
+Submit ni ejecutó el envío. La copia del texto guardado está en [devpost.md](devpost.md).
